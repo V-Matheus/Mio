@@ -8,3 +8,7 @@ Principais funcionalidades:
 - Streak de dias consecutivos de estudo
 - Perfil com histórico de atividades e tecnologias
 - Mascote Mio que acompanha toda a jornada do usuário
+
+## Documentação
+
+- [Arquitetura](ARCHITECTURE.md) - Visão técnica do sistema
