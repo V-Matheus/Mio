@@ -31,6 +31,18 @@
       "react": "recommended"
     }
   },
+  "overrides": [
+    {
+      "includes": ["apps/api/src/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useImportType": "off"
+          }
+        }
+      }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "double",
