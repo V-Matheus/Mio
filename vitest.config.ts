@@ -6,6 +6,17 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
+      exclude: [
+        "**/*.config.{ts,js,mjs}",
+        "**/*.d.ts",
+        "**/main.ts",
+        "**/node_modules/**",
+        "**/tests/**",
+        "**/dist/**",
+        "**/.next/**",
+        "**/coverage/**",
+        "**/packages/**",
+      ],
     },
   },
 })
