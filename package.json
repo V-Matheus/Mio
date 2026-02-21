@@ -8,14 +8,21 @@
     "format": "turbo run format",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:e2e": "turbo run test:e2e",
+    "test:cov": "turbo run test:cov",
+    "test:ui": "vitest --ui --coverage",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.3",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
     "turbo": "^2.8.10",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=18"

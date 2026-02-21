@@ -1,4 +1,3 @@
-import path from "node:path"
 import { sharedConfig } from "@mio/testing-config"
 import swc from "unplugin-swc"
 import { defineConfig } from "vitest/config"
@@ -7,8 +6,7 @@ export default defineConfig({
   plugins: [swc.vite()],
   test: {
     ...sharedConfig,
-    name: "api",
-    root: path.resolve(import.meta.dirname),
-    include: ["tests/**/*.test.ts"],
+    root: "./",
+    include: ["tests/unit/**/*.test.ts"],
   },
 })

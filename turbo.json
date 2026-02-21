@@ -24,6 +24,19 @@
     "test": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "**/*.test.{ts,tsx}"]
+    },
+    "test:unit": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "tests/unit/**/*.test.{ts,tsx}"]
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "tests/e2e/**/*.test.{ts,tsx}"]
+    },
+    "test:cov": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "**/*.test.{ts,tsx}"],
+      "outputs": ["coverage/**"]
     }
   }
 }
