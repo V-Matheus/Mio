@@ -42,15 +42,15 @@ jobs:
       - name: Lint
         run: yarn lint --filter=@mio/web
 
+      - name: Type Check
+        run: yarn check-types --filter=@mio/web
+
+      - name: Run Tests
+        run: yarn test --filter=@mio/web
+
       - name: React Doctor
         uses: millionco/react-doctor@main
         with:
           directory: apps/web
           diff: main
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Type Check
-        run: yarn check-types --filter=@mio/web
-
-      - name: Run Tests
-        run: yarn test --filter=@mio/web
