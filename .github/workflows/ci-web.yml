@@ -20,15 +20,16 @@ jobs:
   test:
     name: Lint, Type Check & Test
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'yarn'
 
       - name: Install dependencies
@@ -37,13 +38,14 @@ jobs:
       - name: Lint
         run: yarn lint --filter=@mio/web
 
-      - name: React Doctor
-        uses: millionco/react-doctor@v1
-        with:
-          directory: apps/web
-
       - name: Type Check
         run: yarn check-types --filter=@mio/web
 
       - name: Run Tests
         run: yarn test --filter=@mio/web
+
+      - name: React Doctor
+        uses: millionco/react-doctor@main
+        with:
+          directory: apps/web
+          diff: main
