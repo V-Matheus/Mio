@@ -37,6 +37,11 @@ jobs:
       - name: Lint
         run: yarn lint --filter=@mio/web
 
+      - name: React Doctor
+        uses: millionco/react-doctor@v1
+        with:
+          directory: apps/web
+
       - name: Type Check
         run: yarn check-types --filter=@mio/web
 
