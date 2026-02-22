@@ -41,11 +41,13 @@
     "apps/api/**/*.{ts,tsx}": [
       "biome check --fix",
       "bash -c 'yarn check-types --filter=@mio/api'",
+      "bash -c 'yarn lint --filter=@mio/api'",
       "bash -c 'yarn test:unit --filter=@mio/api'"
     ],
     "apps/web/**/*.{ts,tsx}": [
       "biome check --fix",
       "bash -c 'yarn check-types --filter=@mio/web'",
+      "bash -c 'yarn lint --filter=@mio/web'",
       "bash -c 'yarn test:unit --filter=@mio/web'"
     ]
   }
