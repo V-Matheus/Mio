@@ -1,0 +1,44 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
+  "schedule": ["every weekend"],
+  "timezone": "America/Sao_Paulo",
+  "packageRules": [
+    {
+      "description": "Auto-merge patch updates when CI passes",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
+      "description": "Group NestJS packages together",
+      "matchPackagePatterns": ["^@nestjs/"],
+      "groupName": "nestjs"
+    },
+    {
+      "description": "Group testing packages together",
+      "matchPackagePatterns": ["^@vitest/", "^vitest$", "^supertest$", "^@types/supertest$"],
+      "groupName": "testing"
+    },
+    {
+      "description": "Group React packages together",
+      "matchPackagePatterns": ["^react", "^@types/react"],
+      "groupName": "react"
+    },
+    {
+      "description": "Group Tailwind and PostCSS together",
+      "matchPackagePatterns": ["^tailwindcss$", "^@tailwindcss/", "^postcss$"],
+      "groupName": "tailwind"
+    },
+    {
+      "description": "Group Biome packages together",
+      "matchPackagePatterns": ["^@biomejs/"],
+      "groupName": "biome"
+    },
+    {
+      "description": "Group TypeScript and type definitions together",
+      "matchPackagePatterns": ["^typescript$", "^@types/node$"],
+      "groupName": "typescript"
+    }
+  ]
+}

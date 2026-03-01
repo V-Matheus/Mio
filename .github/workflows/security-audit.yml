@@ -1,0 +1,41 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'yarn.lock'
+      - '**/package.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'yarn.lock'
+      - '**/package.json'
+  schedule:
+    - cron: '0 9 * * 1'
+
+jobs:
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Yarn Audit
+        run: yarn audit --groups dependencies
+        continue-on-error: true
+
+      - name: Audit Summary
+        if: failure()
+        run: echo "::warning::Vulnerabilities found. Run 'yarn audit' locally for details."
