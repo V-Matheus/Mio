@@ -45,7 +45,7 @@
   ],
   "css": {
     "parser": {
-      "allowTailwindSpecificSyntax": true
+      "tailwindDirectives": true
     }
   },
   "javascript": {
