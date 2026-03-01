@@ -1,44 +1,71 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "labels": ["dependencies"],
-  "schedule": ["every weekend"],
+  "extends": [
+    "config:recommended"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "schedule": [
+    "every weekend"
+  ],
   "timezone": "America/Sao_Paulo",
   "packageRules": [
     {
       "description": "Auto-merge patch updates when CI passes",
-      "matchUpdateTypes": ["patch"],
+      "matchUpdateTypes": [
+        "patch"
+      ],
       "automerge": true
     },
     {
       "description": "Group NestJS packages together",
-      "matchPackagePatterns": ["^@nestjs/"],
-      "groupName": "nestjs"
+      "groupName": "nestjs",
+      "matchPackageNames": [
+        "/^@nestjs//"
+      ]
     },
     {
       "description": "Group testing packages together",
-      "matchPackagePatterns": ["^@vitest/", "^vitest$", "^supertest$", "^@types/supertest$"],
-      "groupName": "testing"
+      "groupName": "testing",
+      "matchPackageNames": [
+        "/^@vitest//",
+        "/^vitest$/",
+        "/^supertest$/",
+        "/^@types/supertest$/"
+      ]
     },
     {
       "description": "Group React packages together",
-      "matchPackagePatterns": ["^react", "^@types/react"],
-      "groupName": "react"
+      "groupName": "react",
+      "matchPackageNames": [
+        "/^react/",
+        "/^@types/react/"
+      ]
     },
     {
       "description": "Group Tailwind and PostCSS together",
-      "matchPackagePatterns": ["^tailwindcss$", "^@tailwindcss/", "^postcss$"],
-      "groupName": "tailwind"
+      "groupName": "tailwind",
+      "matchPackageNames": [
+        "/^tailwindcss$/",
+        "/^@tailwindcss//",
+        "/^postcss$/"
+      ]
     },
     {
       "description": "Group Biome packages together",
-      "matchPackagePatterns": ["^@biomejs/"],
-      "groupName": "biome"
+      "groupName": "biome",
+      "matchPackageNames": [
+        "/^@biomejs//"
+      ]
     },
     {
       "description": "Group TypeScript and type definitions together",
-      "matchPackagePatterns": ["^typescript$", "^@types/node$"],
-      "groupName": "typescript"
+      "groupName": "typescript",
+      "matchPackageNames": [
+        "/^typescript$/",
+        "/^@types/node$/"
+      ]
     }
   ]
 }
