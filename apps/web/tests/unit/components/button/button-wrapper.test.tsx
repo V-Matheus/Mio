@@ -64,6 +64,16 @@ describe("ButtonWrapper", () => {
     expect(button.className).toContain("cursor-not-allowed")
   })
 
+  it("should automatically set disabled when colorScheme is disabled", () => {
+    render(
+      <ButtonWrapper variant="icon" colorScheme="disabled">
+        Icon
+      </ButtonWrapper>,
+    )
+
+    expect(screen.getByRole("button")).toBeDisabled()
+  })
+
   it("should not apply iconColorStyles for non-icon variants", () => {
     render(
       <ButtonWrapper variant="primary" colorScheme="success">
@@ -75,16 +85,32 @@ describe("ButtonWrapper", () => {
     expect(button.className).not.toContain("bg-success")
   })
 
-  it("should forward additional props to the button element", () => {
-    render(
-      <ButtonWrapper disabled aria-label="test button">
-        Click
-      </ButtonWrapper>,
-    )
+  it("should disable primary variant with disabled prop", () => {
+    render(<ButtonWrapper disabled>Primary</ButtonWrapper>)
 
     const button = screen.getByRole("button")
     expect(button).toBeDisabled()
-    expect(button).toHaveAttribute("aria-label", "test button")
+    expect(button.className).toContain("disabled:opacity-50")
+    expect(button.className).toContain("disabled:cursor-not-allowed")
+  })
+
+  it("should disable secondary variant with disabled prop", () => {
+    render(
+      <ButtonWrapper variant="secondary" disabled>
+        Secondary
+      </ButtonWrapper>,
+    )
+
+    expect(screen.getByRole("button")).toBeDisabled()
+  })
+
+  it("should forward additional props to the button element", () => {
+    render(<ButtonWrapper aria-label="test button">Click</ButtonWrapper>)
+
+    expect(screen.getByRole("button")).toHaveAttribute(
+      "aria-label",
+      "test button",
+    )
   })
 
   it("should append custom className", () => {

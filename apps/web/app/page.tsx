@@ -16,7 +16,7 @@ export default function Home() {
           <Icon icon="lucide:check" />
         </ButtonIcon>
       </ButtonWrapper>
-      <ButtonWrapper variant="icon" colorScheme="disabled" disabled>
+      <ButtonWrapper variant="icon" colorScheme="disabled">
         <ButtonIcon>
           <Icon icon="lucide:lock" />
         </ButtonIcon>

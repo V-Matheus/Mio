@@ -9,11 +9,11 @@ interface ButtonWrapperProps extends ComponentProps<"button"> {
 }
 
 const baseStyles =
-  "inline-flex items-center justify-center font-display font-bold cursor-pointer transition-all"
+  "inline-flex items-center justify-center font-display font-bold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "rounded-full px-10 py-4 bg-primary text-white shadow-[0_6px_0_var(--color-primary-shadow)] active:translate-y-[3px] active:shadow-[0_3px_0_var(--color-primary-shadow)]",
+    "rounded-full px-10 py-4 bg-primary text-white shadow-[0_6px_0_var(--color-primary-shadow)] active:translate-y-[3px] active:shadow-[0_3px_0_var(--color-primary-shadow)] disabled:active:translate-y-0 disabled:active:shadow-[0_6px_0_var(--color-primary-shadow)]",
   secondary:
     "rounded-full px-10 py-4 bg-white text-foreground border-[3px] border-foreground",
   icon: "rounded-2xl p-4 shadow-[0_6px_0_var(--shadow-color)] active:translate-y-[3px] active:shadow-[0_3px_0_var(--shadow-color)] disabled:active:translate-y-0 disabled:active:shadow-[0_6px_0_var(--shadow-color)] disabled:cursor-not-allowed",
@@ -42,8 +42,10 @@ export function ButtonWrapper({
     .filter(Boolean)
     .join(" ")
 
+  const isDisabled = colorScheme === "disabled" || props.disabled
+
   return (
-    <button className={classes} {...props}>
+    <button className={classes} disabled={isDisabled} {...props}>
       {children}
     </button>
   )
