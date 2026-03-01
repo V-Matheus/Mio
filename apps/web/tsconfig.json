@@ -1,6 +1,7 @@
 {
   "extends": "@mio/typescript-config/nextjs.json",
   "compilerOptions": {
+    "lib": ["ES2024", "dom", "dom.iterable"],
     "types": ["vitest/globals", "@testing-library/jest-dom"],
     "plugins": [
       {
