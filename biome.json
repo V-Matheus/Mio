@@ -43,6 +43,11 @@
       }
     }
   ],
+  "css": {
+    "parser": {
+      "allowTailwindSpecificSyntax": true
+    }
+  },
   "javascript": {
     "formatter": {
       "quoteStyle": "double",
