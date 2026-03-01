@@ -7,6 +7,11 @@
   --color-success: #10B981;
   --color-background: #FDF5EE;
   --color-foreground: #332D28;
+  --color-primary-shadow: #CC3300;
+  --color-success-shadow: #0A8C62;
+  --color-disabled: #D4D4D4;
+  --color-disabled-foreground: #9E9E9E;
+  --color-disabled-shadow: #B0B0B0;
 
   --font-display: var(--font-outfit), sans-serif;
   --font-body: var(--font-plus-jakarta-sans), sans-serif;
