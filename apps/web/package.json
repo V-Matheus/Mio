@@ -29,7 +29,7 @@
   "devDependencies": {
     "@mio/testing-config": "*",
     "@mio/typescript-config": "*",
-    "@types/node": "^22.15.3",
+    "@types/node": "^24.0.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "typescript": "5.9.3"
