@@ -33,7 +33,11 @@ describe("ButtonWrapper", () => {
   })
 
   it("should apply icon variant styles", () => {
-    render(<ButtonWrapper variant="icon">Icon</ButtonWrapper>)
+    render(
+      <ButtonWrapper variant="icon" aria-label="Icon">
+        Icon
+      </ButtonWrapper>,
+    )
 
     const button = screen.getByRole("button")
     expect(button.className).toContain("rounded-2xl")
@@ -41,7 +45,7 @@ describe("ButtonWrapper", () => {
 
   it("should apply colorScheme for icon variant", () => {
     render(
-      <ButtonWrapper variant="icon" colorScheme="success">
+      <ButtonWrapper variant="icon" colorScheme="success" aria-label="Success">
         Icon
       </ButtonWrapper>,
     )
@@ -53,7 +57,11 @@ describe("ButtonWrapper", () => {
 
   it("should apply disabled colorScheme styles for icon variant", () => {
     render(
-      <ButtonWrapper variant="icon" colorScheme="disabled">
+      <ButtonWrapper
+        variant="icon"
+        colorScheme="disabled"
+        aria-label="Disabled"
+      >
         Icon
       </ButtonWrapper>,
     )
@@ -66,7 +74,11 @@ describe("ButtonWrapper", () => {
 
   it("should automatically set disabled when colorScheme is disabled", () => {
     render(
-      <ButtonWrapper variant="icon" colorScheme="disabled">
+      <ButtonWrapper
+        variant="icon"
+        colorScheme="disabled"
+        aria-label="Disabled"
+      >
         Icon
       </ButtonWrapper>,
     )

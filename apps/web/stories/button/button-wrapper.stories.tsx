@@ -43,6 +43,7 @@ export const IconPrimary: Story = {
   args: {
     variant: "icon",
     colorScheme: "primary",
+    "aria-label": "Play",
     children: (
       <ButtonIcon>
         <Icon icon="mdi:play" width={24} height={24} />
@@ -55,6 +56,7 @@ export const IconSuccess: Story = {
   args: {
     variant: "icon",
     colorScheme: "success",
+    "aria-label": "Confirm",
     children: (
       <ButtonIcon>
         <Icon icon="mdi:check" width={24} height={24} />
@@ -67,6 +69,7 @@ export const IconDisabled: Story = {
   args: {
     variant: "icon",
     colorScheme: "disabled",
+    "aria-label": "Locked",
     children: (
       <ButtonIcon>
         <Icon icon="mdi:lock" width={24} height={24} />
