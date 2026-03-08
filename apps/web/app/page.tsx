@@ -6,6 +6,12 @@ import {
   CardTitle,
   CardWrapper,
 } from "./components/card"
+import {
+  BadgeIcon,
+  BadgeValue,
+  BadgeWrapper,
+  ProgressBar,
+} from "./components/gamification"
 
 export default function Home() {
   return (
@@ -46,6 +52,22 @@ export default function Home() {
           </CardTitle>
         </CardWrapper>
       </div>
+
+      <div className="flex items-center gap-4">
+        <BadgeWrapper>
+          <BadgeIcon>
+            <Icon icon="mdi:fire" className="text-orange-500" />
+          </BadgeIcon>
+          <BadgeValue>12</BadgeValue>
+        </BadgeWrapper>
+        <BadgeWrapper>
+          <BadgeIcon>
+            <Icon icon="mdi:lightning-bolt" className="text-yellow-500" />
+          </BadgeIcon>
+          <BadgeValue>450</BadgeValue>
+        </BadgeWrapper>
+      </div>
+      <ProgressBar value={75} className="w-64" />
 
       <Icon icon="devicon:react" />
       <Icon icon="devicon:javascript" />
