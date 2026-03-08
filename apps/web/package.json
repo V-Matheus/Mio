@@ -15,7 +15,9 @@
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:cov": "vitest run --coverage",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui --coverage"
+    "test:ui": "vitest --ui --coverage",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@iconify/react": "^6.0.2",
@@ -32,6 +34,13 @@
     "@types/node": "^24.0.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "storybook": "^10.2.16",
+    "@storybook/nextjs-vite": "^10.2.16",
+    "@chromatic-com/storybook": "^5.0.1",
+    "@storybook/addon-a11y": "^10.2.16",
+    "@storybook/addon-docs": "^10.2.16",
+    "@storybook/addon-onboarding": "^10.2.16",
+    "vite": "^7.3.1"
   }
 }

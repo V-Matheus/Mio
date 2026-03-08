@@ -3,10 +3,13 @@ import type { ComponentProps } from "react"
 type ButtonVariant = "primary" | "secondary" | "icon"
 type ButtonColorScheme = "primary" | "success" | "disabled"
 
-interface ButtonWrapperProps extends ComponentProps<"button"> {
-  variant?: ButtonVariant
+type ButtonWrapperBaseProps = ComponentProps<"button"> & {
   colorScheme?: ButtonColorScheme
 }
+
+type ButtonWrapperProps =
+  | (ButtonWrapperBaseProps & { variant?: "primary" | "secondary" })
+  | (ButtonWrapperBaseProps & { variant: "icon"; "aria-label": string })
 
 const baseStyles =
   "inline-flex items-center justify-center font-display font-bold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"

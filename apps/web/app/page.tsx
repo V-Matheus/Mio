@@ -23,12 +23,12 @@ export default function Home() {
       <ButtonWrapper variant="secondary">
         <ButtonText>Secondary Action</ButtonText>
       </ButtonWrapper>
-      <ButtonWrapper variant="icon" colorScheme="success">
+      <ButtonWrapper variant="icon" colorScheme="success" aria-label="Confirm">
         <ButtonIcon>
           <Icon icon="lucide:check" />
         </ButtonIcon>
       </ButtonWrapper>
-      <ButtonWrapper variant="icon" colorScheme="disabled">
+      <ButtonWrapper variant="icon" colorScheme="disabled" aria-label="Locked">
         <ButtonIcon>
           <Icon icon="lucide:lock" />
         </ButtonIcon>
