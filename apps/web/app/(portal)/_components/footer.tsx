@@ -1,23 +1,24 @@
 import { Icon } from "@iconify/react"
 import Image from "next/image"
+import Link from "next/link"
 
 const quickLinks = [
-  { label: "Home", href: "#" },
+  { label: "Home", href: "/" },
   { label: "Como funciona", href: "#como-funciona" },
   { label: "Tecnologias", href: "#tecnologias" },
   { label: "Benefícios", href: "#beneficios" },
 ]
 
 const supportLinks = [
-  { label: "Suporte", href: "#" },
-  { label: "FAQ", href: "#" },
+  { label: "Suporte", href: "/" },
+  { label: "FAQ", href: "/" },
 ]
 
 const socialLinks = [
-  { icon: "mdi:facebook", href: "#", label: "Facebook" },
-  { icon: "mdi:twitter", href: "#", label: "Twitter" },
-  { icon: "mdi:instagram", href: "#", label: "Instagram" },
-  { icon: "mdi:linkedin", href: "#", label: "LinkedIn" },
+  { icon: "mdi:facebook", href: "/", label: "Facebook" },
+  { icon: "mdi:twitter", href: "/", label: "Twitter" },
+  { icon: "mdi:instagram", href: "/", label: "Instagram" },
+  { icon: "mdi:linkedin", href: "/", label: "LinkedIn" },
 ]
 
 export function Footer() {
@@ -41,14 +42,14 @@ export function Footer() {
             </p>
             <div className="flex gap-3">
               {socialLinks.map((social) => (
-                <a
+                <Link
                   key={social.label}
                   href={social.href}
                   aria-label={social.label}
                   className="text-white/60 hover:text-primary transition-colors"
                 >
                   <Icon icon={social.icon} width={20} height={20} />
-                </a>
+                </Link>
               ))}
             </div>
           </div>
@@ -60,12 +61,12 @@ export function Footer() {
             <ul className="space-y-2">
               {quickLinks.map((link) => (
                 <li key={link.label}>
-                  <a
+                  <Link
                     href={link.href}
                     className="text-sm text-white/60 hover:text-primary transition-colors"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -76,12 +77,12 @@ export function Footer() {
             <ul className="space-y-2">
               {supportLinks.map((link) => (
                 <li key={link.label}>
-                  <a
+                  <Link
                     href={link.href}
                     className="text-sm text-white/60 hover:text-primary transition-colors"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

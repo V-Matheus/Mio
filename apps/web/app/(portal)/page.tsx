@@ -30,7 +30,7 @@ const levels = [
   },
   {
     title: "Especialista",
-    description: "Para a infinito e além! O que vamos criar agora?",
+    description: "Para o infinito e além! O que vamos criar agora?",
     icon: "mdi:trophy-outline",
   },
 ]
@@ -80,7 +80,7 @@ export default function Home() {
   return (
     <>
       {/* Hero Section */}
-      <section className="py-20 md:py-28 text-center px-6">
+      <section id="top" className="py-20 md:py-28 text-center px-6">
         <div className="max-w-3xl mx-auto">
           <div className="flex justify-center mb-6">
             <Image
@@ -116,7 +116,7 @@ export default function Home() {
             {levels.map((level) => (
               <div
                 key={level.title}
-                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:border-primary/40 hover:shadow-md transition-all group cursor-pointer"
+                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:border-primary/40 hover:shadow-md transition-all group"
               >
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                   <Icon
