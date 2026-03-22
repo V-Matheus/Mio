@@ -1,5 +1,34 @@
 @import "tailwindcss";
 
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #FF9100 #FDF5EE;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #FDF5EE;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #FF9100;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #CC3300;
+  }
+
+  section[id] {
+    scroll-margin-top: 5rem;
+  }
+}
+
 @theme {
   --color-primary: #FF9100;
   --color-secondary: #FBBF24;

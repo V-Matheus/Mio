@@ -1,10 +1,12 @@
 import { render, screen } from "@testing-library/react"
-import Home from "../../app/page"
+import Home from "../../app/(portal)/page"
 
 describe("Home", () => {
   it("should render the title", () => {
     render(<Home />)
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Mio")
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Olá, eu sou Mio!",
+    )
   })
 })

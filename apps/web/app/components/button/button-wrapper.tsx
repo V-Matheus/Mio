@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react"
 
-type ButtonVariant = "primary" | "secondary" | "icon"
+type ButtonVariant = "primary" | "secondary" | "outline" | "icon"
 type ButtonColorScheme = "primary" | "success" | "disabled"
 
 type ButtonWrapperBaseProps = ComponentProps<"button"> & {
@@ -8,7 +8,7 @@ type ButtonWrapperBaseProps = ComponentProps<"button"> & {
 }
 
 type ButtonWrapperProps =
-  | (ButtonWrapperBaseProps & { variant?: "primary" | "secondary" })
+  | (ButtonWrapperBaseProps & { variant?: "primary" | "secondary" | "outline" })
   | (ButtonWrapperBaseProps & { variant: "icon"; "aria-label": string })
 
 const baseStyles =
@@ -19,6 +19,8 @@ const variantStyles: Record<ButtonVariant, string> = {
     "rounded-full px-10 py-4 bg-primary text-white shadow-[0_6px_0_var(--color-primary-shadow)] active:translate-y-[3px] active:shadow-[0_3px_0_var(--color-primary-shadow)] disabled:active:translate-y-0 disabled:active:shadow-[0_6px_0_var(--color-primary-shadow)]",
   secondary:
     "rounded-full px-10 py-4 bg-white text-foreground border-[3px] border-foreground",
+  outline:
+    "rounded-full px-10 py-4 bg-transparent text-white border-[3px] border-white hover:bg-white/10",
   icon: "rounded-2xl p-4 shadow-[0_6px_0_var(--shadow-color)] active:translate-y-[3px] active:shadow-[0_3px_0_var(--shadow-color)] disabled:active:translate-y-0 disabled:active:shadow-[0_6px_0_var(--shadow-color)] disabled:cursor-not-allowed",
 }
 
