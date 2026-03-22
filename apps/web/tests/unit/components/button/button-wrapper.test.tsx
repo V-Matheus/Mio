@@ -106,6 +106,15 @@ describe("ButtonWrapper", () => {
     expect(button.className).toContain("disabled:cursor-not-allowed")
   })
 
+  it("should apply outline variant styles", () => {
+    render(<ButtonWrapper variant="outline">Outline</ButtonWrapper>)
+
+    const button = screen.getByRole("button")
+    expect(button.className).toContain("bg-transparent")
+    expect(button.className).toContain("text-white")
+    expect(button.className).toContain("border-white")
+  })
+
   it("should disable secondary variant with disabled prop", () => {
     render(
       <ButtonWrapper variant="secondary" disabled>

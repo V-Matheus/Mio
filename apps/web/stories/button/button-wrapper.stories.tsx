@@ -12,7 +12,7 @@ const meta: Meta<typeof ButtonWrapper> = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["primary", "secondary", "icon"],
+      options: ["primary", "secondary", "outline", "icon"],
     },
     colorScheme: {
       control: "select",
@@ -37,6 +37,20 @@ export const Secondary: Story = {
     variant: "secondary",
     children: <ButtonText>Cancelar</ButtonText>,
   },
+}
+
+export const Outline: Story = {
+  args: {
+    variant: "outline",
+    children: <ButtonText>Criar conta gratuita</ButtonText>,
+  },
+  decorators: [
+    (Story) => (
+      <div className="bg-primary p-8 rounded-lg">
+        <Story />
+      </div>
+    ),
+  ],
 }
 
 export const IconPrimary: Story = {
