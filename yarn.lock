@@ -317,9 +317,9 @@
   integrity sha512-DDaRehssg1aNrH4+2hnj1B7vnUGEjU6OIlyRdkMd0aUdIUvKXrJfXsy8LVtXAy7DRvYVluWbMspsRhz2lcW0mQ==
 
 "@chromatic-com/storybook@^5.0.1":
-  version "5.1.1"
-  resolved "https://registry.yarnpkg.com/@chromatic-com/storybook/-/storybook-5.1.1.tgz#58293140d8958376080858367db2c918d1267e7a"
-  integrity sha512-BPoAXHM71XgeCK2u0jKr9i8apeQMm/Z9IWGyndA2FMijfQG9m8ox45DdWh/pxFkK5ClhGgirv5QwMhFIeHmThg==
+  version "5.1.2"
+  resolved "https://registry.yarnpkg.com/@chromatic-com/storybook/-/storybook-5.1.2.tgz#bd32f9e9152a14113bdc0737dbb2333077c8a71f"
+  integrity sha512-H/hgvwC3E+OtseP2OT2QYUJH2VfnzT6wM3pWOkaNV6g7QI+VUdWJbeJ3o2jFqvEPQNqzhQKWDOlvM4lu+7is6g==
   dependencies:
     "@neoconfetti/react" "^1.0.0"
     chromatic "^13.3.4"
