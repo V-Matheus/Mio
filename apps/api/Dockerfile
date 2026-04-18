@@ -45,6 +45,9 @@ COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 
 USER nestjs
 
+ARG SERVICE=gateway
+ENV SERVICE=${SERVICE}
+
 EXPOSE 3333
 
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-c", "node dist/apps/${SERVICE}/main.js"]

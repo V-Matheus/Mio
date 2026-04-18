@@ -1,0 +1,21 @@
+FROM node:24-alpine
+
+RUN apk add --no-cache libc6-compat
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+
+WORKDIR /app
+RUN chown node:node /app
+
+USER node
+
+# Only package manifests are copied here so the dependency layer stays cached.
+# Source code is mounted via docker-compose volumes at runtime.
+COPY --chown=node:node package.json yarn.lock ./
+COPY --chown=node:node apps/api/package.json ./apps/api/
+COPY --chown=node:node apps/web/package.json ./apps/web/
+COPY --chown=node:node packages/testing-config/package.json ./packages/testing-config/
+COPY --chown=node:node packages/typescript-config/package.json ./packages/typescript-config/
+
+RUN yarn install --frozen-lockfile
+
+ENV NODE_ENV=development
