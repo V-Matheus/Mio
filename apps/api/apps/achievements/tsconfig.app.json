@@ -1,0 +1,7 @@
+{
+  "extends": "@mio/typescript-config/nestjs.json",
+  "compilerOptions": {
+    "outDir": "../../dist/apps/achievements"
+  },
+  "include": ["src/**/*"]
+}

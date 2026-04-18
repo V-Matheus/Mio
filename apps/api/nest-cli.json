@@ -1,8 +1,67 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "sourceRoot": "apps/gateway/src",
+  "monorepo": true,
+  "root": "apps/gateway",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "tsConfigPath": "apps/gateway/tsconfig.app.json"
+  },
+  "projects": {
+    "gateway": {
+      "type": "application",
+      "root": "apps/gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/gateway/tsconfig.app.json"
+      }
+    },
+    "core": {
+      "type": "application",
+      "root": "apps/core",
+      "entryFile": "main",
+      "sourceRoot": "apps/core/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/core/tsconfig.app.json"
+      }
+    },
+    "gamification": {
+      "type": "application",
+      "root": "apps/gamification",
+      "entryFile": "main",
+      "sourceRoot": "apps/gamification/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/gamification/tsconfig.app.json"
+      }
+    },
+    "achievements": {
+      "type": "application",
+      "root": "apps/achievements",
+      "entryFile": "main",
+      "sourceRoot": "apps/achievements/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/achievements/tsconfig.app.json"
+      }
+    },
+    "messenger": {
+      "type": "application",
+      "root": "apps/messenger",
+      "entryFile": "main",
+      "sourceRoot": "apps/messenger/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/messenger/tsconfig.app.json"
+      }
+    },
+    "notifications": {
+      "type": "application",
+      "root": "apps/notifications",
+      "entryFile": "main",
+      "sourceRoot": "apps/notifications/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/notifications/tsconfig.app.json"
+      }
+    }
   }
 }

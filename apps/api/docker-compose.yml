@@ -1,0 +1,133 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    restart: unless-stopped
+
+  # Only this service declares `build:`. The image is built once and reused
+  # by the other 5 services via `image: mio-api-dev` below.
+  api-gateway:
+    image: mio-api-dev
+    build:
+      context: ../../
+      dockerfile: apps/api/Dockerfile.dev
+    command: yarn workspace @mio/api dev:gateway
+    env_file:
+      - .env
+    ports:
+      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+    volumes:
+      - ../../:/app
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    restart: unless-stopped
+
+  api-core:
+    image: mio-api-dev
+    command: yarn workspace @mio/api dev:core
+    env_file:
+      - .env
+    ports:
+      - "${CORE_PORT}:${CORE_PORT}"
+    volumes:
+      - ../../:/app
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+
+  api-gamification:
+    image: mio-api-dev
+    command: yarn workspace @mio/api dev:gamification
+    env_file:
+      - .env
+    ports:
+      - "${GAMIFICATION_PORT}:${GAMIFICATION_PORT}"
+    volumes:
+      - ../../:/app
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+
+  api-achievements:
+    image: mio-api-dev
+    command: yarn workspace @mio/api dev:achievements
+    env_file:
+      - .env
+    ports:
+      - "${ACHIEVEMENTS_PORT}:${ACHIEVEMENTS_PORT}"
+    volumes:
+      - ../../:/app
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+
+  api-messenger:
+    image: mio-api-dev
+    command: yarn workspace @mio/api dev:messenger
+    env_file:
+      - .env
+    ports:
+      - "${MESSENGER_PORT}:${MESSENGER_PORT}"
+    volumes:
+      - ../../:/app
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+
+  api-notifications:
+    image: mio-api-dev
+    command: yarn workspace @mio/api dev:notifications
+    env_file:
+      - .env
+    ports:
+      - "${NOTIFICATIONS_PORT}:${NOTIFICATIONS_PORT}"
+    volumes:
+      - ../../:/app
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+  rabbitmq-data:

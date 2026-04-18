@@ -33,7 +33,7 @@
   },
   "overrides": [
     {
-      "includes": ["apps/api/src/**"],
+      "includes": ["apps/api/apps/**", "apps/api/libs/**"],
       "linter": {
         "rules": {
           "style": {

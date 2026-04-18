@@ -5,6 +5,6 @@
     "baseUrl": "./",
     "types": ["vitest/globals"]
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["apps/**/*", "libs/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]
 }

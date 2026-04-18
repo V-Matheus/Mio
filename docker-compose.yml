@@ -1,14 +1,7 @@
-services:
-  api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-    ports:
-      - "3333:3333"
-    environment:
-      - NODE_ENV=production
-    restart: unless-stopped
+include:
+  - apps/api/docker-compose.yml
 
+services:
   web:
     build:
       context: .
@@ -16,7 +9,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
     depends_on:
-      - api
+      - api-gateway
     restart: unless-stopped
