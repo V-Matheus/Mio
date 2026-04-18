@@ -98,6 +98,8 @@ A arquitetura reflete um **mindset de QA** através de:
 
 ---
 
+> A arquitetura detalhada pode ser vista em: [IcePanel](https://s.icepanel.io/jMRAJCwP216mDS/ov0Y)
+
 <div align="center">
 
 **[README](README.md)** · **[Licença](LICENSE)**
