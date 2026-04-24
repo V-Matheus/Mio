@@ -13,7 +13,8 @@
     "test:cov": "turbo run test:cov",
     "test:ui": "vitest --ui --coverage",
     "docker:build": "docker compose build",
-    "docker:up": "docker compose up --build",
+    "docker:up": "docker compose up",
+    "docker:up:build": "docker compose up --build",
     "docker:down": "docker compose down",
     "prepare": "husky"
   },

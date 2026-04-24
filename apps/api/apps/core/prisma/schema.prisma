@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/core"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("CORE_DATABASE_URL")
+}
+
+enum SectionKind {
+  TEXT
+  EXERCISE
+}
+
+model User {
+  id        BigInt   @id @default(autoincrement())
+  code      String   @unique
+  email     String   @unique
+  name      String
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  enrollments Enrollment[]
+  progress    LessonProgress[]
+}
+
+model Track {
+  id          BigInt   @id @default(autoincrement())
+  slug        String   @unique
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lessons     Lesson[]
+  enrollments Enrollment[]
+}
+
+model Lesson {
+  id       BigInt @id @default(autoincrement())
+  trackId  BigInt
+  slug     String
+  title    String
+  position Int
+
+  track    Track            @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  sections Section[]
+  progress LessonProgress[]
+
+  @@unique([trackId, slug])
+  @@unique([trackId, position])
+}
+
+model Section {
+  id          BigInt      @id @default(autoincrement())
+  lessonId    BigInt
+  slug        String
+  title       String
+  position    Int
+  kind        SectionKind @default(TEXT)
+  contentPath String
+
+  lesson   Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  progress LessonProgress[]
+
+  @@unique([lessonId, slug])
+  @@unique([lessonId, position])
+}
+
+model Enrollment {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt
+  trackId   BigInt
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trackId])
+}
+
+model LessonProgress {
+  id            BigInt    @id @default(autoincrement())
+  userId        BigInt
+  lessonId      BigInt
+  lastSectionId BigInt?
+  completedAt   DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lastSection Section? @relation(fields: [lastSectionId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, lessonId])
+}
