@@ -1,10 +1,10 @@
 {
   "name": "@mio/api",
   "version": "0.1.0",
-  "type": "module",
   "private": true,
   "scripts": {
-    "dev": "docker compose -f docker-compose.yml up --build",
+    "dev": "docker compose -f docker-compose.yml up",
+    "dev:build": "docker compose -f docker-compose.yml up --build",
     "dev:gateway": "nest start gateway --watch",
     "dev:core": "nest start core --watch",
     "dev:gamification": "nest start gamification --watch",
@@ -39,6 +39,9 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/microservices": "^11.1.19",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/terminus": "^11.0.0",
+    "@grpc/grpc-js": "^1.12.2",
+    "@grpc/proto-loader": "^0.7.13",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
