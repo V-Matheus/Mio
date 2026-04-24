@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "yarn prisma:generate",
     "dev": "docker compose -f docker-compose.yml up",
     "dev:build": "docker compose -f docker-compose.yml up --build",
     "dev:gateway": "nest start gateway --watch",
