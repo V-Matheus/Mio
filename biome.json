@@ -52,6 +52,9 @@
     "formatter": {
       "quoteStyle": "double",
       "semicolons": "asNeeded"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
     }
   },
   "assist": {
