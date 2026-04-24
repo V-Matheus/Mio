@@ -1,5 +1,6 @@
 import { Controller } from "@nestjs/common"
 import { GrpcMethod } from "@nestjs/microservices"
+import { PrismaService } from "../prisma/prisma.service"
 
 enum ServingStatus {
   UNKNOWN = 0,
@@ -9,8 +10,15 @@ enum ServingStatus {
 
 @Controller()
 export class HealthController {
+  constructor(private readonly prisma: PrismaService) {}
+
   @GrpcMethod("Health", "Check")
-  check(): { status: ServingStatus } {
-    return { status: ServingStatus.SERVING }
+  async check(): Promise<{ status: ServingStatus }> {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`
+      return { status: ServingStatus.SERVING }
+    } catch {
+      return { status: ServingStatus.NOT_SERVING }
+    }
   }
 }

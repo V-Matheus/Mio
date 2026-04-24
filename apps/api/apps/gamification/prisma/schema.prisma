@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/gamification"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("GAMIFICATION_DATABASE_URL")
+}
+
+model UserXp {
+  userCode  String   @id
+  total     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  transactions XpTransaction[]
+}
+
+model XpTransaction {
+  id        BigInt   @id @default(autoincrement())
+  userCode  String
+  amount    Int
+  reason    String
+  sourceId  String?
+  createdAt DateTime @default(now())
+
+  user UserXp @relation(fields: [userCode], references: [userCode], onDelete: Cascade)
+
+  @@index([userCode, createdAt])
+}

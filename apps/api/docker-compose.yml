@@ -1,16 +1,44 @@
 services:
-  postgres:
+  postgres-core:
     image: postgres:18-alpine
     env_file:
       - .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${CORE_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${CORE_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${CORE_POSTGRES_DB}
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${CORE_POSTGRES_PORT}:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-core-data:/var/lib/postgresql
+    restart: unless-stopped
+
+  postgres-gamification:
+    image: postgres:18-alpine
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${GAMIFICATION_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${GAMIFICATION_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${GAMIFICATION_POSTGRES_DB}
+    ports:
+      - "${GAMIFICATION_POSTGRES_PORT}:5432"
+    volumes:
+      - postgres-gamification-data:/var/lib/postgresql
+    restart: unless-stopped
+
+  postgres-achievements:
+    image: postgres:18-alpine
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${ACHIEVEMENTS_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${ACHIEVEMENTS_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${ACHIEVEMENTS_POSTGRES_DB}
+    ports:
+      - "${ACHIEVEMENTS_POSTGRES_PORT}:5432"
+    volumes:
+      - postgres-achievements-data:/var/lib/postgresql
     restart: unless-stopped
 
   redis:
@@ -44,10 +72,7 @@ services:
       - "${GATEWAY_PORT}:${GATEWAY_PORT}"
     volumes:
       - ../../:/app
-      - /app/node_modules
-      - /app/apps/api/node_modules
     depends_on:
-      - postgres
       - redis
       - rabbitmq
     restart: unless-stopped
@@ -57,14 +82,13 @@ services:
     command: yarn workspace @mio/api dev:core
     env_file:
       - .env
-    ports:
-      - "${CORE_PORT}:${CORE_PORT}"
+    expose:
+      - "5001"
     volumes:
       - ../../:/app
-      - /app/node_modules
-      - /app/apps/api/node_modules
     depends_on:
       - api-gateway
+      - postgres-core
     restart: unless-stopped
 
   api-gamification:
@@ -72,14 +96,13 @@ services:
     command: yarn workspace @mio/api dev:gamification
     env_file:
       - .env
-    ports:
-      - "${GAMIFICATION_PORT}:${GAMIFICATION_PORT}"
+    expose:
+      - "5002"
     volumes:
       - ../../:/app
-      - /app/node_modules
-      - /app/apps/api/node_modules
     depends_on:
       - api-gateway
+      - postgres-gamification
     restart: unless-stopped
 
   api-achievements:
@@ -87,14 +110,13 @@ services:
     command: yarn workspace @mio/api dev:achievements
     env_file:
       - .env
-    ports:
-      - "${ACHIEVEMENTS_PORT}:${ACHIEVEMENTS_PORT}"
+    expose:
+      - "5003"
     volumes:
       - ../../:/app
-      - /app/node_modules
-      - /app/apps/api/node_modules
     depends_on:
       - api-gateway
+      - postgres-achievements
     restart: unless-stopped
 
   api-messenger:
@@ -102,12 +124,10 @@ services:
     command: yarn workspace @mio/api dev:messenger
     env_file:
       - .env
-    ports:
-      - "${MESSENGER_PORT}:${MESSENGER_PORT}"
+    expose:
+      - "5004"
     volumes:
       - ../../:/app
-      - /app/node_modules
-      - /app/apps/api/node_modules
     depends_on:
       - api-gateway
     restart: unless-stopped
@@ -117,17 +137,17 @@ services:
     command: yarn workspace @mio/api dev:notifications
     env_file:
       - .env
-    ports:
-      - "${NOTIFICATIONS_PORT}:${NOTIFICATIONS_PORT}"
+    expose:
+      - "5005"
     volumes:
       - ../../:/app
-      - /app/node_modules
-      - /app/apps/api/node_modules
     depends_on:
       - api-gateway
     restart: unless-stopped
 
 volumes:
-  postgres-data:
+  postgres-core-data:
+  postgres-gamification-data:
+  postgres-achievements-data:
   redis-data:
   rabbitmq-data:
