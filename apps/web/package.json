@@ -23,24 +23,26 @@
     "@iconify/react": "^6.0.2",
     "@tailwindcss/postcss": "^4.2.0",
     "next": "16.2.4",
+    "next-auth": "^5.0.0-beta.31",
     "postcss": "^8.5.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tailwindcss": "^4.2.0"
+    "tailwindcss": "^4.2.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@chromatic-com/storybook": "^5.0.1",
     "@mio/testing-config": "*",
     "@mio/typescript-config": "*",
-    "@types/node": "^24.0.0",
-    "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3",
-    "typescript": "5.9.3",
-    "storybook": "^10.2.16",
-    "@storybook/nextjs-vite": "^10.2.16",
-    "@chromatic-com/storybook": "^5.0.1",
     "@storybook/addon-a11y": "^10.2.16",
     "@storybook/addon-docs": "^10.2.16",
     "@storybook/addon-onboarding": "^10.2.16",
+    "@storybook/nextjs-vite": "^10.2.16",
+    "@types/node": "^24.0.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "storybook": "^10.2.16",
+    "typescript": "5.9.3",
     "vite": "^7.3.1"
   }
 }
