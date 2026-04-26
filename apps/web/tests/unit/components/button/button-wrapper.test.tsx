@@ -115,6 +115,17 @@ describe("ButtonWrapper", () => {
     expect(button.className).toContain("border-white")
   })
 
+  it("should apply social variant styles", () => {
+    render(<ButtonWrapper variant="social">Continuar com Google</ButtonWrapper>)
+
+    const button = screen.getByRole("button")
+    expect(button.className).toContain("bg-white")
+    expect(button.className).toContain("text-foreground")
+    expect(button.className).toContain("border-foreground/10")
+    expect(button.className).toContain("rounded-full")
+    expect(button.className).toContain("hover:border-primary/40")
+  })
+
   it("should disable secondary variant with disabled prop", () => {
     render(
       <ButtonWrapper variant="secondary" disabled>

@@ -3,6 +3,9 @@
   "compilerOptions": {
     "lib": ["ES2024", "dom", "dom.iterable"],
     "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "paths": {
+      "@/*": ["./*"]
+    },
     "plugins": [
       {
         "name": "next"
