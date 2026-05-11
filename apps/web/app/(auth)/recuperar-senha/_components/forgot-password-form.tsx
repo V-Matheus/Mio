@@ -21,7 +21,7 @@ export function ForgotPasswordForm() {
     <section className="flex items-center justify-center px-6 py-12 lg:px-16">
       <div className="flex w-full max-w-md flex-col gap-8">
         <header>
-          <h2 className="font-display text-3xl font-bold text-foreground">
+          <h2 className="font-display text-3xl font-semibold text-foreground">
             Esqueceu sua senha?
           </h2>
           <p className="mt-2 text-sm text-foreground/60">

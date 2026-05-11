@@ -15,13 +15,13 @@ function TypographyShowcase() {
             fontFamily: "monospace",
           }}
         >
-          font-display (Outfit) — Títulos e destaques
+          font-display (Outfit) : Títulos e destaques
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "#9ca3af",
                 fontFamily: "monospace",
               }}
@@ -35,7 +35,7 @@ function TypographyShowcase() {
           <div>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "#9ca3af",
                 fontFamily: "monospace",
               }}
@@ -49,7 +49,7 @@ function TypographyShowcase() {
           <div>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "#9ca3af",
                 fontFamily: "monospace",
               }}
@@ -63,7 +63,7 @@ function TypographyShowcase() {
           <div>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "#9ca3af",
                 fontFamily: "monospace",
               }}
@@ -77,7 +77,7 @@ function TypographyShowcase() {
           <div>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "#9ca3af",
                 fontFamily: "monospace",
               }}
@@ -100,13 +100,13 @@ function TypographyShowcase() {
             fontFamily: "monospace",
           }}
         >
-          font-body (Plus Jakarta Sans) — Corpo de texto
+          font-body (Plus Jakarta Sans) : Corpo de texto
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "#9ca3af",
                 fontFamily: "monospace",
               }}
@@ -120,7 +120,7 @@ function TypographyShowcase() {
           <div>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "#9ca3af",
                 fontFamily: "monospace",
               }}
@@ -134,7 +134,7 @@ function TypographyShowcase() {
           <div>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "#9ca3af",
                 fontFamily: "monospace",
               }}
@@ -148,7 +148,7 @@ function TypographyShowcase() {
           <div>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "#9ca3af",
                 fontFamily: "monospace",
               }}
@@ -162,7 +162,7 @@ function TypographyShowcase() {
           <div>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: "#9ca3af",
                 fontFamily: "monospace",
               }}

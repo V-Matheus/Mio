@@ -90,7 +90,7 @@ export default function Home() {
               height={360}
             />
           </div>
-          <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
+          <h1 className="font-display text-4xl md:text-5xl font-semibold text-foreground mb-4">
             Olá, eu sou <span className="text-primary">Mio!</span>
           </h1>
           <p className="text-foreground/60 text-lg mb-8 max-w-xl mx-auto">
@@ -106,7 +106,7 @@ export default function Home() {
       {/* Journey Levels Section */}
       <section className="py-16 px-6" id="niveis">
         <div className="max-w-6xl mx-auto">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-3">
+          <h2 className="font-display text-3xl md:text-4xl font-semibold text-center mb-3">
             Sua jornada começa agora
           </h2>
           <p className="text-center text-foreground/60 mb-12 max-w-lg mx-auto">
@@ -116,9 +116,9 @@ export default function Home() {
             {levels.map((level) => (
               <div
                 key={level.title}
-                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:border-primary/40 hover:shadow-md transition-all group"
+                className="bg-white rounded-2xl p-6 border border-zinc-100 shadow-sm hover:border-primary/40 hover:shadow-md transition-all group"
               >
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                   <Icon
                     icon={level.icon}
                     width={24}
@@ -126,7 +126,7 @@ export default function Home() {
                     className="text-primary"
                   />
                 </div>
-                <h3 className="font-display font-bold text-lg mb-2">
+                <h3 className="font-display font-semibold text-lg mb-2">
                   {level.title}
                 </h3>
                 <p className="text-sm text-foreground/60">
@@ -146,7 +146,7 @@ export default function Home() {
       {/* How it Works Section */}
       <section className="py-16 px-6 bg-white" id="como-funciona">
         <div className="max-w-5xl mx-auto">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-3">
+          <h2 className="font-display text-3xl md:text-4xl font-semibold text-center mb-3">
             Como funciona?
           </h2>
           <p className="text-center text-foreground/60 mb-12 max-w-lg mx-auto">
@@ -155,10 +155,10 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {steps.map((step) => (
               <div key={step.number} className="text-center">
-                <div className="w-14 h-14 rounded-full bg-primary text-white font-display font-bold text-xl flex items-center justify-center mx-auto mb-4">
+                <div className="size-14 rounded-full bg-primary text-white font-display font-semibold text-xl flex items-center justify-center mx-auto mb-4">
                   {step.number}
                 </div>
-                <h3 className="font-display font-bold text-lg mb-2">
+                <h3 className="font-display font-semibold text-lg mb-2">
                   {step.title}
                 </h3>
                 <p className="text-sm text-foreground/60">{step.description}</p>
@@ -171,7 +171,7 @@ export default function Home() {
       {/* Technologies Section */}
       <section className="py-16 px-6" id="tecnologias">
         <div className="max-w-5xl mx-auto">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-3">
+          <h2 className="font-display text-3xl md:text-4xl font-semibold text-center mb-3">
             Tecnologias que você vai dominar
           </h2>
           <p className="text-center text-foreground/60 mb-12 max-w-lg mx-auto">
@@ -181,7 +181,7 @@ export default function Home() {
             {technologies.map((tech) => (
               <span
                 key={tech.name}
-                className="bg-white border border-gray-200 rounded-full px-6 py-3 text-sm font-medium text-foreground hover:border-primary/40 hover:shadow-sm transition-all cursor-default inline-flex items-center gap-2"
+                className="bg-white border border-zinc-200 rounded-full px-6 py-3 text-sm font-medium text-foreground hover:border-primary/40 hover:shadow-sm transition-all cursor-default inline-flex items-center gap-2"
               >
                 <Icon icon={tech.icon} width={20} height={20} />
                 {tech.name}
@@ -194,13 +194,13 @@ export default function Home() {
       {/* Benefits Section */}
       <section className="py-16 px-6 bg-white" id="beneficios">
         <div className="max-w-5xl mx-auto">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-12">
+          <h2 className="font-display text-3xl md:text-4xl font-semibold text-center mb-12">
             Por que escolher o Mio?
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {benefits.map((benefit) => (
               <div key={benefit.text} className="flex items-center gap-3 p-4">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <Icon
                     icon={benefit.icon}
                     width={20}
@@ -218,7 +218,7 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-20 px-6 bg-primary text-white text-center">
         <div className="max-w-2xl mx-auto">
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="font-display text-3xl md:text-4xl font-semibold mb-4">
             Pronto para começar sua jornada?
           </h2>
           <p className="text-white/80 mb-8">

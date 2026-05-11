@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import { AuthError } from "next-auth"
 import {
   forgotPasswordAction,
   loginAction,
@@ -12,8 +13,18 @@ vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }))
 
+vi.mock("next-auth", () => ({
+  AuthError: class AuthError extends Error {
+    constructor(message?: string) {
+      super(message)
+      this.name = "AuthError"
+    }
+  },
+}))
+
 vi.mock("@/auth", () => ({
   signIn: vi.fn(),
+  auth: vi.fn().mockResolvedValue(null),
 }))
 
 vi.mock("@/lib/auth/service", () => ({
@@ -83,42 +94,35 @@ describe("loginAction", () => {
     })
   })
 
-  it("should call authService.login with parsed input", async () => {
-    vi.mocked(authService.login).mockResolvedValue({
-      ok: true,
-      userId: "user-1",
-    })
+  it("should call signIn with credentials provider and redirectTo /home", async () => {
+    vi.mocked(signIn).mockResolvedValue(undefined as never)
     const formData = new FormData()
     formData.set("email", "user@example.com")
     formData.set("password", "secret")
 
     await loginAction(initialState, formData)
 
-    expect(authService.login).toHaveBeenCalledWith({
+    expect(signIn).toHaveBeenCalledWith("credentials", {
       email: "user@example.com",
       password: "secret",
+      redirectTo: "/home",
     })
+    expect(authService.login).not.toHaveBeenCalled()
   })
 
-  it("should redirect to /home on service success", async () => {
-    vi.mocked(authService.login).mockResolvedValue({
-      ok: true,
-      userId: "user-1",
-    })
+  it("should return ok: true when signIn succeeds", async () => {
+    vi.mocked(signIn).mockResolvedValue(undefined as never)
     const formData = new FormData()
     formData.set("email", "user@example.com")
     formData.set("password", "secret")
 
-    await loginAction(initialState, formData)
+    const result = await loginAction(initialState, formData)
 
-    expect(redirect).toHaveBeenCalledWith("/home")
+    expect(result).toEqual({ ok: true, section: null })
   })
 
-  it("should return error message and echo values when service fails", async () => {
-    vi.mocked(authService.login).mockResolvedValue({
-      ok: false,
-      error: "Invalid credentials",
-    })
+  it("should return error message and echo values when signIn throws AuthError", async () => {
+    vi.mocked(signIn).mockRejectedValue(new AuthError("CredentialsSignin"))
     const formData = new FormData()
     formData.set("email", "user@example.com")
     formData.set("password", "wrong")
@@ -127,10 +131,21 @@ describe("loginAction", () => {
 
     expect(result).toEqual({
       ok: false,
-      message: "Invalid credentials",
+      message: "Email ou senha inválidos",
       values: { email: "user@example.com", password: "wrong" },
+      section: null,
     })
     expect(redirect).not.toHaveBeenCalled()
+  })
+
+  it("should rethrow non-AuthError exceptions", async () => {
+    const unexpected = new Error("network down")
+    vi.mocked(signIn).mockRejectedValue(unexpected)
+    const formData = new FormData()
+    formData.set("email", "user@example.com")
+    formData.set("password", "secret")
+
+    await expect(loginAction(initialState, formData)).rejects.toBe(unexpected)
   })
 })
 
@@ -179,7 +194,7 @@ describe("registerAction", () => {
   it("should call authService.register with parsed input", async () => {
     vi.mocked(authService.register).mockResolvedValue({
       ok: true,
-      userId: "user-1",
+      accessToken: "stub-token",
     })
 
     await registerAction(initialState, validFormData())
@@ -196,7 +211,7 @@ describe("registerAction", () => {
   it("should redirect to /home on service success", async () => {
     vi.mocked(authService.register).mockResolvedValue({
       ok: true,
-      userId: "user-1",
+      accessToken: "stub-token",
     })
 
     await registerAction(initialState, validFormData())

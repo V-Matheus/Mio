@@ -16,13 +16,16 @@ import {
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
-  const [state, action, pending] = useActionState(loginAction, { ok: false })
+  const [state, action, pending] = useActionState(loginAction, {
+    ok: false,
+    section: null,
+  })
 
   return (
     <section className="flex items-center justify-center px-6 py-12 lg:px-16">
       <div className="flex w-full max-w-md flex-col gap-8">
         <header>
-          <h2 className="font-display text-3xl font-bold text-foreground">
+          <h2 className="font-display text-3xl font-semibold text-foreground">
             Bem-vindo de volta!
           </h2>
           <p className="mt-2 text-sm text-foreground/60">

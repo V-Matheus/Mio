@@ -37,16 +37,16 @@ describe("InputAdornment", () => {
   })
 
   it("should call onClick when clicked", async () => {
-    const handleClick = vi.fn()
+    const onAdornmentClick = vi.fn()
     render(
-      <InputAdornment aria-label="Action" onClick={handleClick}>
+      <InputAdornment aria-label="Action" onClick={onAdornmentClick}>
         x
       </InputAdornment>,
     )
 
     await userEvent.click(screen.getByRole("button"))
 
-    expect(handleClick).toHaveBeenCalledTimes(1)
+    expect(onAdornmentClick).toHaveBeenCalledTimes(1)
   })
 
   it("should append custom className", () => {
