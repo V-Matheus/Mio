@@ -18,15 +18,23 @@ const nextAuth = NextAuth({
           return null
         }
 
-        const result = await authService.login({ email, password })
-
-        if (result.ok) {
-          return {
-            accessToken: result.accessToken,
-            email,
-          }
+        const loginResult = await authService.login({ email, password })
+        if (!loginResult.ok) {
+          return null
         }
-        return null
+
+        const meResult = await authService.me(loginResult.accessToken)
+        if (!meResult.ok) {
+          return null
+        }
+
+        return {
+          id: meResult.user.code,
+          name: meResult.user.name,
+          email: meResult.user.email,
+          image: meResult.user.avatarUrl,
+          accessToken: loginResult.accessToken,
+        }
       },
     }),
   ],
@@ -34,27 +42,64 @@ const nextAuth = NextAuth({
     signIn: "/login",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
-      console.log("[auth] sign-in", {
-        provider: account?.provider,
-        providerAccountId: account?.providerAccountId,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-        },
-        profile,
+    async signIn({ user, account }) {
+      if (!account || account.provider === "credentials") {
+        return true
+      }
+
+      if (account.provider !== "google" && account.provider !== "github") {
+        return false
+      }
+
+      if (!user.email) {
+        return false
+      }
+
+      const upsertResult = await authService.upsertOAuthUser({
+        provider: account.provider,
+        providerAccountId: account.providerAccountId,
+        email: user.email,
+        name: user.name ?? "",
+        avatarUrl: user.image ?? null,
       })
+
+      if (!upsertResult.ok) {
+        return false
+      }
+
+      const meResult = await authService.me(upsertResult.accessToken)
+      if (!meResult.ok) {
+        return false
+      }
+
+      user.id = meResult.user.code
+      user.name = meResult.user.name
+      user.email = meResult.user.email
+      user.image = meResult.user.avatarUrl
+      user.accessToken = upsertResult.accessToken
+
       return true
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.accessToken = user.accessToken
         token.id = user.id
         token.name = user.name
         token.email = user.email
+        token.picture = user.image
+        return token
       }
+
+      if (trigger === "update" && token.accessToken) {
+        const meResult = await authService.me(token.accessToken as string)
+        if (meResult.ok) {
+          token.id = meResult.user.code
+          token.name = meResult.user.name
+          token.email = meResult.user.email
+          token.picture = meResult.user.avatarUrl
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
@@ -64,6 +109,7 @@ const nextAuth = NextAuth({
         session.user.id = (token.id as string) || (token.sub as string)
         session.user.name = token.name || null
         session.user.email = (token.email as string) || ""
+        session.user.image = (token.picture as string | null) ?? null
       }
 
       return session
