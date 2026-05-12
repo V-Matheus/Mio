@@ -11,7 +11,7 @@ const navLinks = [
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-100">
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
         <Link href={"#top"}>
           <Image src="/logo.png" alt="Mio" width={128} height={48} />

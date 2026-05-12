@@ -55,7 +55,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-display font-bold text-sm mb-4">
+            <h3 className="font-display font-semibold text-sm mb-4">
               Links Rápidos
             </h3>
             <ul className="space-y-2">
@@ -73,7 +73,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-display font-bold text-sm mb-4">Suporte</h3>
+            <h3 className="font-display font-semibold text-sm mb-4">Suporte</h3>
             <ul className="space-y-2">
               {supportLinks.map((link) => (
                 <li key={link.label}>
@@ -89,7 +89,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-display font-bold text-sm mb-4">Contato</h3>
+            <h3 className="font-display font-semibold text-sm mb-4">Contato</h3>
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-sm text-white/60">
                 <Icon icon="mdi:email-outline" width={16} height={16} />

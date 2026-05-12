@@ -11,7 +11,7 @@ vi.mock("@/app/(auth)/_actions/auth", () => ({
 describe("LoginForm", () => {
   beforeEach(() => {
     vi.mocked(loginAction).mockReset()
-    vi.mocked(loginAction).mockResolvedValue({ ok: false })
+    vi.mocked(loginAction).mockResolvedValue({ ok: false, section: null })
   })
 
   it("should render email and password fields", () => {
@@ -82,6 +82,7 @@ describe("LoginForm", () => {
     vi.mocked(loginAction).mockResolvedValue({
       ok: false,
       fieldErrors: { email: ["Email inválido"] },
+      section: null,
     })
 
     render(<LoginForm />)
@@ -97,6 +98,7 @@ describe("LoginForm", () => {
     vi.mocked(loginAction).mockResolvedValue({
       ok: false,
       message: "Email ou senha inválidos",
+      section: null,
     })
 
     render(<LoginForm />)
