@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3000",
+    "docker:dev": "trap 'docker compose -p mio-dev -f ../../docker-compose.dev.yml down' EXIT INT TERM; docker compose -p mio-dev -f ../../docker-compose.dev.yml up --build --no-deps web",
     "build": "next build",
     "start": "next start",
     "lint": "biome lint .",
