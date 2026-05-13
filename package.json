@@ -16,6 +16,8 @@
     "docker:up": "docker compose up",
     "docker:up:build": "docker compose up --build",
     "docker:down": "docker compose down",
+    "docker:dev": "turbo run docker:dev",
+    "docker:dev:down": "docker compose -p mio-dev -f docker-compose.dev.yml down",
     "prepare": "husky"
   },
   "devDependencies": {

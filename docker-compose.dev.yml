@@ -1,0 +1,20 @@
+include:
+  - apps/api/docker-compose.dev.yml
+
+services:
+  web:
+    image: mio-web-dev
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.dev
+    command: yarn workspace @mio/web dev
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./:/app
+    depends_on:
+      - api-gateway

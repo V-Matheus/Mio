@@ -21,6 +21,10 @@
       "cache": false,
       "persistent": true
     },
+    "docker:dev": {
+      "cache": false,
+      "persistent": true
+    },
     "test": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "**/*.test.{ts,tsx}"]

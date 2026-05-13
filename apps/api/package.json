@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "postinstall": "yarn prisma:generate",
-    "dev": "docker compose -f docker-compose.yml up",
-    "dev:build": "docker compose -f docker-compose.yml up --build",
+    "dev": "yarn docker:dev",
+    "docker:dev": "trap 'docker compose -p mio-dev -f ../../docker-compose.dev.yml down' EXIT INT TERM; docker compose -p mio-dev -f ../../docker-compose.dev.yml up --build postgres-core postgres-gamification postgres-achievements redis rabbitmq api-gateway api-core api-gamification api-achievements api-messenger api-notifications",
     "dev:gateway": "nest start gateway --watch",
     "dev:core": "nest start core --watch",
     "dev:gamification": "nest start gamification --watch",
