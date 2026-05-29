@@ -333,13 +333,12 @@
     css-tree "^3.0.0"
 
 "@chromatic-com/storybook@^5.0.1":
-  version "5.1.2"
-  resolved "https://registry.yarnpkg.com/@chromatic-com/storybook/-/storybook-5.1.2.tgz#bd32f9e9152a14113bdc0737dbb2333077c8a71f"
-  integrity sha512-H/hgvwC3E+OtseP2OT2QYUJH2VfnzT6wM3pWOkaNV6g7QI+VUdWJbeJ3o2jFqvEPQNqzhQKWDOlvM4lu+7is6g==
+  version "5.2.1"
+  resolved "https://registry.yarnpkg.com/@chromatic-com/storybook/-/storybook-5.2.1.tgz#ecfbcb93e19b7e3f995dfea8313c9357171ffc7a"
+  integrity sha512-z6I7NJk/0VngA64y5TNYaB4Hc2X8+90n4op6lBt9PvWk5TmIlFLDqdX33rlrwbNRkkYijVgA/wO04rVYXi5Mlg==
   dependencies:
     "@neoconfetti/react" "^1.0.0"
-    chromatic "^13.3.4"
-    filesize "^10.0.12"
+    chromatic "16.10.0"
     jsonfile "^6.1.0"
     strip-ansi "^7.1.0"
 
@@ -2856,10 +2855,12 @@ chokidar@4.0.3, chokidar@^4.0.1, chokidar@^4.0.3:
   dependencies:
     readdirp "^4.0.1"
 
-chromatic@^13.3.4:
-  version "13.3.5"
-  resolved "https://registry.yarnpkg.com/chromatic/-/chromatic-13.3.5.tgz#425d9eac714de2063962172d11914d8ec3feb64d"
-  integrity sha512-MzPhxpl838qJUo0A55osCF2ifwPbjcIPeElr1d4SHcjnHoIcg7l1syJDrAYK/a+PcCBrOGi06jPNpQAln5hWgw==
+chromatic@16.10.0:
+  version "16.10.0"
+  resolved "https://registry.yarnpkg.com/chromatic/-/chromatic-16.10.0.tgz#30891067d703d767e554e7e1d0bc375d88fcbdcd"
+  integrity sha512-nFsztmnu7rFiGafUJgXvLUNpqmRylz92eNvzBoJNTKKQj4EQUyxznwnfpf1dTs7hXtWD8JwcH92jADydaHA1sw==
+  dependencies:
+    semver "^7.3.5"
 
 chrome-trace-event@^1.0.2:
   version "1.0.4"
@@ -3630,11 +3631,6 @@ file-type@21.3.4:
     strtok3 "^10.3.4"
     token-types "^6.1.1"
     uint8array-extras "^1.4.0"
-
-filesize@^10.0.12:
-  version "10.1.6"
-  resolved "https://registry.yarnpkg.com/filesize/-/filesize-10.1.6.tgz#31194da825ac58689c0bce3948f33ce83aabd361"
-  integrity sha512-sJslQKU2uM33qH5nqewAwVB2QgR6w1aMNsYUp3aN5rMRyXEwJGmZvaWzeJFNTOXWlHQyBFCWrdj3fV/fsTOX8w==
 
 fill-range@^7.1.1:
   version "7.1.1"
