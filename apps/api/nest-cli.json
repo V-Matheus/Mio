@@ -6,7 +6,9 @@
   "root": "apps/gateway",
   "compilerOptions": {
     "deleteOutDir": true,
-    "tsConfigPath": "apps/gateway/tsconfig.app.json"
+    "tsConfigPath": "apps/gateway/tsconfig.app.json",
+    "assets": ["**/*.proto"],
+    "watchAssets": true
   },
   "projects": {
     "gateway": {

@@ -13,17 +13,52 @@ enum SectionKind {
   EXERCISE
 }
 
-model User {
-  id        BigInt   @id @default(autoincrement())
-  code      String   @unique
-  email     String   @unique
-  name      String
-  avatarUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum AuthProvider {
+  CREDENTIALS
+  GOOGLE
+  GITHUB
+}
 
-  enrollments Enrollment[]
-  progress    LessonProgress[]
+model User {
+  id           BigInt   @id @default(autoincrement())
+  code         String   @unique
+  email        String   @unique
+  name         String
+  avatarUrl    String?
+  passwordHash String? // null para usuários OAuth puros
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  enrollments    Enrollment[]
+  progress       LessonProgress[]
+  identities     UserIdentity[]
+  passwordResets PasswordReset[]
+}
+
+model UserIdentity {
+  id                BigInt       @id @default(autoincrement())
+  userId            BigInt
+  provider          AuthProvider
+  providerAccountId String
+  createdAt         DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model PasswordReset {
+  id        BigInt    @id @default(autoincrement())
+  userId    BigInt
+  tokenHash String    @unique // hash do token enviado por email
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Track {

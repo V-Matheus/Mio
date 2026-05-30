@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package mio.users.v1;
+
+service UsersService {
+  rpc Register(RegisterRequest) returns (UserResponse);
+  rpc ValidateCredentials(ValidateCredentialsRequest) returns (UserResponse);
+  rpc FindByEmail(FindByEmailRequest) returns (UserResponse);
+  rpc FindByCode(FindByCodeRequest) returns (UserResponse);
+  rpc UpsertOAuthUser(UpsertOAuthRequest) returns (UserResponse);
+  rpc IssuePasswordReset(IssuePasswordResetRequest) returns (PasswordResetTokenResponse);
+  rpc ConsumePasswordReset(ConsumePasswordResetRequest) returns (UserResponse);
+}
+
+message RegisterRequest {
+  string email = 1;
+  string name = 2;
+  string password = 3;
+}
+
+message ValidateCredentialsRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message UpsertOAuthRequest {
+  string provider = 1; // "google" | "github"
+  string provider_account_id = 2;
+  string email = 3;
+  string name = 4;
+  string avatar_url = 5;
+}
+
+message FindByEmailRequest {
+  string email = 1;
+}
+
+message FindByCodeRequest {
+  string code = 1;
+}
+
+message IssuePasswordResetRequest {
+  string email = 1;
+}
+
+message ConsumePasswordResetRequest {
+  string token = 1;
+  string new_password = 2;
+}
+
+message UserResponse {
+  string code = 1;
+  string email = 2;
+  string name = 3;
+  string avatar_url = 4;
+}
+
+message PasswordResetTokenResponse {
+  string token = 1; // token bruto (apenas em retorno; persistido como hash)
+  string expires_at = 2;
+}
