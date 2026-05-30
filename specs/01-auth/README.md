@@ -246,8 +246,18 @@ type Query {
 - Solicitar reset envia evento `user.password_reset_requested` com token; usar o token em `/redefinir-senha/[token]` atualiza `passwordHash` e invalida o token.
 - Acessar `/home` sem cookie redireciona para `/login`; com cookie válido, mostra a página.
 
+## Decisões de implementação (1ª iteração do backend)
+
+- **Contratos gRPC no pacote `@mio/grpc-contracts`** (`packages/grpc-contracts`), não em `apps/api/proto/` nem co-localizados no módulo: cada domínio tem `src/<domínio>/<x>.proto` + `<x>.contract.ts` (`{ package, service, clientToken, protoPath: join(__dirname, …) }`). Servidor (core) e cliente (gateway) importam o **mesmo** descritor (fonte única). Resolvido via node_modules (workspace) em dev e prod. Cada app agrega em `src/grpc/registry.ts`. **Nada de arquivos soltos.** (Tentamos co-localizar dentro do módulo, mas o build tsc-sem-webpack do gateway não alcançava o proto do core — daí o pacote.) Build do pacote: `tsc + copy-protos.mjs`; `incremental:false`; turbo `check-types` passou a depender de `^build`; GraphQL exigiu `@as-integrations/express5`.
+- **Eventos pertencem ao módulo**: os eventos `user.*` vivem em `apps/core/src/modules/users/events/` (publisher AMQP self-contained), não num módulo `events` no topo. Quando a spec 00 criar o `EventBusModule` compartilhado, o publisher passa a delegar nele.
+- **`health.proto` migrado para `@mio/grpc-contracts`** (`src/health/`, `healthContract`): `apps/api/proto/` deixou de existir. Os 5 microsserviços servem e o gateway consome via o contrato compartilhado. `clientToken` é opcional no `GrpcContract` (health serve vários alvos sem token único).
+- **`FindByCode` adicionado ao `UsersService`**: o JWT carrega `sub = user.code` e o resolver `me` resolve o usuário por `code` (a spec só previa `FindByEmail`).
+- **Hash com `@node-rs/argon2`** (argon2id) em vez do pacote `argon2`: binários pré-compilados, sem toolchain nativa na imagem Alpine.
+- **Variáveis de ambiente novas** (adicionar a `.env`/`.env.example`): `JWT_SECRET`, `JWT_ISSUER` (default `mio-gateway`), `JWT_EXPIRES_IN` (default `1h`), `RABBITMQ_URL` (ex.: `amqp://rabbitmq:5672`).
+
 ## Riscos & decisões em aberto
 
 - **Conflito de email entre provedores**: usuário cadastrado por credenciais que depois loga com Google de mesmo email. Política inicial: **vincular automaticamente** (cria `UserIdentity` ligado ao `User` existente). Avaliar fluxo de confirmação posterior.
+- **Proto cross-app em produção**: ✅ resolvido pelo pacote `@mio/grpc-contracts` — o `.proto` é copiado pro `dist` do pacote e resolvido via `node_modules` (symlink do workspace) tanto em dev quanto em prod, sem `tsconfig-paths`.
 - **Refresh token**: fora do MVP. Sessão NextAuth (cookie) cuida do prazo curto; expiração do JWT força re-login após 1h. Aceitável até termos endpoint dedicado.
 - **Rate limiting** de `requestPasswordReset` e `login`: tratar no gateway via `@nestjs/throttler` antes de ir pra produção.

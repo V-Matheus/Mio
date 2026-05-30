@@ -14,9 +14,10 @@ Base técnica compartilhada por todas as features. Nada de regra de negócio aqu
 ### Backend infra
 - ✅ 6 apps NestJS provisionados: `gateway`, `core`, `gamification`, `achievements`, `messenger`, `notifications` (`apps/api/apps/`).
 - ✅ `docker-compose.yml` com Postgres x3, Redis, RabbitMQ e os 6 serviços.
-- ✅ Health checks: gRPC `Health.Check` (`apps/api/proto/health.proto`) e endpoints `/health/live` + `/health/ready` no gateway.
+- ✅ Health checks: gRPC `Health.Check` (contrato em `@mio/grpc-contracts`) e endpoints `/health/live` + `/health/ready` no gateway.
 - ✅ Prisma schemas para `core`, `gamification`, `achievements` com bancos isolados.
-- ⏳ gRPC: hoje só carrega o `health.proto`. Não há `.proto` por domínio.
+- ✅ gRPC: contratos `.proto` por domínio no pacote `@mio/grpc-contracts` (`health`, `users`); cada app agrega via `src/grpc/registry.ts`.
+- ✅ **`health.proto` migrado para o pacote `@mio/grpc-contracts`** (`src/health/`, como `healthContract`) — `apps/api/proto/` não existe mais. Servido pelos 5 microsserviços e consumido pelo gateway. (Antes ficava solto em `apps/api/proto/` e não escalava.)
 - ❌ GraphQL: gateway é REST puro, sem `@nestjs/graphql` instalado.
 - ❌ AMQP/RabbitMQ: serviço está no compose, mas **nenhum app NestJS está conectado** ao broker.
 - ❌ Redis: instância está no compose, mas **nenhum app conectado**.
