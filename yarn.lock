@@ -1177,9 +1177,9 @@
     webpack-node-externals "3.0.0"
 
 "@nestjs/common@^11.0.1":
-  version "11.1.21"
-  resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-11.1.21.tgz#9a45c6c09e90cabfdcc4f9579877fb5d89924d3c"
-  integrity sha512-YV1HYDGsm2rnR0vrLKidtrG6jYX5yqiIjeur1j8++dKGqhhsJ6cjMs0RfQRSTUH7IjgDemA59/znQ8nRrE0D9g==
+  version "11.1.24"
+  resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-11.1.24.tgz#0665208a5e7658ddf2182dd248bdc04bb27277da"
+  integrity sha512-9zHxaDDM+oXW9As6UsP5yYB+UqczBmpeSCIFWdPEtEukMnZhxODG1BBjaUcdBB8Sc1uzojSJSJlp3yFp853t1g==
   dependencies:
     uid "2.0.2"
     file-type "21.3.4"
@@ -1188,9 +1188,9 @@
     tslib "2.8.1"
 
 "@nestjs/core@^11.0.1":
-  version "11.1.21"
-  resolved "https://registry.yarnpkg.com/@nestjs/core/-/core-11.1.21.tgz#609f482d430da2cd55b4f8f478fbe0026b1f5ea5"
-  integrity sha512-fqo0BHgny3MOuAL8GSfG3ZUKFVVBaBQD/0iyibnwTONT5vPexjQxJzu+945iloVvBDmrnAaRWxC1gqCDEs/AXQ==
+  version "11.1.24"
+  resolved "https://registry.yarnpkg.com/@nestjs/core/-/core-11.1.24.tgz#054180df61ab539dbfb1f949ab945fb390f8a747"
+  integrity sha512-K4bzT+lEdd0Hhcsw3jtk56QAW6s6skK3ViN7hIROSN0kUf4ROwWEAKopJID6yhPQxB45kDtP2wEcjzE8171J3g==
   dependencies:
     uid "2.0.2"
     "@nuxt/opencollective" "0.4.1"
@@ -1200,17 +1200,17 @@
     tslib "2.8.1"
 
 "@nestjs/microservices@^11.1.19":
-  version "11.1.21"
-  resolved "https://registry.yarnpkg.com/@nestjs/microservices/-/microservices-11.1.21.tgz#089a963da9fe9f13d9ee4b0fe3bb198d06181b3c"
-  integrity sha512-NRDK/lCSD5ul53NE5YHuXKygI7P73OLSR5gljFBrUfLip37L/+s96MqUBHCxWt2YCd0GhPJfqO9zttJBxpX5sA==
+  version "11.1.24"
+  resolved "https://registry.yarnpkg.com/@nestjs/microservices/-/microservices-11.1.24.tgz#8ae7bf8b4bec2ef377a2c8dc6eba3e33ad5f163e"
+  integrity sha512-ALu/7qk3obFlw7KVSPRz+BjuyWPLmv9isknhLG8UYXkjx3aPhJGp52i3qiTqucM1jKtoBgPa3+SK4e9fVvglGA==
   dependencies:
     iterare "1.2.1"
     tslib "2.8.1"
 
 "@nestjs/platform-express@^11.0.1":
-  version "11.1.21"
-  resolved "https://registry.yarnpkg.com/@nestjs/platform-express/-/platform-express-11.1.21.tgz#b7d53676ede478d287f09b42858591a84fb2c5b4"
-  integrity sha512-lA3ViycOnz4Df3EstIKpuAVFhqxQixTnjAVk0M+LRyNBlGM6VSCaNJaAIrb9Pcry39T4hTHpNVbRqGLSvhL8gA==
+  version "11.1.24"
+  resolved "https://registry.yarnpkg.com/@nestjs/platform-express/-/platform-express-11.1.24.tgz#808f81699e059dedad2c7af0ada31751f85976ac"
+  integrity sha512-CeMKbRBm05aOBiWhIHWO2xDeHbxynBF9ySQv3gRjObz2N5+uJnYriAYkHvVqvC4JIydmMPmT5VdICFNlNz3qyA==
   dependencies:
     cors "2.8.6"
     express "5.2.1"
@@ -1238,9 +1238,9 @@
     check-disk-space "3.4.0"
 
 "@nestjs/testing@^11.0.1":
-  version "11.1.21"
-  resolved "https://registry.yarnpkg.com/@nestjs/testing/-/testing-11.1.21.tgz#86f4930e147894f9e7250d0634e063c6290a0d7c"
-  integrity sha512-RhzaUFxr6/bpXWjKIzr7p2eHKMFMLwPgsxJNFcCf2CkkT3UEjW+KRGb7E2JY+fh+ck3zAdvQJrzATDnSsVlFZw==
+  version "11.1.24"
+  resolved "https://registry.yarnpkg.com/@nestjs/testing/-/testing-11.1.24.tgz#ccc4c759d6b84c09dd27c9fc0208c5a1d4cd446f"
+  integrity sha512-+4M4UAnhtprBQN0J2uI6IP0wDqhy9aH8XCMu5SO8oCi0oB04YXA4a4PAEkxmsPn7gHW4dj1u4GFteNQOWgvTJw==
   dependencies:
     tslib "2.8.1"
 
