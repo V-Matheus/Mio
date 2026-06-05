@@ -1,0 +1,14 @@
+{
+  "name": "@mio/grpc-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc && node scripts/copy-protos.mjs",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@mio/typescript-config": "*"
+  }
+}

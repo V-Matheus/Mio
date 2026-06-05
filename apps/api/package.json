@@ -5,7 +5,8 @@
   "scripts": {
     "postinstall": "yarn prisma:generate",
     "dev": "yarn docker:dev",
-    "docker:dev": "trap 'docker compose -p mio-dev -f ../../docker-compose.dev.yml down' EXIT INT TERM; docker compose -p mio-dev -f ../../docker-compose.dev.yml up --build postgres-core postgres-gamification postgres-achievements redis rabbitmq api-gateway api-core api-gamification api-achievements api-messenger api-notifications",
+    "docker:dev": "yarn build:contracts && trap 'docker compose -p mio-dev -f ../../docker-compose.dev.yml down' EXIT INT TERM; docker compose -p mio-dev -f ../../docker-compose.dev.yml up --build postgres-core postgres-gamification postgres-achievements redis rabbitmq api-gateway api-core api-gamification api-achievements api-messenger api-notifications",
+    "build:contracts": "yarn workspace @mio/grpc-contracts build",
     "dev:gateway": "nest start gateway --watch",
     "dev:core": "nest start core --watch",
     "dev:gamification": "nest start gamification --watch",
@@ -42,17 +43,27 @@
     "test:ui": "vitest --ui --coverage"
   },
   "dependencies": {
+    "@apollo/server": "^5.5.1",
+    "@as-integrations/express5": "^1.1.2",
+    "@grpc/grpc-js": "^1.12.2",
+    "@grpc/proto-loader": "^0.8.0",
+    "@mio/grpc-contracts": "*",
+    "@nestjs/apollo": "^13.4.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/graphql": "^13.4.2",
+    "@nestjs/jwt": "^11.0.2",
     "@nestjs/microservices": "^11.1.19",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/terminus": "^11.0.0",
+    "@node-rs/argon2": "^2.0.2",
     "@prisma/client": "^6.2.0",
-    "@grpc/grpc-js": "^1.12.2",
+    "amqplib": "^2.0.1",
+    "graphql": "^16.14.0",
     "nanoid": "^5.0.9",
-    "@grpc/proto-loader": "^0.8.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@mio/testing-config": "*",
@@ -60,6 +71,7 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
+    "@types/amqplib": "^0.10.8",
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
     "@types/supertest": "^6.0.2",

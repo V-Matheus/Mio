@@ -1,18 +1,16 @@
-import { join } from "node:path"
+import { healthContract } from "@mio/grpc-contracts"
 import { Module } from "@nestjs/common"
 import { ClientsModule, Transport } from "@nestjs/microservices"
 import { TerminusModule } from "@nestjs/terminus"
 import { HealthController } from "./health.controller"
-
-const grpcHealthProtoPath = join(process.cwd(), "proto/health.proto")
 
 const grpcClient = (name: string, host: string, portEnv: string) => ({
   name,
   transport: Transport.GRPC as const,
   options: {
     url: `${host}:${process.env[portEnv]}`,
-    package: "grpc.health.v1",
-    protoPath: grpcHealthProtoPath,
+    package: healthContract.package,
+    protoPath: healthContract.protoPath,
     loader: { enums: String },
   },
 })
