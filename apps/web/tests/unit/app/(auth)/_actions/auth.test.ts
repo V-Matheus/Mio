@@ -196,6 +196,7 @@ describe("registerAction", () => {
       ok: true,
       accessToken: "stub-token",
     })
+    vi.mocked(signIn).mockResolvedValue(undefined as never)
 
     await registerAction(initialState, validFormData())
 
@@ -208,15 +209,20 @@ describe("registerAction", () => {
     })
   })
 
-  it("should redirect to /home on service success", async () => {
+  it("should sign in with credentials and redirectTo /home on service success", async () => {
     vi.mocked(authService.register).mockResolvedValue({
       ok: true,
       accessToken: "stub-token",
     })
+    vi.mocked(signIn).mockResolvedValue(undefined as never)
 
     await registerAction(initialState, validFormData())
 
-    expect(redirect).toHaveBeenCalledWith("/home")
+    expect(signIn).toHaveBeenCalledWith("credentials", {
+      email: "victor@example.com",
+      password: "Strong1Pass",
+      redirectTo: "/home",
+    })
   })
 
   it("should return error message when service fails", async () => {
@@ -229,7 +235,33 @@ describe("registerAction", () => {
 
     expect(result.ok).toBe(false)
     expect(result.message).toBe("Email already in use")
-    expect(redirect).not.toHaveBeenCalled()
+    expect(signIn).not.toHaveBeenCalled()
+  })
+
+  it("should return an error when register succeeds but signIn throws AuthError", async () => {
+    vi.mocked(authService.register).mockResolvedValue({
+      ok: true,
+      accessToken: "stub-token",
+    })
+    vi.mocked(signIn).mockRejectedValue(new AuthError("CredentialsSignin"))
+
+    const result = await registerAction(initialState, validFormData())
+
+    expect(result.ok).toBe(false)
+    expect(result.message).toContain("não foi possível entrar")
+  })
+
+  it("should rethrow non-AuthError exceptions from signIn", async () => {
+    vi.mocked(authService.register).mockResolvedValue({
+      ok: true,
+      accessToken: "stub-token",
+    })
+    const unexpected = new Error("network down")
+    vi.mocked(signIn).mockRejectedValue(unexpected)
+
+    await expect(registerAction(initialState, validFormData())).rejects.toBe(
+      unexpected,
+    )
   })
 })
 

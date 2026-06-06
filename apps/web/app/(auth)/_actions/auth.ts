@@ -105,7 +105,29 @@ export async function registerAction(
     return { ok: false, message: result.error, values }
   }
 
-  redirect("/home")
+  // Cadastro criou o usuário; agora autentica com as mesmas credenciais para
+  // estabelecer a sessão NextAuth antes de ir para /home (senão o proxy vê
+  // "anônimo" e devolve para /login).
+  try {
+    await signIn("credentials", {
+      email: parsed.data.email,
+      password: parsed.data.password,
+      redirectTo: "/home",
+    })
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return {
+        ok: false,
+        message:
+          "Conta criada, mas não foi possível entrar. Tente fazer login.",
+        values,
+      }
+    }
+
+    throw error
+  }
+
+  return { ok: true }
 }
 
 export async function forgotPasswordAction(
