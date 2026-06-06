@@ -1,90 +1,106 @@
+import { gatewayError, getGatewayClient } from "../gateway/client"
+import {
+  LOGIN_MUTATION,
+  ME_QUERY,
+  REGISTER_MUTATION,
+  REQUEST_PASSWORD_RESET_MUTATION,
+  UPSERT_OAUTH_MUTATION,
+} from "./graphql"
 import type { ForgotPasswordInput, LoginInput, RegisterInput } from "./schemas"
+import type {
+  ForgotPasswordResult,
+  LoginResult,
+  MeResult,
+  MeUser,
+  RegisterResult,
+  UpsertOAuthInput,
+  UpsertOAuthResult,
+} from "./types"
 
-export type LoginResult =
-  | { ok: true; accessToken: string }
-  | { ok: false; error: string }
+// Reexporta o contrato de tipos do serviço para quem importa de `./service`.
+export type * from "./types"
 
-export type RegisterResult =
-  | { ok: true; accessToken: string }
-  | { ok: false; error: string }
-
-export type ForgotPasswordResult = { ok: true } | { ok: false; error: string }
-
-export type MeUser = {
-  code: string
-  email: string
-  name: string
-  avatarUrl: string | null
-}
-
-export type MeResult = { ok: true; user: MeUser } | { ok: false; error: string }
-
-export type OAuthProvider = "google" | "github"
-
-export type UpsertOAuthInput = {
-  provider: OAuthProvider
-  providerAccountId: string
-  email: string
-  name: string
-  avatarUrl: string | null
-}
-
-export type UpsertOAuthResult =
-  | { ok: true; accessToken: string }
-  | { ok: false; error: string }
-
-// Stub. Será substituído por mutations/queries GraphQL ao Gateway quando o
-// módulo `auth` do back existir. Mantém a forma final do contrato pra que
-// apenas o corpo de cada método mude.
-//
-// O JWT carrega apenas `sub` (user code) — dados do usuário vêm de `me()`.
-// Payload decodificado: { sub: "stub-id-123", iat: 1516239022 }
-const MOCK_JWT =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHViLWlkLTEyMyIsImlhdCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-
-const MOCK_USER: MeUser = {
-  code: "stub-id-123",
-  email: "victor@example.com",
-  name: "Victor Sousa",
-  avatarUrl: null,
-}
+type AccessTokenPayload = { accessToken: string }
 
 export const authService = {
-  async login(_input: LoginInput): Promise<LoginResult> {
-    return { ok: true, accessToken: MOCK_JWT }
+  async login(input: LoginInput): Promise<LoginResult> {
+    try {
+      const { login } = await getGatewayClient().request<{
+        login: AccessTokenPayload
+      }>(LOGIN_MUTATION, { input })
+      return { ok: true, accessToken: login.accessToken }
+    } catch (error) {
+      return { ok: false, error: gatewayError(error, "Falha no login") }
+    }
   },
 
   async register(input: RegisterInput): Promise<RegisterResult> {
-    console.log("[auth-service] register", {
-      name: input.name,
-      email: input.email,
-    })
-    return { ok: true, accessToken: MOCK_JWT }
+    try {
+      const { register } = await getGatewayClient().request<{
+        register: AccessTokenPayload
+      }>(REGISTER_MUTATION, {
+        input: {
+          email: input.email,
+          name: input.name,
+          password: input.password,
+        },
+      })
+      return { ok: true, accessToken: register.accessToken }
+    } catch (error) {
+      return {
+        ok: false,
+        error: gatewayError(error, "Falha no cadastro"),
+      }
+    }
   },
 
   async requestPasswordReset(
     input: ForgotPasswordInput,
   ): Promise<ForgotPasswordResult> {
-    console.log("[auth-service] requestPasswordReset", { email: input.email })
-    return { ok: true }
+    try {
+      await getGatewayClient().request(REQUEST_PASSWORD_RESET_MUTATION, {
+        email: input.email,
+      })
+      return { ok: true }
+    } catch (error) {
+      return {
+        ok: false,
+        error: gatewayError(error, "Falha ao solicitar redefinição"),
+      }
+    }
   },
 
   async me(accessToken: string): Promise<MeResult> {
     if (!accessToken) {
       return { ok: false, error: "Missing access token" }
     }
-    return { ok: true, user: MOCK_USER }
+    try {
+      const { me } = await getGatewayClient(accessToken).request<{
+        me: MeUser
+      }>(ME_QUERY)
+      return { ok: true, user: { ...me, avatarUrl: me.avatarUrl ?? null } }
+    } catch (error) {
+      return {
+        ok: false,
+        error: gatewayError(error, "Falha ao carregar usuário"),
+      }
+    }
   },
 
   async upsertOAuthUser(input: UpsertOAuthInput): Promise<UpsertOAuthResult> {
     if (!input.providerAccountId || !input.email) {
       return { ok: false, error: "Missing OAuth identification" }
     }
-    console.log("[auth-service] upsertOAuthUser", {
-      provider: input.provider,
-      providerAccountId: input.providerAccountId,
-      email: input.email,
-    })
-    return { ok: true, accessToken: MOCK_JWT }
+    try {
+      const { upsertOAuthUser } = await getGatewayClient().request<{
+        upsertOAuthUser: AccessTokenPayload
+      }>(UPSERT_OAUTH_MUTATION, { input })
+      return { ok: true, accessToken: upsertOAuthUser.accessToken }
+    } catch (error) {
+      return {
+        ok: false,
+        error: gatewayError(error, "Falha no login social"),
+      }
+    }
   },
 }

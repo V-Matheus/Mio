@@ -5,6 +5,7 @@ import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe"
 import { AuthService } from "./auth.service"
 import { LoginInput, loginSchema } from "./dto/login.input"
 import { RegisterInput, registerSchema } from "./dto/register.input"
+import { UpsertOAuthInput, upsertOAuthSchema } from "./dto/upsert-oauth.input"
 import { CurrentUserCode, GqlAuthGuard } from "./guards/gql-auth.guard"
 import { AuthPayload } from "./models/auth-payload.model"
 import { User } from "./models/user.model"
@@ -25,6 +26,14 @@ export class AuthResolver {
     @Args("input", new ZodValidationPipe(loginSchema)) input: LoginInput,
   ): Promise<AuthPayload> {
     return this.auth.login(input)
+  }
+
+  @Mutation(() => AuthPayload)
+  upsertOAuthUser(
+    @Args("input", new ZodValidationPipe(upsertOAuthSchema))
+    input: UpsertOAuthInput,
+  ): Promise<AuthPayload> {
+    return this.auth.upsertOAuthUser(input)
   }
 
   @Mutation(() => Boolean)

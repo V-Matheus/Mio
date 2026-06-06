@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { loginSchema } from "../../apps/gateway/src/modules/auth/dto/login.input"
 import { registerSchema } from "../../apps/gateway/src/modules/auth/dto/register.input"
+import { upsertOAuthSchema } from "../../apps/gateway/src/modules/auth/dto/upsert-oauth.input"
 
 describe("loginSchema", () => {
   it("aceita email válido e senha não-vazia", () => {
@@ -54,6 +55,46 @@ describe("registerSchema", () => {
 
   it("rejeita email inválido", () => {
     expect(registerSchema.safeParse({ ...valid, email: "x" }).success).toBe(
+      false,
+    )
+  })
+})
+
+describe("upsertOAuthSchema", () => {
+  const valid = {
+    provider: "google",
+    providerAccountId: "google-123",
+    email: "a@b.com",
+    name: "Victor",
+    avatarUrl: "https://img/x.png",
+  }
+
+  it("aceita input OAuth válido", () => {
+    expect(upsertOAuthSchema.safeParse(valid).success).toBe(true)
+  })
+
+  it("aceita avatarUrl nulo/ausente", () => {
+    expect(
+      upsertOAuthSchema.safeParse({ ...valid, avatarUrl: null }).success,
+    ).toBe(true)
+    const { avatarUrl: _omit, ...withoutAvatar } = valid
+    expect(upsertOAuthSchema.safeParse(withoutAvatar).success).toBe(true)
+  })
+
+  it("rejeita provider fora de google/github", () => {
+    expect(
+      upsertOAuthSchema.safeParse({ ...valid, provider: "twitter" }).success,
+    ).toBe(false)
+  })
+
+  it("rejeita providerAccountId vazio", () => {
+    expect(
+      upsertOAuthSchema.safeParse({ ...valid, providerAccountId: "" }).success,
+    ).toBe(false)
+  })
+
+  it("rejeita email inválido", () => {
+    expect(upsertOAuthSchema.safeParse({ ...valid, email: "x" }).success).toBe(
       false,
     )
   })

@@ -6,6 +6,7 @@ import { firstValueFrom, type Observable } from "rxjs"
 import { USERS_PACKAGE_TOKEN } from "../../grpc/registry"
 import type { LoginInput } from "./dto/login.input"
 import type { RegisterInput } from "./dto/register.input"
+import type { UpsertOAuthInput } from "./dto/upsert-oauth.input"
 import type { AuthPayload } from "./models/auth-payload.model"
 import type { User } from "./models/user.model"
 import type {
@@ -42,6 +43,19 @@ export class AuthService implements OnModuleInit {
 
   async login(input: LoginInput): Promise<AuthPayload> {
     const user = await this.call(this.usersService.validateCredentials(input))
+    return this.toAuthPayload(user)
+  }
+
+  async upsertOAuthUser(input: UpsertOAuthInput): Promise<AuthPayload> {
+    const user = await this.call(
+      this.usersService.upsertOAuthUser({
+        provider: input.provider,
+        providerAccountId: input.providerAccountId,
+        email: input.email,
+        name: input.name,
+        avatarUrl: input.avatarUrl ?? "",
+      }),
+    )
     return this.toAuthPayload(user)
   }
 

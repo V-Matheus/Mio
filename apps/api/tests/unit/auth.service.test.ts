@@ -57,6 +57,30 @@ describe("AuthService", () => {
     expect(result.accessToken).toBe("signed.jwt")
   })
 
+  it("upsertOAuthUser emite JWT e devolve AuthPayload", async () => {
+    const upsertOAuthUser = vi.fn().mockReturnValue(of(grpcUser))
+    const { service, jwt } = setup({ upsertOAuthUser })
+
+    const result = await service.upsertOAuthUser({
+      provider: "google",
+      providerAccountId: "google-123",
+      email: grpcUser.email,
+      name: grpcUser.name,
+      avatarUrl: null,
+    })
+
+    expect(upsertOAuthUser).toHaveBeenCalledWith({
+      provider: "google",
+      providerAccountId: "google-123",
+      email: grpcUser.email,
+      name: grpcUser.name,
+      avatarUrl: "",
+    })
+    expect(jwt.sign).toHaveBeenCalledWith({ sub: grpcUser.code })
+    expect(result.accessToken).toBe("signed.jwt")
+    expect(result.user.code).toBe(grpcUser.code)
+  })
+
   it("mapeia erro gRPC para GraphQLError com extensions.code", async () => {
     const { service } = setup({
       validateCredentials: vi

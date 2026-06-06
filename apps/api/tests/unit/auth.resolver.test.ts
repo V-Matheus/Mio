@@ -6,6 +6,7 @@ function makeResolver() {
   const auth = {
     register: vi.fn().mockResolvedValue({ accessToken: "t", user: {} }),
     login: vi.fn().mockResolvedValue({ accessToken: "t", user: {} }),
+    upsertOAuthUser: vi.fn().mockResolvedValue({ accessToken: "t", user: {} }),
     requestPasswordReset: vi.fn().mockResolvedValue(true),
     resetPassword: vi.fn().mockResolvedValue(true),
     me: vi.fn().mockResolvedValue({ code: "c" }),
@@ -26,6 +27,19 @@ describe("AuthResolver", () => {
     const input = { email: "a@b.com", password: "12345678" }
     await resolver.login(input)
     expect(auth.login).toHaveBeenCalledWith(input)
+  })
+
+  it("upsertOAuthUser delega para AuthService.upsertOAuthUser", async () => {
+    const { resolver, auth } = makeResolver()
+    const input = {
+      provider: "google",
+      providerAccountId: "google-123",
+      email: "a@b.com",
+      name: "V",
+      avatarUrl: null,
+    }
+    await resolver.upsertOAuthUser(input)
+    expect(auth.upsertOAuthUser).toHaveBeenCalledWith(input)
   })
 
   it("requestPasswordReset delega o email", async () => {
