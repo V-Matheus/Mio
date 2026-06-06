@@ -17,6 +17,8 @@ export const sharedConfig: UserConfig["test"] = {
       "**/.next/**",
       "**/coverage/**",
       "**/packages/**",
+      "**/types/**",
+      "**/*.stories.{ts,tsx}",
     ],
   },
 }

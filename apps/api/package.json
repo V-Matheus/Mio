@@ -29,6 +29,8 @@
     "prisma:generate": "for s in core gamification achievements; do prisma generate --schema=apps/$s/prisma/schema.prisma || exit 1; done",
     "prisma:migrate:dev": "for s in core gamification achievements; do prisma migrate dev --schema=apps/$s/prisma/schema.prisma || exit 1; done",
     "prisma:migrate:deploy": "for s in core gamification achievements; do prisma migrate deploy --schema=apps/$s/prisma/schema.prisma || exit 1; done",
+    "docker:prisma:migrate:dev": "docker compose -p mio-dev -f ../../docker-compose.dev.yml exec api-core yarn workspace @mio/api prisma:migrate:dev",
+    "docker:prisma:migrate:deploy": "docker compose -p mio-dev -f ../../docker-compose.dev.yml exec api-core yarn workspace @mio/api prisma:migrate:deploy",
     "prisma:studio:core": "dotenv -e .env -- sh -c 'CORE_DATABASE_URL=postgresql://$CORE_POSTGRES_USER:$CORE_POSTGRES_PASSWORD@localhost:$CORE_POSTGRES_PORT/$CORE_POSTGRES_DB prisma studio --schema=apps/core/prisma/schema.prisma --port 5555'",
     "prisma:studio:gamification": "dotenv -e .env -- sh -c 'GAMIFICATION_DATABASE_URL=postgresql://$GAMIFICATION_POSTGRES_USER:$GAMIFICATION_POSTGRES_PASSWORD@localhost:$GAMIFICATION_POSTGRES_PORT/$GAMIFICATION_POSTGRES_DB prisma studio --schema=apps/gamification/prisma/schema.prisma --port 5556'",
     "prisma:studio:achievements": "dotenv -e .env -- sh -c 'ACHIEVEMENTS_DATABASE_URL=postgresql://$ACHIEVEMENTS_POSTGRES_USER:$ACHIEVEMENTS_POSTGRES_PASSWORD@localhost:$ACHIEVEMENTS_POSTGRES_PORT/$ACHIEVEMENTS_POSTGRES_DB prisma studio --schema=apps/achievements/prisma/schema.prisma --port 5557'",
