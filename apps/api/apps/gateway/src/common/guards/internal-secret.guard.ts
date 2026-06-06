@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto"
 import {
   type CanActivate,
   type ExecutionContext,
@@ -38,7 +39,11 @@ export class InternalSecretGuard implements CanActivate {
 
     const req = GqlExecutionContext.create(context).getContext().req
     const provided: string | undefined = req?.headers?.["x-internal-secret"]
-    if (provided !== secret) {
+    if (
+      !provided ||
+      provided.length !== secret.length ||
+      !timingSafeEqual(Buffer.from(provided), Buffer.from(secret))
+    ) {
       throw forbidden()
     }
 
