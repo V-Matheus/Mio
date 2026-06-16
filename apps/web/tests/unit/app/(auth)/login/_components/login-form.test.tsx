@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { loginAction } from "@/app/(auth)/_actions/auth"
 import { LoginForm } from "@/app/(auth)/login/_components/login-form"
+import { loginAction } from "@/lib/auth/actions"
 
-vi.mock("@/app/(auth)/_actions/auth", () => ({
+vi.mock("@/lib/auth/actions", () => ({
   loginAction: vi.fn(),
   signInWithProvider: vi.fn(),
 }))

@@ -1,11 +1,10 @@
 "use client"
 
-import { Icon } from "@iconify/react"
 import Link from "next/link"
 import { useActionState, useState } from "react"
-import { loginAction } from "@/app/(auth)/_actions/auth"
 import { SocialLogin } from "@/app/(auth)/_components/social-login"
 import { ButtonText, ButtonWrapper } from "@/app/components/button"
+import { Icon } from "@/app/components/icon"
 import {
   InputAdornment,
   InputControl,
@@ -13,6 +12,7 @@ import {
   InputLabel,
   InputWrapper,
 } from "@/app/components/input"
+import { loginAction } from "@/lib/auth/actions"
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)

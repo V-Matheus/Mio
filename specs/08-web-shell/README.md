@@ -9,12 +9,14 @@ Layout, navegação e telas pessoais do usuário logado: `/home`, `/perfil`, str
 - ✅ Fluxo de auth em `app/(auth)/` (login, cadastro, recuperar senha).
 - ✅ `proxy.ts` redireciona logado → `/home` e anônimo → `/login`.
 - ✅ Design system base (button, card, input, gamification badges, progress bar).
-- ❌ Nenhuma rota `/home` (proxy redireciona, mas o destino quebra com 404).
-- ❌ Nenhum route group `(app)` para rotas autenticadas.
-- ❌ Nenhum layout autenticado.
-- ❌ Nenhum componente de navbar/sidebar interna.
-- ❌ Nenhuma página de perfil.
-- ❌ Nenhuma exibição de streak.
+- ✅ Route group `app/(app)/` para rotas autenticadas, com `layout.tsx` (`AppShell`).
+- ✅ `AppShell` baseado em **sidebar** (sem topbar — ver decisão): logo + navegação + bloco do usuário no rodapé; vira drawer no mobile.
+- ✅ Componentes de layout: `Sidebar`, `SidebarUser` (avatar + menu Perfil/Sair). Avatar no design system (`AvatarWrapper`, `AvatarImage` com fallback de iniciais).
+- ✅ Rota `/home` (placeholder com saudação — **não** é o dashboard completo ainda).
+- ✅ Rota `/perfil` mínima (avatar + nome + e-mail de `/me`; cards de gamificação ainda não).
+- ❌ Nenhuma exibição de streak (depende do backend).
+- ❌ Dashboard `/home` completo, cards de progresso, conquistas, tecnologias (dependem dos resolvers `home`/`profile`).
+- ❌ `RealtimeProvider` (spec 06) ainda não integrado ao layout.
 
 ### Designs disponíveis
 Em `/figma-exports/`:
@@ -118,32 +120,37 @@ enum ActivityKind { LESSON_COMPLETED ACHIEVEMENT_UNLOCKED }
 app/
 ├── (portal)/                          # ✅ existente — público
 ├── (auth)/                            # ✅ existente
-└── (app)/                             # ❌ a criar
-    ├── layout.tsx                     # AppShell (sidebar + header)
+└── (app)/                             # ✅ criado
+    ├── layout.tsx                     # ✅ AppShell (sidebar)
     ├── home/
-    │   └── page.tsx
-    ├── trilhas/                       # (overlap com spec 02)
+    │   └── page.tsx                   # ✅ placeholder (saudação)
+    ├── trilhas/                       # ❌ (overlap com spec 02)
     │   ├── page.tsx
     │   └── [slug]/
     │       ├── page.tsx
     │       └── aula/[lessonSlug]/page.tsx
-    ├── ranking/                       # (overlap com spec 04)
+    ├── ranking/                       # ❌ (overlap com spec 04)
     │   └── page.tsx
-    ├── conquistas/                    # (overlap com spec 05)
+    ├── conquistas/                    # ❌ (overlap com spec 05)
     │   └── page.tsx
     └── perfil/
-        ├── page.tsx                   # próprio perfil
-        └── [userCode]/page.tsx        # perfil público de outro usuário
+        ├── page.tsx                   # ✅ mínima (avatar + nome + e-mail)
+        └── [userCode]/page.tsx        # ❌ perfil público de outro usuário
 ```
+
+> Apenas `Home` e `Trilhas` aparecem na navegação do sidebar por enquanto; as demais rotas serão adicionadas conforme as specs 02/04/05 avançam (links inexistentes caem em 404 de propósito).
+
+> **Server Actions** do shell autenticado **não** ficam em `_actions/` dentro de `(app)` — ficam por domínio em `lib/<dominio>/actions/` (ex.: `signOutAction` em `lib/auth/actions/session.ts`). O helper de sessão é `getSessionUser()` em `lib/auth/utils/getSessionUser.ts` (por padrão redireciona para `/login`; `{ require: false }` para versão anulável). Ver `apps/web/CLAUDE.md`.
 
 ### Componentes novos no design system
 
-- `app/components/avatar/` — `AvatarWrapper`, `AvatarImage`, `AvatarFallback`.
-- `app/components/layout/sidebar.tsx`, `app/components/layout/topbar.tsx`, `app/components/layout/app-shell.tsx`.
-- `app/components/streak/streak-badge.tsx`.
-- `app/components/activity/activity-list.tsx`.
+- ✅ `app/components/avatar/` — `AvatarWrapper`, `AvatarImage` (com fallback de iniciais via `getInitials`), `AvatarFallback`. Stories + testes unitários.
+- ✅ `app/components/layout/` — `app-shell.tsx`, `sidebar.tsx`, `sidebar-user.tsx`, `nav-items.ts`. **Não há `topbar.tsx`/`UserMenu`** — o bloco do usuário (Perfil/Sair) fica no rodapé do sidebar (ver decisão). _Faltam stories + testes destes._
+- ✅ `app/components/icon/` — componente `Icon` central que registra ícones offline (Iconify) e renderiza no SSR sem "piscar". Usar sempre este, não `@iconify/react` direto.
+- ❌ `app/components/streak/streak-badge.tsx` — pendente (depende do backend de streak).
+- ❌ `app/components/activity/activity-list.tsx` — pendente.
 
-Para todos: stories em `stories/` + testes unitários.
+Para os novos: stories em `stories/` + testes unitários.
 
 ## Tarefas
 
@@ -158,25 +165,35 @@ Para todos: stories em `stories/` + testes unitários.
 - [ ] Cache leve (request-scoped DataLoader) para evitar refazer query nas mesmas chamadas.
 
 ### Web
-- [ ] Criar `app/(app)/layout.tsx` com `<AppShell>`.
-- [ ] `AppShell` (`app/components/layout/app-shell.tsx`) com sidebar fixa + header sticky.
-- [ ] Componentes `Sidebar`, `Topbar`, `UserMenu`, `AvatarWrapper`.
-- [ ] Página `/home` consumindo `query { home }`.
-- [ ] Página `/perfil` consumindo `query { profile }`.
+- [x] Criar `app/(app)/layout.tsx` com `<AppShell>`.
+- [x] `AppShell` (`app/components/layout/app-shell.tsx`) com sidebar fixa (drawer no mobile). _Sem header sticky — ver decisão._
+- [x] Componentes `Sidebar`, `SidebarUser` (substitui `Topbar`/`UserMenu`), `AvatarWrapper`/`AvatarImage`/`AvatarFallback`.
+- [x] Página `/home` (placeholder com saudação). _Falta consumir `query { home }`._
+- [x] Página `/perfil` mínima (avatar + nome + e-mail de `/me`). _Falta consumir `query { profile }` e os cards de gamificação._
+- [x] Menu do usuário com "Sair" (`signOutAction` → `signOut()` do NextAuth), no rodapé do sidebar.
+- [x] `proxy.ts` — sem mudança: a lógica atual "tudo que não é auth/portal é protegido" já cobre `/home` e `/perfil`.
+- [ ] `/home` consumindo `query { home }` (dashboard completo: cards de progresso, mascote, próximas aulas).
+- [ ] `/perfil` consumindo `query { profile }` (XP/nível, conquistas, tecnologias, histórico) + `/perfil/[userCode]`.
 - [ ] `StreakBadge` exibindo `streakCurrent` com ícone de chama.
 - [ ] Integrar `RealtimeProvider` (spec 06) dentro do layout autenticado.
-- [ ] Atualizar `proxy.ts` para incluir as novas rotas em `PROTECTED_ROUTES` (ou continuar com a lógica de "tudo que não é auth/portal é protegido").
-- [ ] Stories + testes unitários para os novos componentes.
+- [ ] Stories + testes unitários para os componentes de layout (`Sidebar`, `SidebarUser`, `AppShell`). _Avatar já tem._
 
 ## Critérios de aceite
 
 - Logar redireciona para `/home` e renderiza dashboard com nome, XP atual, streak e trilhas matriculadas.
 - Concluir uma lição:
   - `streakCurrent` incrementa se for primeiro dia novo, ou se mantém se mesma data.
-  - Header atualiza XP em real-time (via spec 06).
+  - Bloco do usuário (rodapé do sidebar) atualiza XP em real-time (via spec 06).
 - `/perfil` mostra dados próprios; `/perfil/<userCode>` mostra perfil público de outro aluno.
-- Menu do usuário no header permite "Sair" (chama `signOut()` do NextAuth).
-- Layout responsivo: sidebar vira drawer em mobile.
+- Menu do usuário (rodapé do sidebar) permite "Sair" (chama `signOut()` do NextAuth). ✅
+- Layout responsivo: sidebar vira drawer em mobile. ✅
+
+## Decisões adotadas (base do shell)
+
+- **Sem topbar.** Seguindo `home-autenticado.png`, o shell é só sidebar. O bloco do usuário (avatar + nome + menu Perfil/Sair) fica no **rodapé do sidebar**, não num header. O XP/nível, quando o backend existir, entra nesse bloco (linha sob o nome, como no design), não num header.
+- **Mobile:** sidebar vira drawer; um botão flutuante (canto superior esquerdo) o abre — não há barra superior.
+- **Ícones:** sempre via `app/components/icon` (registro offline + SSR), nunca `@iconify/react` direto, pra evitar a "piscada" no carregamento.
+- **Server Actions por domínio** em `lib/<dominio>/actions/`; helper de sessão `getSessionUser()` com guard embutido. Detalhes em `apps/web/CLAUDE.md`.
 
 ## Riscos & decisões em aberto
 

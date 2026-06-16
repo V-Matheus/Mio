@@ -1094,6 +1094,34 @@
     protobufjs "^7.5.5"
     yargs "^17.7.2"
 
+"@iconify-icons/devicon@^1.2.17":
+  version "1.2.17"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/devicon/-/devicon-1.2.17.tgz#d5abe2a09227cca2bad2667f8133a8195f4ac346"
+  integrity sha512-p471pxnBUbk5VTF6aqPqF8htTyqHO+BjOArE9WDmJdFt9POsb7yIShH9GElO1lk9OBU9KZV9PLUGWBzH9gqH6A==
+  dependencies:
+    "@iconify/types" "*"
+
+"@iconify-icons/logos@^1.2.36":
+  version "1.2.36"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/logos/-/logos-1.2.36.tgz#a8fa9674cf92b20d797d04c3d0f404a1c80277a5"
+  integrity sha512-VzF299ubR4SKCZzLJoAawxeSjszJV1Q6y+4chCIPQuAafqfjtDjZxagZxL3ILKCsRLNN/z3zmCOOAL83tC8kLw==
+  dependencies:
+    "@iconify/types" "*"
+
+"@iconify-icons/lucide@^1.2.135":
+  version "1.2.135"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/lucide/-/lucide-1.2.135.tgz#bbcbe6983dfa1f59140560d7614483802b913441"
+  integrity sha512-t2Dya1a+PInBmHScbbGyseze7rrGHRW/dYF4GTR6f51N08sCg6KrtE4zmplnZE1ul2NyC+sxKpXRCv48hEgaQw==
+  dependencies:
+    "@iconify/types" "*"
+
+"@iconify-icons/mdi@^1.2.48":
+  version "1.2.48"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/mdi/-/mdi-1.2.48.tgz#5610701160239614db6be99104d9d477fef7cd67"
+  integrity sha512-51bfNoRLhYDfxSu0Nyi/uRVq6q/tP4TyEc0vvuNwImrXpxrRJUAWJF2A36CfBkXm3hO9IBlph/CD/XNDJKgG6w==
+  dependencies:
+    "@iconify/types" "*"
+
 "@iconify/react@^6.0.2":
   version "6.0.2"
   resolved "https://registry.yarnpkg.com/@iconify/react/-/react-6.0.2.tgz#b6d9bd0e13f9cb85b3a7fddbc70bbf71f5da1d33"
@@ -1101,7 +1129,7 @@
   dependencies:
     "@iconify/types" "^2.0.0"
 
-"@iconify/types@^2.0.0":
+"@iconify/types@*", "@iconify/types@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@iconify/types/-/types-2.0.0.tgz#ab0e9ea681d6c8a1214f30cd741fe3a20cc57f57"
   integrity sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==

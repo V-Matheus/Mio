@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation"
 import { AuthError } from "next-auth"
+import { signIn } from "@/auth"
 import {
   forgotPasswordAction,
   loginAction,
   registerAction,
   signInWithProvider,
-} from "@/app/(auth)/_actions/auth"
-import { signIn } from "@/auth"
+} from "@/lib/auth/actions/auth"
 import { authService } from "@/lib/auth/service"
 
 vi.mock("next/navigation", () => ({

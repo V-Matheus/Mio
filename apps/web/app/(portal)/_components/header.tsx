@@ -14,7 +14,7 @@ export function Header() {
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-100">
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
         <Link href={"#top"}>
-          <Image src="/logo.png" alt="Mio" width={128} height={48} />
+          <Image src="/logo-mio.png" alt="Mio" width={128} height={50} />
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
