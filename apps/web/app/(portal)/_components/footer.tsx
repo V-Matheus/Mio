@@ -1,6 +1,6 @@
-import { Icon } from "@iconify/react"
 import Image from "next/image"
 import Link from "next/link"
+import { Icon } from "@/app/components/icon"
 
 const quickLinks = [
   { label: "Home", href: "/" },
@@ -29,7 +29,7 @@ export function Footer() {
           <div className="md:col-span-1">
             <div className="mb-4">
               <Image
-                src="/logo.png"
+                src="/logo-mio.png"
                 alt="Mio"
                 width={72}
                 height={28}

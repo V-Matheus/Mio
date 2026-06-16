@@ -1,6 +1,6 @@
-import { Icon } from "@iconify/react"
-import { signInWithProvider } from "@/app/(auth)/_actions/auth"
 import { ButtonText, ButtonWrapper } from "@/app/components/button"
+import { Icon } from "@/app/components/icon"
+import { signInWithProvider } from "@/lib/auth/actions"
 
 const providers = [
   {

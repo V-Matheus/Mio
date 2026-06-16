@@ -1,5 +1,5 @@
-import { Icon } from "@iconify/react"
 import Image from "next/image"
+import { Icon } from "@/app/components/icon"
 import { ButtonText, ButtonWrapper } from "../components/button"
 
 const levels = [

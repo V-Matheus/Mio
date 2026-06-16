@@ -1,4 +1,3 @@
-import { Icon } from "@iconify/react"
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import {
   CardDescription,
@@ -6,6 +5,7 @@ import {
   CardTitle,
   CardWrapper,
 } from "../../app/components/card"
+import { Icon } from "../../app/components/icon"
 
 const meta: Meta<typeof CardWrapper> = {
   title: "Components/Card/CardWrapper",

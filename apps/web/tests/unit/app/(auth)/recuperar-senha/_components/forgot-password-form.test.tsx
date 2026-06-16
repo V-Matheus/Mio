@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { forgotPasswordAction } from "@/app/(auth)/_actions/auth"
 import { ForgotPasswordForm } from "@/app/(auth)/recuperar-senha/_components/forgot-password-form"
+import { forgotPasswordAction } from "@/lib/auth/actions"
 
-vi.mock("@/app/(auth)/_actions/auth", () => ({
+vi.mock("@/lib/auth/actions", () => ({
   forgotPasswordAction: vi.fn(),
 }))
 

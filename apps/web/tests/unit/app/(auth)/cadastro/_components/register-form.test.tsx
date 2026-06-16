@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { registerAction } from "@/app/(auth)/_actions/auth"
 import { RegisterForm } from "@/app/(auth)/cadastro/_components/register-form"
+import { registerAction } from "@/lib/auth/actions"
 
-vi.mock("@/app/(auth)/_actions/auth", () => ({
+vi.mock("@/lib/auth/actions", () => ({
   registerAction: vi.fn(),
   signInWithProvider: vi.fn(),
 }))

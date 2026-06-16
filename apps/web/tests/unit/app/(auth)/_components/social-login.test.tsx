@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { SocialLogin } from "@/app/(auth)/_components/social-login"
 
-vi.mock("@/app/(auth)/_actions/auth", () => ({
+vi.mock("@/lib/auth/actions", () => ({
   signInWithProvider: vi.fn(),
 }))
 

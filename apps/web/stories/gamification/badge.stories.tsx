@@ -1,10 +1,10 @@
-import { Icon } from "@iconify/react"
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import {
   BadgeIcon,
   BadgeValue,
   BadgeWrapper,
 } from "../../app/components/gamification"
+import { Icon } from "../../app/components/icon"
 
 const meta: Meta<typeof BadgeWrapper> = {
   title: "Components/Gamification/Badge",

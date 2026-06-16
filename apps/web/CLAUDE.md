@@ -51,6 +51,7 @@ yarn build-storybook  # build estatico do storybook
 - **Compound components** para o design system: `Wrapper` + pecas (`Text`, `Icon`, `Title`, etc.), exportados via barrel `index.ts`.
 - **Route groups** `(nome)` para organizar sem afetar URL; **private folders** `_nome` para esconder arquivos que nao devem virar rota.
 - **Mutacoes sensiveis** devem passar por Server Actions — nunca chamar o Gateway direto do browser.
+- **Server Actions vivem por dominio em `lib/<dominio>/actions/`** (ex.: `lib/auth/actions/`), nao em `_actions/` dentro de route groups. Motivo: route groups como `(app)` abrangem o app inteiro e viram "dumping ground". Cada dominio agrupa `actions/` + `service.ts` + `schemas/` + `types/` + `graphql/`. Componentes importam via barrel `@/lib/<dominio>/actions`. Acoes ficam finas (parse FormData -> Zod schema -> service -> FormState/redirect); logica de dominio fica no `service.ts`. Testes espelham em `tests/unit/lib/<dominio>/actions/`.
 - **Tokens de design** vivem em `globals.css` sob `@theme`; nao hardcode cores/fontes nos componentes.
 - Commits seguem **Conventional Commits** (feat, fix, docs, refactor, test, chore, etc.), subject em lowercase.
 - Pre-commit hooks via Husky: lint-staged roda biome check, type check e testes unitarios.

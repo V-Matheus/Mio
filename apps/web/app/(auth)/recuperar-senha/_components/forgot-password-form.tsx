@@ -1,16 +1,16 @@
 "use client"
 
-import { Icon } from "@iconify/react"
 import Link from "next/link"
 import { useActionState } from "react"
-import { forgotPasswordAction } from "@/app/(auth)/_actions/auth"
 import { ButtonText, ButtonWrapper } from "@/app/components/button"
+import { Icon } from "@/app/components/icon"
 import {
   InputControl,
   InputField,
   InputLabel,
   InputWrapper,
 } from "@/app/components/input"
+import { forgotPasswordAction } from "@/lib/auth/actions"
 
 export function ForgotPasswordForm() {
   const [state, action, pending] = useActionState(forgotPasswordAction, {

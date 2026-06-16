@@ -1,6 +1,6 @@
-import { Icon } from "@iconify/react"
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
 import { CardIcon } from "../../app/components/card"
+import { Icon } from "../../app/components/icon"
 
 const meta: Meta<typeof CardIcon> = {
   title: "Components/Card/CardIcon",
