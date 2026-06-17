@@ -1,0 +1,46 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AuthPayload {
+  accessToken: String!
+  user: User!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type Mutation {
+  login(input: LoginInput!): AuthPayload!
+  register(input: RegisterInput!): AuthPayload!
+  requestPasswordReset(email: String!): Boolean!
+  resetPassword(newPassword: String!, token: String!): Boolean!
+  upsertOAuthUser(input: UpsertOAuthInput!): AuthPayload!
+}
+
+type Query {
+  me: User!
+}
+
+input RegisterInput {
+  email: String!
+  name: String!
+  password: String!
+}
+
+input UpsertOAuthInput {
+  avatarUrl: String
+  email: String!
+  name: String!
+  provider: String!
+  providerAccountId: String!
+}
+
+type User {
+  avatarUrl: String
+  code: ID!
+  email: String!
+  name: String!
+}

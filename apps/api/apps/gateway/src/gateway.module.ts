@@ -1,3 +1,4 @@
+import { join } from "node:path"
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default"
 import { ApolloDriver, type ApolloDriverConfig } from "@nestjs/apollo"
 import { Module } from "@nestjs/common"
@@ -10,11 +11,16 @@ import { HealthModule } from "./modules/health/health.module"
 
 const isProduction = process.env.NODE_ENV === "production"
 
+const autoSchemaFile = isProduction
+  ? true
+  : join(process.cwd(), "../../packages/graphql-schema/schema.gql")
+
 @Module({
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: true,
+      autoSchemaFile,
+      sortSchema: true,
       playground: false,
       introspection: !isProduction,
       csrfPrevention: isProduction,
