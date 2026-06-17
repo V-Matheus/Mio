@@ -1,10 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
-import {
-  ButtonIcon,
-  ButtonText,
-  ButtonWrapper,
-} from "../../app/components/button"
-import { Icon } from "../../app/components/icon"
+import { ButtonIcon, ButtonText, ButtonWrapper } from "@/components/button"
+import { Icon } from "@/components/icon"
 
 const meta: Meta<typeof ButtonWrapper> = {
   title: "Components/Button/ButtonWrapper",

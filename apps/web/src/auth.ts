@@ -2,7 +2,7 @@ import NextAuth, { type NextAuthResult } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GitHub from "next-auth/providers/github"
 import Google from "next-auth/providers/google"
-import { authService } from "./lib/auth/service"
+import { authService } from "@/lib/auth/service"
 
 const nextAuth = NextAuth({
   providers: [

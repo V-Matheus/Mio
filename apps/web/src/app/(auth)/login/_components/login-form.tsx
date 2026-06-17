@@ -3,15 +3,15 @@
 import Link from "next/link"
 import { useActionState, useState } from "react"
 import { SocialLogin } from "@/app/(auth)/_components/social-login"
-import { ButtonText, ButtonWrapper } from "@/app/components/button"
-import { Icon } from "@/app/components/icon"
+import { ButtonText, ButtonWrapper } from "@/components/button"
+import { Icon } from "@/components/icon"
 import {
   InputAdornment,
   InputControl,
   InputField,
   InputLabel,
   InputWrapper,
-} from "@/app/components/input"
+} from "@/components/input"
 import { loginAction } from "@/lib/auth/actions"
 
 export function LoginForm() {

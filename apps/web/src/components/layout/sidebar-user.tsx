@@ -2,10 +2,10 @@
 
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
+import { AvatarImage, AvatarWrapper } from "@/components/avatar"
+import { Icon } from "@/components/icon"
 import { signOutAction } from "@/lib/auth/actions"
 import type { SessionUser } from "@/lib/auth/utils/getSessionUser"
-import { AvatarImage, AvatarWrapper } from "../avatar"
-import { Icon } from "../icon"
 
 interface SidebarUserProps {
   user: SessionUser

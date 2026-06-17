@@ -37,19 +37,27 @@ yarn build-storybook  # build estatico do storybook
 
 ## Estrutura
 
-- `app/` — App Router
-  - `layout.tsx` — RootLayout (fontes, `<html>`, `<body>`)
-  - `globals.css` — tokens de design via `@theme` do Tailwind v4
-  - `components/` — design system (button, card, gamification)
-  - `(portal)/` — route group da landing; `_components/` sao privados da rota
-- `stories/` — Storybook espelhando `app/components/`
+Codigo da aplicacao vive em `src/`; a raiz de `apps/web/` guarda so configuracao (`next.config.js`, `tsconfig.json`, `vitest.*.config.ts`, `.storybook/`, `Dockerfile*`, `public/`).
+
+- `src/` — codigo da aplicacao
+  - `app/` — App Router (apenas roteamento + composicao de pagina)
+    - `layout.tsx` — RootLayout (fontes, `<html>`, `<body>`)
+    - `globals.css` — tokens de design via `@theme` do Tailwind v4
+    - `(portal)/` — route group da landing; `_components/` sao privados da rota
+  - `components/` — design system compartilhado (button, card, avatar, icon, layout...). Importar via `@/components/<x>`
+  - `lib/` — logica de dominio por modulo (`lib/<dominio>/`)
+  - `auth.ts` — NextAuth (handlers/signIn/signOut/auth); `proxy.ts` — middleware do Next 16
+  - `@types/` — augmentations de modulo (ex.: `next-auth.d.ts`)
+- `stories/` — Storybook espelhando `src/components/`
 - `tests/unit`, `tests/integration`, `tests/e2e` — Vitest
+- Alias `@/*` resolve para `src/*` (tsconfig + vitest configs).
 
 ## Convencoes
 
 - **Server Components por padrao.** Use Client Components (`"use client"`) somente quando precisar de estado/efeitos/eventos do browser.
 - **Compound components** para o design system: `Wrapper` + pecas (`Text`, `Icon`, `Title`, etc.), exportados via barrel `index.ts`.
 - **Route groups** `(nome)` para organizar sem afetar URL; **private folders** `_nome` para esconder arquivos que nao devem virar rota.
+- **Imports: alias `@/` quando cruza pasta/modulo** (ex.: `@/components/icon`, `@/lib/auth/service`); caminho relativo **so com `./`** para arquivos co-locados na mesma pasta (barrels `index.ts`, compound components, `_components` de uma rota). Nunca `../` em `src/` — e robusto a mover arquivos e evita cadeias `../../`. **Imposto pelo Biome** (`noRestrictedImports` no override de `apps/web/{src,tests,stories}` em `biome.json`); arquivos de config fora de `src/` (ex.: `.storybook/`) podem usar `../`.
 - **Mutacoes sensiveis** devem passar por Server Actions — nunca chamar o Gateway direto do browser.
 - **Server Actions vivem por dominio em `lib/<dominio>/actions/`** (ex.: `lib/auth/actions/`), nao em `_actions/` dentro de route groups. Motivo: route groups como `(app)` abrangem o app inteiro e viram "dumping ground". Cada dominio agrupa `actions/` + `service.ts` + `schemas/` + `types/` + `graphql/`. Componentes importam via barrel `@/lib/<dominio>/actions`. Acoes ficam finas (parse FormData -> Zod schema -> service -> FormState/redirect); logica de dominio fica no `service.ts`. Testes espelham em `tests/unit/lib/<dominio>/actions/`.
 - **Tokens de design** vivem em `globals.css` sob `@theme`; nao hardcode cores/fontes nos componentes.

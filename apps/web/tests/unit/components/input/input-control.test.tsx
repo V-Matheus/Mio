@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { InputControl } from "../../../../app/components/input"
+import { InputControl } from "@/components/input"
 
 describe("InputControl", () => {
   it("should render an input element", () => {

@@ -1,5 +1,5 @@
 import { ClientError } from "graphql-request"
-import { gatewayError, getGatewayClient } from "../../../../lib/gateway/client"
+import { gatewayError, getGatewayClient } from "@/lib/gateway/client"
 
 // `server-only` lança fora de um ambiente RSC (inclusive no Vitest); aqui o
 // client é importado direto, então neutralizamos o guard.

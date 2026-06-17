@@ -4,8 +4,8 @@ import {
   CardIcon,
   CardTitle,
   CardWrapper,
-} from "../../app/components/card"
-import { Icon } from "../../app/components/icon"
+} from "@/components/card"
+import { Icon } from "@/components/icon"
 
 const meta: Meta<typeof CardWrapper> = {
   title: "Components/Card/CardWrapper",

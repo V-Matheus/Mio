@@ -1,9 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import {
-  AvatarImage,
-  AvatarWrapper,
-  getInitials,
-} from "../../../../app/components/avatar"
+import { AvatarImage, AvatarWrapper, getInitials } from "@/components/avatar"
 
 describe("getInitials", () => {
   it("deriva primeira e última inicial", () => {

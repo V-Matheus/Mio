@@ -117,7 +117,7 @@ enum ActivityKind { LESSON_COMPLETED ACHIEVEMENT_UNLOCKED }
 ### Estrutura de rotas
 
 ```
-app/
+src/app/                               # código da app vive em src/
 ├── (portal)/                          # ✅ existente — público
 ├── (auth)/                            # ✅ existente
 └── (app)/                             # ✅ criado
@@ -140,15 +140,15 @@ app/
 
 > Apenas `Home` e `Trilhas` aparecem na navegação do sidebar por enquanto; as demais rotas serão adicionadas conforme as specs 02/04/05 avançam (links inexistentes caem em 404 de propósito).
 
-> **Server Actions** do shell autenticado **não** ficam em `_actions/` dentro de `(app)` — ficam por domínio em `lib/<dominio>/actions/` (ex.: `signOutAction` em `lib/auth/actions/session.ts`). O helper de sessão é `getSessionUser()` em `lib/auth/utils/getSessionUser.ts` (por padrão redireciona para `/login`; `{ require: false }` para versão anulável). Ver `apps/web/CLAUDE.md`.
+> **Server Actions** do shell autenticado **não** ficam em `_actions/` dentro de `(app)` — ficam por domínio em `src/lib/<dominio>/actions/` (ex.: `signOutAction` em `src/lib/auth/actions/session.ts`). O helper de sessão é `getSessionUser()` em `src/lib/auth/utils/getSessionUser.ts` (por padrão redireciona para `/login`; `{ require: false }` para versão anulável). Ver `apps/web/CLAUDE.md`.
 
 ### Componentes novos no design system
 
-- ✅ `app/components/avatar/` — `AvatarWrapper`, `AvatarImage` (com fallback de iniciais via `getInitials`), `AvatarFallback`. Stories + testes unitários.
-- ✅ `app/components/layout/` — `app-shell.tsx`, `sidebar.tsx`, `sidebar-user.tsx`, `nav-items.ts`. **Não há `topbar.tsx`/`UserMenu`** — o bloco do usuário (Perfil/Sair) fica no rodapé do sidebar (ver decisão). _Faltam stories + testes destes._
-- ✅ `app/components/icon/` — componente `Icon` central que registra ícones offline (Iconify) e renderiza no SSR sem "piscar". Usar sempre este, não `@iconify/react` direto.
-- ❌ `app/components/streak/streak-badge.tsx` — pendente (depende do backend de streak).
-- ❌ `app/components/activity/activity-list.tsx` — pendente.
+- ✅ `components/avatar/` — `AvatarWrapper`, `AvatarImage` (com fallback de iniciais via `getInitials`), `AvatarFallback`. Stories + testes unitários.
+- ✅ `components/layout/` — `app-shell.tsx`, `sidebar.tsx`, `sidebar-user.tsx`, `nav-items.ts`. **Não há `topbar.tsx`/`UserMenu`** — o bloco do usuário (Perfil/Sair) fica no rodapé do sidebar (ver decisão). _Faltam stories + testes destes._
+- ✅ `components/icon/` — componente `Icon` central que registra ícones offline (Iconify) e renderiza no SSR sem "piscar". Usar sempre este, não `@iconify/react` direto.
+- ❌ `components/streak/streak-badge.tsx` — pendente (depende do backend de streak).
+- ❌ `components/activity/activity-list.tsx` — pendente.
 
 Para os novos: stories em `stories/` + testes unitários.
 
@@ -166,7 +166,7 @@ Para os novos: stories em `stories/` + testes unitários.
 
 ### Web
 - [x] Criar `app/(app)/layout.tsx` com `<AppShell>`.
-- [x] `AppShell` (`app/components/layout/app-shell.tsx`) com sidebar fixa (drawer no mobile). _Sem header sticky — ver decisão._
+- [x] `AppShell` (`components/layout/app-shell.tsx`) com sidebar fixa (drawer no mobile). _Sem header sticky — ver decisão._
 - [x] Componentes `Sidebar`, `SidebarUser` (substitui `Topbar`/`UserMenu`), `AvatarWrapper`/`AvatarImage`/`AvatarFallback`.
 - [x] Página `/home` (placeholder com saudação). _Falta consumir `query { home }`._
 - [x] Página `/perfil` mínima (avatar + nome + e-mail de `/me`). _Falta consumir `query { profile }` e os cards de gamificação._
@@ -192,7 +192,7 @@ Para os novos: stories em `stories/` + testes unitários.
 
 - **Sem topbar.** Seguindo `home-autenticado.png`, o shell é só sidebar. O bloco do usuário (avatar + nome + menu Perfil/Sair) fica no **rodapé do sidebar**, não num header. O XP/nível, quando o backend existir, entra nesse bloco (linha sob o nome, como no design), não num header.
 - **Mobile:** sidebar vira drawer; um botão flutuante (canto superior esquerdo) o abre — não há barra superior.
-- **Ícones:** sempre via `app/components/icon` (registro offline + SSR), nunca `@iconify/react` direto, pra evitar a "piscada" no carregamento.
+- **Ícones:** sempre via `components/icon` (registro offline + SSR), nunca `@iconify/react` direto, pra evitar a "piscada" no carregamento.
 - **Server Actions por domínio** em `lib/<dominio>/actions/`; helper de sessão `getSessionUser()` com guard embutido. Detalhes em `apps/web/CLAUDE.md`.
 
 ## Riscos & decisões em aberto

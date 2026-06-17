@@ -1,6 +1,6 @@
 import Image from "next/image"
-import { Icon } from "@/app/components/icon"
-import { ButtonText, ButtonWrapper } from "../components/button"
+import { ButtonText, ButtonWrapper } from "@/components/button"
+import { Icon } from "@/components/icon"
 
 const levels = [
   {

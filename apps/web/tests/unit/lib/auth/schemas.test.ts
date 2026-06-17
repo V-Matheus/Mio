@@ -2,7 +2,7 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
-} from "../../../../lib/auth/schemas"
+} from "@/lib/auth/schemas"
 
 describe("loginSchema", () => {
   it("should accept a valid email and password", () => {

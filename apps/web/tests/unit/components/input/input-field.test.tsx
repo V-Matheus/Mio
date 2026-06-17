@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { InputField } from "../../../../app/components/input"
+import { InputField } from "@/components/input"
 
 describe("InputField", () => {
   it("should render a div containing children", () => {

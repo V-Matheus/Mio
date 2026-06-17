@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { BadgeIcon } from "../../../../app/components/gamification"
+import { BadgeIcon } from "@/components/gamification"
 
 describe("BadgeIcon", () => {
   it("should render a span element", () => {

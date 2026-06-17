@@ -1,5 +1,5 @@
-import { AvatarImage, AvatarWrapper } from "@/app/components/avatar"
-import { CardWrapper } from "@/app/components/card"
+import { AvatarImage, AvatarWrapper } from "@/components/avatar"
+import { CardWrapper } from "@/components/card"
 import { getSessionUser } from "@/lib/auth/utils/getSessionUser"
 
 export default async function PerfilPage() {

@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { ButtonText } from "../../../../app/components/button"
+import { ButtonText } from "@/components/button"
 
 describe("ButtonText", () => {
   it("should render a span element", () => {

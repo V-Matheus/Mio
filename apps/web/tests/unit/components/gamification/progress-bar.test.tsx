@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { ProgressBar } from "../../../../app/components/gamification"
+import { ProgressBar } from "@/components/gamification"
 
 describe("ProgressBar", () => {
   it("should render a progressbar element", () => {

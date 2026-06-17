@@ -2,14 +2,14 @@
 
 import Link from "next/link"
 import { useActionState } from "react"
-import { ButtonText, ButtonWrapper } from "@/app/components/button"
-import { Icon } from "@/app/components/icon"
+import { ButtonText, ButtonWrapper } from "@/components/button"
+import { Icon } from "@/components/icon"
 import {
   InputControl,
   InputField,
   InputLabel,
   InputWrapper,
-} from "@/app/components/input"
+} from "@/components/input"
 import { forgotPasswordAction } from "@/lib/auth/actions"
 
 export function ForgotPasswordForm() {

@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { BadgeWrapper } from "../../../../app/components/gamification"
+import { BadgeWrapper } from "@/components/gamification"
 
 describe("BadgeWrapper", () => {
   it("should render a div element", () => {
