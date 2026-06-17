@@ -27,7 +27,7 @@ describe("authService", () => {
       })
 
       expect(result).toEqual({ ok: true, accessToken: "jwt-123" })
-      expect(mockRequest).toHaveBeenCalledWith(expect.any(String), {
+      expect(mockRequest).toHaveBeenCalledWith(expect.anything(), {
         input: { email: "user@example.com", password: "secret" },
       })
     })
@@ -59,7 +59,7 @@ describe("authService", () => {
       })
 
       expect(result).toEqual({ ok: true, accessToken: "jwt-456" })
-      expect(mockRequest).toHaveBeenCalledWith(expect.any(String), {
+      expect(mockRequest).toHaveBeenCalledWith(expect.anything(), {
         input: {
           email: "victor@example.com",
           name: "Victor",
@@ -92,7 +92,7 @@ describe("authService", () => {
       })
 
       expect(result).toEqual({ ok: true })
-      expect(mockRequest).toHaveBeenCalledWith(expect.any(String), {
+      expect(mockRequest).toHaveBeenCalledWith(expect.anything(), {
         email: "anyone@example.com",
       })
     })
@@ -164,7 +164,7 @@ describe("authService", () => {
       })
 
       expect(result).toEqual({ ok: true, accessToken: "jwt-oauth" })
-      expect(mockRequest).toHaveBeenCalledWith(expect.any(String), {
+      expect(mockRequest).toHaveBeenCalledWith(expect.anything(), {
         input: {
           provider: "google",
           providerAccountId: "google-123",

@@ -1,6 +1,6 @@
-import { gql } from "graphql-request"
+import { graphql } from "@/lib/gql/generated"
 
-export const ME_QUERY = gql`
+export const ME_QUERY = graphql(`
   query Me {
     me {
       code
@@ -9,4 +9,4 @@ export const ME_QUERY = gql`
       avatarUrl
     }
   }
-`
+`)

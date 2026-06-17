@@ -1,9 +1,9 @@
-import { gql } from "graphql-request"
+import { graphql } from "@/lib/gql/generated"
 
-export const REGISTER_MUTATION = gql`
+export const REGISTER_MUTATION = graphql(`
   mutation Register($input: RegisterInput!) {
     register(input: $input) {
       accessToken
     }
   }
-`
+`)

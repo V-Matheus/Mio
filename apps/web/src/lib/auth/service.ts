@@ -11,7 +11,6 @@ import type {
   ForgotPasswordResult,
   LoginResult,
   MeResult,
-  MeUser,
   RegisterResult,
   UpsertOAuthInput,
   UpsertOAuthResult,
@@ -20,14 +19,12 @@ import type {
 // Reexporta o contrato de tipos do serviço para quem importa de `./service`.
 export type * from "./types"
 
-type AccessTokenPayload = { accessToken: string }
-
 export const authService = {
   async login(input: LoginInput): Promise<LoginResult> {
     try {
-      const { login } = await getGatewayClient().request<{
-        login: AccessTokenPayload
-      }>(LOGIN_MUTATION, { input })
+      const { login } = await getGatewayClient().request(LOGIN_MUTATION, {
+        input,
+      })
       return { ok: true, accessToken: login.accessToken }
     } catch (error) {
       return { ok: false, error: gatewayError(error, "Falha no login") }
@@ -36,9 +33,7 @@ export const authService = {
 
   async register(input: RegisterInput): Promise<RegisterResult> {
     try {
-      const { register } = await getGatewayClient().request<{
-        register: AccessTokenPayload
-      }>(REGISTER_MUTATION, {
+      const { register } = await getGatewayClient().request(REGISTER_MUTATION, {
         input: {
           email: input.email,
           name: input.name,
@@ -75,9 +70,7 @@ export const authService = {
       return { ok: false, error: "Missing access token" }
     }
     try {
-      const { me } = await getGatewayClient(accessToken).request<{
-        me: MeUser
-      }>(ME_QUERY)
+      const { me } = await getGatewayClient(accessToken).request(ME_QUERY)
       return { ok: true, user: { ...me, avatarUrl: me.avatarUrl ?? null } }
     } catch (error) {
       return {
@@ -92,9 +85,10 @@ export const authService = {
       return { ok: false, error: "Missing OAuth identification" }
     }
     try {
-      const { upsertOAuthUser } = await getGatewayClient().request<{
-        upsertOAuthUser: AccessTokenPayload
-      }>(UPSERT_OAUTH_MUTATION, { input })
+      const { upsertOAuthUser } = await getGatewayClient().request(
+        UPSERT_OAUTH_MUTATION,
+        { input },
+      )
       return { ok: true, accessToken: upsertOAuthUser.accessToken }
     } catch (error) {
       return {

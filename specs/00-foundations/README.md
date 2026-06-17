@@ -99,10 +99,10 @@ Estender para incluir:
 - [ ] `RedisModule.forRoot({ host, port })` global em `gamification` (sorted sets) e `messenger` (pub/sub).
 
 ### Cliente GraphQL no Web
-- [ ] Adicionar `graphql-request` (lightweight, server-friendly) + `@graphql-codegen/cli` para gerar tipos a partir do schema do gateway.
-- [ ] `apps/web/lib/gql/client.ts` com função `gqlServer()` que injeta headers de auth (cookie/JWT).
-- [ ] Script `yarn codegen` que aponta para `http://localhost:3333/graphql` (ou snapshot em CI).
-- [ ] `.gitignore` para tipos gerados sob `apps/web/lib/gql/generated/`.
+- [x] Adicionar `graphql-request` (lightweight, server-friendly) + `@graphql-codegen/cli` para gerar tipos a partir do schema do gateway. _Usa o preset `client` (`@graphql-codegen/client-preset`) — operações via `graphql()` tipado._
+- [x] `apps/web/lib/gql/client.ts` com função `gqlServer()` que injeta headers de auth (cookie/JWT). _Implementado como `getGatewayClient(accessToken)` em `lib/gateway/client.ts` (injeta `Authorization: Bearer` + `x-internal-secret`); ver spec 01._
+- [x] Script `yarn codegen` que aponta para `http://localhost:3333/graphql` (ou snapshot em CI). _Lê o snapshot SDL emitido pelo gateway (`autoSchemaFile` → `packages/graphql-schema/schema.gql`), fonte única num pacote de workspace (sobrevive ao `turbo prune` do Docker); roda offline/CI sem servidor._
+- [x] `.gitignore` para tipos gerados sob `apps/web/lib/gql/generated/`. _Saída em `src/lib/gql/generated/` (gitignored); pre-hooks rodam `codegen` antes de dev/build/check-types/test._
 
 ### Observabilidade
 - [ ] Instalar `nestjs-pino` em todos os serviços + interceptor de request id.
