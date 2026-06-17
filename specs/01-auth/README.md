@@ -24,17 +24,18 @@ Cadastro, login (credenciais + OAuth), recuperação de senha, sessão segura e 
 - ✅ **Refresh sob demanda** no callback `jwt`: ramo `trigger === "update"` rebusca `me()` e regrava `token.name`/`email`/`picture`. Acionado pelo client com `useSession().update()` após mutações que mudam o usuário.
 - ✅ **`image` propagado** no JWT (`token.picture`) e na session (`session.user.image`).
 - ✅ `lib/auth/service.ts` **integrado ao Gateway via GraphQL** (`graphql-request`): `login`/`register`/`requestPasswordReset`/`me`/`upsertOAuthUser` chamam o Gateway. Client server-side em `lib/gateway/client.ts` (`getGatewayClient(accessToken)` + `gatewayError`), endpoint via `GATEWAY_GRAPHQL_URL`. Domínio organizado em `lib/auth/{graphql,schemas,types}/` (1 arquivo por operação + barrel).
-- ❌ Página `/home` referenciada pelo `redirectTo` não existe.
+- ✅ Página `/home` referenciada pelo `redirectTo` existe (`app/(app)/home/page.tsx`).
 - ❌ Página de redefinição de senha (`/redefinir-senha/[token]`) não existe.
 
 ### Backend (`apps/api`)
-- ✅ Schema Prisma do Core já possui `User` (`apps/api/apps/core/prisma/schema.prisma`).
-- ❌ Nenhum módulo `users` ou `auth` no Core.
-- ❌ Nenhuma mutation/query GraphQL no Gateway.
-- ❌ Nenhum `.proto` para Users.
-- ❌ Nenhuma estratégia de hash de senha (`argon2` ou `bcrypt`).
-- ❌ Nenhuma emissão de JWT real.
-- ❌ Token de password reset não persistido.
+- ✅ Schema Prisma do Core já possui `User` (`apps/api/apps/core/prisma/schema.prisma`), além de `UserIdentity` e `PasswordReset` (migration `..._auth_users_identities_password_reset`).
+- ✅ Módulo `users` no Core (`modules/users/` com service/controller gRPC) e módulo `auth` no Gateway.
+- ✅ Mutations/queries GraphQL no Gateway (`register`/`login`/`upsertOAuthUser`/`requestPasswordReset`/`resetPassword`/`me`).
+- ✅ Contrato gRPC de Users (`packages/grpc-contracts/src/users/`, pacote `@mio/grpc-contracts`).
+- ✅ Hash de senha com `@node-rs/argon2` (argon2id).
+- ✅ Emissão de JWT real (HS256) no Gateway após `register`/`login`.
+- ✅ Token de password reset persistido como hash (`PasswordReset.tokenHash`).
+- ⚠️ Falta cobertura e2e do Core (`tests/e2e/` ainda vazio).
 
 ## Escopo
 
@@ -214,22 +215,22 @@ type Query {
 ## Tarefas
 
 ### Core (`apps/api/apps/core`)
-- [ ] Criar migration para `UserIdentity` e `PasswordReset` (estender `User` com `passwordHash`).
-- [ ] Criar `modules/users/users.module.ts`, `users.service.ts`, `users.controller.ts` (gRPC).
-- [ ] Hash de senha com `argon2id` (`argon2` package).
-- [ ] Geração de `User.code` com `nanoid(12)`.
-- [ ] Gerar token de password reset (URL-safe random + hash do token).
-- [ ] Após `Register` e `IssuePasswordReset`, publicar evento via `EventBus` (ver `00-foundations`).
-- [ ] Testes unitários (`users.service.test.ts`) e e2e (cobrindo migration + serviço).
+- [x] Criar migration para `UserIdentity` e `PasswordReset` (estender `User` com `passwordHash`).
+- [x] Criar `modules/users/users.module.ts`, `users.service.ts`, `users.controller.ts` (gRPC).
+- [x] Hash de senha com `argon2id` (`argon2` package). _Implementado com `@node-rs/argon2` (ver Decisões)._
+- [x] Geração de `User.code` com `nanoid(12)`.
+- [x] Gerar token de password reset (URL-safe random + hash do token).
+- [x] Após `Register` e `IssuePasswordReset`, publicar evento via `EventBus` (ver `00-foundations`). _Via `UserEventsPublisher` AMQP no módulo (ver Decisões); migrará para `EventBusModule`._
+- [ ] Testes unitários (`users.service.test.ts`) e e2e (cobrindo migration + serviço). _Unitários ✅; e2e ainda falta (`tests/e2e/` só tem `.gitkeep`)._
 
 ### Gateway (`apps/api/apps/gateway`)
-- [ ] Configurar GraphQL (depende de `00-foundations`).
-- [ ] `modules/auth/auth.module.ts`, `auth.resolver.ts`, `auth.service.ts`.
-- [ ] `ClientGrpc` para o pacote `mio.users.v1`.
-- [ ] Emitir JWT após `register` / `login`.
-- [ ] Guard `GqlAuthGuard` que decodifica JWT e popula `context.userCode`.
-- [ ] Resolver `me` consultando Core via gRPC.
-- [ ] Tratamento de erros: mapear `INVALID_CREDENTIALS`, `EMAIL_IN_USE`, `PASSWORD_RESET_EXPIRED` em `GraphQLError` com `extensions.code`.
+- [x] Configurar GraphQL (depende de `00-foundations`).
+- [x] `modules/auth/auth.module.ts`, `auth.resolver.ts`, `auth.service.ts`.
+- [x] `ClientGrpc` para o pacote `mio.users.v1`.
+- [x] Emitir JWT após `register` / `login`.
+- [x] Guard `GqlAuthGuard` que decodifica JWT e popula `context.userCode`.
+- [x] Resolver `me` consultando Core via gRPC.
+- [x] Tratamento de erros: mapear `INVALID_CREDENTIALS`, `EMAIL_IN_USE`, `PASSWORD_RESET_EXPIRED` em `GraphQLError` com `extensions.code`.
 - [x] Mutation `upsertOAuthUser(input: UpsertOAuthInput!): AuthPayload!` — exige o fluxo OAuth do Web (o client gRPC já tinha `upsertOAuthUser`, faltava expor no GraphQL).
 
 ### Web (`apps/web`)
@@ -244,7 +245,7 @@ type Query {
 - [x] Testes unitários para `me` e `upsertOAuthUser` em `tests/unit/lib/auth/service.test.ts`.
 - [x] Substituir corpo dos métodos do `authService` (`login`, `register`, `requestPasswordReset`, `me`, `upsertOAuthUser`) por chamadas GraphQL ao Gateway via `graphql-request`. Forma dos retornos não muda.
 - [x] Usar `accessToken` da session nos headers do GraphQL client server-side (`getGatewayClient(accessToken)` em `lib/gateway/client.ts`).
-- [ ] Criar tela básica `/home` (stub) para o `redirectTo` ter destino válido (overlap com spec 08).
+- [x] Criar tela básica `/home` (stub) para o `redirectTo` ter destino válido (overlap com spec 08).
 - [ ] Página de reset de senha `app/(auth)/redefinir-senha/[token]/page.tsx` (faltava — apenas `recuperar-senha` existe).
 - [x] Atualizar testes que mockam `authService` para o novo client GraphQL.
 

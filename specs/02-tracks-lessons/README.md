@@ -160,7 +160,7 @@ Script de seed lê essa árvore e popula Postgres na inicialização (`yarn seed
 - [ ] Criar `modules/enrollments/enrollments.service.ts`.
 - [ ] Loader de conteúdo (`content-loader.service.ts`) que lê markdown via `fs.readFile` quando o `Section` é resolvido.
 - [ ] Script `scripts/seed-content.ts` que escaneia `apps/core/content/**` e faz upsert no DB.
-- [ ] Indices: `Lesson.trackId+position` (já existe), validar `Section.lessonId+position` (já existe).
+- [x] Indices: `Lesson.trackId+position` (já existe), validar `Section.lessonId+position` (já existe).
 - [ ] Testes unitários do service e e2e do seed.
 
 ### Gateway
