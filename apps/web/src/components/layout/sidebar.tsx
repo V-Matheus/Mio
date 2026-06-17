@@ -3,8 +3,8 @@
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { Icon } from "@/components/icon"
 import type { SessionUser } from "@/lib/auth/utils/getSessionUser"
-import { Icon } from "../icon"
 import { navItems } from "./nav-items"
 import { SidebarUser } from "./sidebar-user"
 

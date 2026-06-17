@@ -1,4 +1,4 @@
-import { gatewayError, getGatewayClient } from "../gateway/client"
+import { gatewayError, getGatewayClient } from "@/lib/gateway/client"
 import {
   LOGIN_MUTATION,
   ME_QUERY,

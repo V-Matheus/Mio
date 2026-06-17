@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
-import { InputLabel } from "../../app/components/input"
+import { InputLabel } from "@/components/input"
 
 const meta: Meta<typeof InputLabel> = {
   title: "Components/Input/InputLabel",

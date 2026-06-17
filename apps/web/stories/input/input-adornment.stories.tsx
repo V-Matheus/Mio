@@ -1,10 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
-import { Icon } from "../../app/components/icon"
-import {
-  InputAdornment,
-  InputControl,
-  InputField,
-} from "../../app/components/input"
+import { Icon } from "@/components/icon"
+import { InputAdornment, InputControl, InputField } from "@/components/input"
 
 const meta: Meta<typeof InputAdornment> = {
   title: "Components/Input/InputAdornment",

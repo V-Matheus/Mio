@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { CardIcon } from "../../../../app/components/card"
+import { CardIcon } from "@/components/card"
 
 describe("CardIcon", () => {
   it("should render a span element", () => {

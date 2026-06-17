@@ -1,5 +1,5 @@
-import { ButtonText, ButtonWrapper } from "@/app/components/button"
-import { Icon } from "@/app/components/icon"
+import { ButtonText, ButtonWrapper } from "@/components/button"
+import { Icon } from "@/components/icon"
 import { signInWithProvider } from "@/lib/auth/actions"
 
 const providers = [

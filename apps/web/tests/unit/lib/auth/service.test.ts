@@ -1,4 +1,4 @@
-import { authService } from "../../../../lib/auth/service"
+import { authService } from "@/lib/auth/service"
 
 const { mockRequest, mockGetClient } = vi.hoisted(() => {
   const mockRequest = vi.fn()
@@ -6,7 +6,7 @@ const { mockRequest, mockGetClient } = vi.hoisted(() => {
   return { mockRequest, mockGetClient }
 })
 
-vi.mock("../../../../lib/gateway/client", () => ({
+vi.mock("@/lib/gateway/client", () => ({
   getGatewayClient: mockGetClient,
   gatewayError: (_error: unknown, fallback: string) => fallback,
 }))

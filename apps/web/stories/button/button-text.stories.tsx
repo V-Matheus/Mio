@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
-import { ButtonText } from "../../app/components/button"
+import { ButtonText } from "@/components/button"
 
 const meta: Meta<typeof ButtonText> = {
   title: "Components/Button/ButtonText",

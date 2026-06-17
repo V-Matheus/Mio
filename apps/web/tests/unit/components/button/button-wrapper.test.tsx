@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { ButtonWrapper } from "../../../../app/components/button"
+import { ButtonWrapper } from "@/components/button"
 
 describe("ButtonWrapper", () => {
   it("should render a button element", () => {

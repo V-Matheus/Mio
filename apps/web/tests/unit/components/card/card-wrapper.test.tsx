@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { CardWrapper } from "../../../../app/components/card"
+import { CardWrapper } from "@/components/card"
 
 describe("CardWrapper", () => {
   it("should render a div element", () => {

@@ -41,6 +41,30 @@
           }
         }
       }
+    },
+    {
+      "includes": [
+        "apps/web/src/**",
+        "apps/web/tests/**",
+        "apps/web/stories/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["../**", "../*"],
+                    "message": "Em apps/web, imports que cruzam pasta/modulo devem usar o alias @/ (ex.: @/components/icon, @/lib/auth/service). Caminho relativo so com ./ para arquivos co-locados na mesma pasta."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "css": {

@@ -1,8 +1,8 @@
 "use client"
 
 import { type ReactNode, useState } from "react"
+import { Icon } from "@/components/icon"
 import type { SessionUser } from "@/lib/auth/utils/getSessionUser"
-import { Icon } from "../icon"
 import { Sidebar } from "./sidebar"
 
 interface AppShellProps {

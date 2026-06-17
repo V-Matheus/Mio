@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { InputWrapper } from "../../../../app/components/input"
+import { InputWrapper } from "@/components/input"
 
 describe("InputWrapper", () => {
   it("should render a div containing children", () => {

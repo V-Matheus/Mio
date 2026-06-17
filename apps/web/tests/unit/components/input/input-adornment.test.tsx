@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { InputAdornment } from "../../../../app/components/input"
+import { InputAdornment } from "@/components/input"
 
 describe("InputAdornment", () => {
   it("should render a button element with aria-label", () => {

@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { ButtonText, ButtonWrapper } from "../../components/button"
+import { ButtonText, ButtonWrapper } from "@/components/button"
 
 const navLinks = [
   { label: "Início", href: "#top" },

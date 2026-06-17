@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { InputLabel } from "../../../../app/components/input"
+import { InputLabel } from "@/components/input"
 
 describe("InputLabel", () => {
   it("should render a label element with htmlFor", () => {
