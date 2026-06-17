@@ -79,10 +79,10 @@ Estender para incluir:
 ## Tarefas
 
 ### GraphQL no gateway
-- [ ] Adicionar dependências: `@nestjs/graphql`, `@nestjs/apollo`, `@apollo/server`, `graphql`.
-- [ ] Configurar `GraphQLModule.forRoot({ driver: ApolloDriver, autoSchemaFile: true, playground: false, introspection: process.env.NODE_ENV !== 'production' })`.
-- [ ] Estrutura `apps/gateway/src/modules/<domain>/<domain>.resolver.ts` para cada domínio.
-- [ ] Context com `req` e `userCode` (após auth — ver spec 01).
+- [x] Adicionar dependências: `@nestjs/graphql`, `@nestjs/apollo`, `@apollo/server`, `graphql`.
+- [x] Configurar `GraphQLModule.forRoot({ driver: ApolloDriver, autoSchemaFile: true, playground: false, introspection: process.env.NODE_ENV !== 'production' })`.
+- [ ] Estrutura `apps/gateway/src/modules/<domain>/<domain>.resolver.ts` para cada domínio. _Só `auth` existe até agora._
+- [ ] Context com `req` e `userCode` (após auth — ver spec 01). _`req` ✅; `userCode` resolvido sob demanda pelo `GqlAuthGuard`, não no context._
 
 ### Contratos gRPC por domínio
 - [ ] Criar `apps/api/proto/users.proto`, `tracks.proto`, `lessons.proto`, `progress.proto`, `gamification.proto`, `achievements.proto`, `messenger.proto`.
