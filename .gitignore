@@ -46,3 +46,10 @@ yarn-error.log*
 .DS_Store
 *.pem
 .mcp.json
+
+# AI local configs (global patterns)
+.claude
+.agents
+.cursor
+CLAUDE.md
+copilot-instructions.md
