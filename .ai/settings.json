@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/post-tool-use.sh",
+            "command": ".ai/hooks/post-tool-use.sh",
             "timeout": 60000
           }
         ]

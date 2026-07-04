@@ -18,7 +18,8 @@
     "docker:down": "docker compose down",
     "docker:dev": "turbo run docker:dev",
     "docker:dev:down": "docker compose -p mio-dev -f docker-compose.dev.yml down",
-    "prepare": "husky"
+    "prepare": "husky",
+    "setup:ai": "bash .ai/setup.sh"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.3",
