@@ -7,6 +7,7 @@ import { GraphQLModule } from "@nestjs/graphql"
 import type { Request } from "express"
 import { InternalSecretGuard } from "./common/guards/internal-secret.guard"
 import { AuthModule } from "./modules/auth/auth.module"
+import { CatalogModule } from "./modules/catalog/catalog.module"
 import { HealthModule } from "./modules/health/health.module"
 
 const isProduction = process.env.NODE_ENV === "production"
@@ -31,6 +32,7 @@ const autoSchemaFile = isProduction
     }),
     HealthModule,
     AuthModule,
+    CatalogModule,
   ],
   controllers: [],
   providers: [

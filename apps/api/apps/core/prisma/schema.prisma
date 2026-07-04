@@ -89,13 +89,13 @@ model Lesson {
 }
 
 model Section {
-  id          BigInt      @id @default(autoincrement())
-  lessonId    BigInt
-  slug        String
-  title       String
-  position    Int
-  kind        SectionKind @default(TEXT)
-  contentPath String
+  id              BigInt      @id @default(autoincrement())
+  lessonId        BigInt
+  slug            String
+  title           String
+  position        Int
+  kind            SectionKind @default(TEXT)
+  contentMarkdown String // fonte da verdade do conteúdo; markdown é formato, não arquivo
 
   lesson   Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   progress LessonProgress[]

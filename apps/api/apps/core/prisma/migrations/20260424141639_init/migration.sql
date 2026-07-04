@@ -45,7 +45,7 @@ CREATE TABLE "Section" (
     "title" TEXT NOT NULL,
     "position" INTEGER NOT NULL,
     "kind" "SectionKind" NOT NULL DEFAULT 'TEXT',
-    "contentPath" TEXT NOT NULL,
+    "contentMarkdown" TEXT NOT NULL,
 
     CONSTRAINT "Section_pkey" PRIMARY KEY ("id")
 );

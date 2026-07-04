@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package mio.catalog.v1;
+
+service CatalogService {
+  rpc ListTracks(ListTracksRequest) returns (TracksResponse);
+  rpc GetTrack(GetTrackRequest) returns (TrackDetailResponse);
+  rpc GetLesson(GetLessonRequest) returns (LessonDetailResponse);
+  rpc GetSection(GetSectionRequest) returns (SectionDetailResponse);
+  rpc EnrollUser(EnrollUserRequest) returns (EnrollmentResponse);
+}
+
+message ListTracksRequest {
+  string user_code = 1; // opcional: marca `enrolled` por usuário
+}
+
+message Track {
+  string slug = 1;
+  string title = 2;
+  string description = 3;
+  int32 lesson_count = 4;
+  bool enrolled = 5;
+}
+
+message TracksResponse {
+  repeated Track tracks = 1;
+}
+
+message GetTrackRequest {
+  string slug = 1;
+  string user_code = 2;
+}
+
+message LessonSummary {
+  string slug = 1;
+  string title = 2;
+  int32 position = 3;
+  bool completed = 4;
+}
+
+message TrackDetailResponse {
+  string slug = 1;
+  string title = 2;
+  string description = 3;
+  repeated LessonSummary lessons = 4;
+  bool enrolled = 5;
+}
+
+message GetLessonRequest {
+  string track_slug = 1;
+  string lesson_slug = 2;
+  string user_code = 3;
+}
+
+message SectionSummary {
+  string slug = 1;
+  string title = 2;
+  int32 position = 3;
+  string kind = 4; // "TEXT" | "EXERCISE"
+  bool completed = 5;
+}
+
+message LessonDetailResponse {
+  string track_slug = 1;
+  string lesson_slug = 2;
+  string title = 3;
+  repeated SectionSummary sections = 4;
+}
+
+message GetSectionRequest {
+  string track_slug = 1;
+  string lesson_slug = 2;
+  string section_slug = 3;
+}
+
+message SectionDetailResponse {
+  string slug = 1;
+  string title = 2;
+  string kind = 3; // "TEXT" | "EXERCISE"
+  string content_markdown = 4;
+}
+
+message EnrollUserRequest {
+  string user_code = 1;
+  string track_slug = 2;
+}
+
+message EnrollmentResponse {
+  bool ok = 1;
+}
