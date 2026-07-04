@@ -5,6 +5,7 @@ import { gatewayGrpcClients } from "../../grpc/registry"
 import { AuthResolver } from "./auth.resolver"
 import { AuthService } from "./auth.service"
 import { GqlAuthGuard } from "./guards/gql-auth.guard"
+import { OptionalGqlAuthGuard } from "./guards/optional-gql-auth.guard"
 
 @Module({
   imports: [
@@ -18,6 +19,9 @@ import { GqlAuthGuard } from "./guards/gql-auth.guard"
       },
     }),
   ],
-  providers: [AuthService, AuthResolver, GqlAuthGuard],
+  providers: [AuthService, AuthResolver, GqlAuthGuard, OptionalGqlAuthGuard],
+  // JwtModule + guards são reexportados para módulos que protegem operações
+  // próprias (ex.: catalog) sem redeclarar a config de JWT.
+  exports: [JwtModule, GqlAuthGuard, OptionalGqlAuthGuard],
 })
 export class AuthModule {}

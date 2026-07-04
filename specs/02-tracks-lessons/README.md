@@ -7,10 +7,11 @@ Catálogo de conteúdo: trilhas → lições → seções (texto / exercício). 
 ### Backend (`apps/api/apps/core`)
 - ✅ Schema Prisma já modela `Track`, `Lesson`, `Section`, `Enrollment`, `LessonProgress` (`apps/api/apps/core/prisma/schema.prisma`).
 - ✅ Enum `SectionKind { TEXT, EXERCISE }`.
-- ❌ Nenhum módulo (`tracks`, `lessons`, `sections`) implementado.
-- ❌ Nenhum `.proto` para catálogo.
-- ❌ Nenhum seed/fixture inicial.
-- ❌ Nenhum loader de conteúdo (texto/markdown vive em filesystem ou DB? — decisão pendente).
+- ✅ Módulo `catalog` unificado (`modules/catalog/`): tracks + lessons + enrollments.
+- ✅ `catalog.proto` (`mio.catalog.v1`) em `@mio/grpc-contracts` (`src/catalog/`).
+- ✅ Conteúdo das seções no **Postgres** (`Section.contentMarkdown`) — markdown é formato de edição/renderização, nunca armazenamento em arquivo.
+- ✅ Seed `yarn seed:content` com fixtures inline (`apps/core/scripts/seed-fixtures.ts`) — trilha inicial `front-end`.
+- ✅ Gateway expõe queries `tracks/track/lesson/section` e mutation `enrollInTrack` (schema.gql regenerado).
 
 ### Frontend (`apps/web`)
 - ❌ Nenhuma página `/trilhas`, `/trilha/[slug]`, `/aula/[slug]`.
@@ -22,8 +23,8 @@ Catálogo de conteúdo: trilhas → lições → seções (texto / exercício). 
 1. CRUD **read-only para o aluno**: listar trilhas, ver detalhe da trilha (com lições), ver detalhe da lição (com seções).
 2. Enrollment: aluno se matricula numa trilha (idempotente).
 3. Renderização de seções `TEXT` (markdown) e `EXERCISE` (placeholder mínimo — exercício real vira spec própria no futuro).
-4. Conteúdo das seções referenciado por `contentPath` — primeira versão: arquivos `.md` em `apps/api/apps/core/content/<track>/<lesson>/<section>.md` lidos do disco.
-5. **Sem CMS de admin** nesta fase. Conteúdo entra via seed/migração.
+4. Conteúdo das seções em `Section.contentMarkdown` (`TEXT` no Postgres) — o banco é a fonte da verdade. Nesta fase o conteúdo entra via seed (`yarn seed:content`, fixtures inline); depois, pela interface de admin ([spec 09](../09-admin-content/)).
+5. **Sem CMS de admin** nesta fase (vira a [spec 09](../09-admin-content/)). Conteúdo entra via seed/migração.
 
 ## Contratos
 
@@ -138,35 +139,27 @@ extend type Mutation {
 }
 ```
 
-### Estrutura de conteúdo
+### Conteúdo inicial (fixtures de seed)
 
-```
-apps/api/apps/core/
-└── content/
-    └── front-end/                        # track slug
-        ├── track.json                    # { title, description }
-        └── intro-html/                   # lesson slug
-            ├── lesson.json               # { title, position }
-            └── 01-tags-basicas.md        # section (slug = "tags-basicas", position = 1, kind = TEXT)
-```
+O conteúdo de desenvolvimento/demonstração vive em `apps/api/apps/core/scripts/seed-fixtures.ts` como dados TypeScript (`TrackEntry[]`): cada trilha declara lições e seções com `slug`, `title`, `position`, `kind` e o `contentMarkdown` inline (template literal). `yarn seed:content` (ou `yarn docker:seed:content` no container) faz upsert idempotente no Postgres — reordenações são seguras e entradas removidas das fixtures geram apenas warning (não são apagadas, preservando progresso/matrículas).
 
-Script de seed lê essa árvore e popula Postgres na inicialização (`yarn seed:content`).
+Não existem arquivos de aula no repo nem em runtime: em produção o conteúdo será criado/editado pela interface de admin (spec 09) direto no banco.
 
 ## Tarefas
 
 ### Core
-- [ ] Criar `modules/tracks/tracks.module.ts`, `tracks.service.ts`, `tracks.controller.ts` (gRPC).
-- [ ] Criar `modules/lessons/lessons.module.ts` (idem) — opcionalmente unificado em `catalog.module.ts`.
-- [ ] Criar `modules/enrollments/enrollments.service.ts`.
-- [ ] Loader de conteúdo (`content-loader.service.ts`) que lê markdown via `fs.readFile` quando o `Section` é resolvido.
-- [ ] Script `scripts/seed-content.ts` que escaneia `apps/core/content/**` e faz upsert no DB.
+- [x] Criar módulos de tracks/lessons — **unificados em `modules/catalog/`** (`catalog.module.ts` + `catalog.controller.ts` gRPC + `tracks.service.ts` + `lessons.service.ts`).
+- [x] Criar `enrollments.service.ts` (no módulo catalog; matrícula idempotente via upsert).
+- [x] Conteúdo no banco: `Section.contentMarkdown` (`TEXT`), servido direto pelo `lessons.service.ts` — sem loader de filesystem.
+- [x] Script `apps/core/scripts/seed-content.ts` que faz upsert das fixtures de `seed-fixtures.ts` no DB (`yarn seed:content` / `yarn docker:seed:content`; reordenação segura, órfãos só geram warning).
 - [x] Indices: `Lesson.trackId+position` (já existe), validar `Section.lessonId+position` (já existe).
-- [ ] Testes unitários do service e e2e do seed.
+- [x] Testes unitários dos services e do seed (validação de fixtures + sync).
+- [ ] e2e do seed contra Postgres real no CI (validado manualmente; falta infra de DB no pipeline de teste).
 
 ### Gateway
-- [ ] `modules/catalog/catalog.module.ts` com `ClientGrpc` para `mio.catalog.v1`.
-- [ ] Resolvers `tracks`, `track`, `lesson`, `section`, `enrollInTrack`.
-- [ ] Guard de auth para `enrollInTrack` (precisa de `userCode`).
+- [x] `modules/catalog/catalog.module.ts` com `ClientGrpc` para `mio.catalog.v1`.
+- [x] Resolvers `tracks`, `track`, `lesson`, `section`, `enrollInTrack` (queries de detalhe devolvem `null` para not-found, conforme schema).
+- [x] Guard de auth para `enrollInTrack` (`GqlAuthGuard`); queries usam `OptionalGqlAuthGuard` — `userCode` opcional só personaliza `enrolled`/`completed`.
 
 ### Web
 - [ ] Página `/trilhas` (`app/(app)/trilhas/page.tsx`) — server component que chama `tracks` via GraphQL.
@@ -179,7 +172,7 @@ Script de seed lê essa árvore e popula Postgres na inicialização (`yarn seed
 
 ## Critérios de aceite
 
-- `yarn seed:content` popula Postgres a partir de pelo menos uma trilha em `content/` com 2 lições e 3 seções cada.
+- `yarn seed:content` popula Postgres a partir das fixtures com pelo menos uma trilha de 2 lições e 3 seções cada.
 - `query { tracks { slug title } }` retorna a trilha seedada.
 - Usuário logado consegue se matricular numa trilha pela UI; `enrolled` reflete true na próxima consulta.
 - Navegar para `/trilhas/<slug>/aula/<slug>` mostra título da lição, lista de seções e renderiza markdown da seção 1.
@@ -187,7 +180,7 @@ Script de seed lê essa árvore e popula Postgres na inicialização (`yarn seed
 
 ## Riscos & decisões em aberto
 
-- **Markdown no DB vs filesystem**: começamos com **filesystem** + git (versionado junto ao código). Mudar para DB só quando houver editor.
+- **Markdown no DB vs filesystem** — ✅ **decidido: DB** (`Section.contentMarkdown`). Aulas nunca entram via git/deploy: serão criadas por professores/admins pela interface (spec 09), e escrita em disco de container é efêmera e sem transação com a row. Markdown segue como **formato** de edição/renderização; a escolha do editor (markdown puro vs editor rico) fica para a spec 09.
 - **Exercícios interativos** (executar código no browser): grande escopo — vira spec própria.
 - **Trilha rota gating**: aluno pode acessar lição sem estar matriculado? Decisão inicial: **pode ler livremente**; matrícula só ativa progresso/XP.
 - **Internacionalização**: schema atual não suporta `locale`. Adicionar `Section.locale` quando virar requisito.

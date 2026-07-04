@@ -1,4 +1,8 @@
-import { type GrpcContract, usersContract } from "@mio/grpc-contracts"
+import {
+  catalogContract,
+  type GrpcContract,
+  usersContract,
+} from "@mio/grpc-contracts"
 import { type ClientProviderOptions, Transport } from "@nestjs/microservices"
 
 /**
@@ -16,6 +20,7 @@ type GrpcTarget = {
 
 const targets: GrpcTarget[] = [
   { contract: usersContract, host: "api-core", portEnv: "CORE_GRPC_PORT" },
+  { contract: catalogContract, host: "api-core", portEnv: "CORE_GRPC_PORT" },
 ]
 
 /** Garante que o contrato é consumível como cliente (tem token de injeção). */
@@ -27,6 +32,7 @@ function requireClientToken(contract: GrpcContract): string {
 }
 
 export const USERS_PACKAGE_TOKEN = requireClientToken(usersContract)
+export const CATALOG_PACKAGE_TOKEN = requireClientToken(catalogContract)
 
 export const gatewayGrpcClients: ClientProviderOptions[] = targets.map(
   ({ contract, host, portEnv }) => ({

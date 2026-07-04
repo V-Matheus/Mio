@@ -1,11 +1,15 @@
-import { healthContract, usersContract } from "@mio/grpc-contracts"
+import {
+  catalogContract,
+  healthContract,
+  usersContract,
+} from "@mio/grpc-contracts"
 
 /**
  * Registry agregador dos serviços gRPC expostos pelo Core. Os contratos vêm da
  * lib compartilhada `@mio/grpc-contracts` (única fonte de pacote + proto); o
  * `main.ts` consome os pacotes/protos como arrays.
  */
-const contracts = [healthContract, usersContract]
+const contracts = [healthContract, usersContract, catalogContract]
 
 export const coreGrpcRegistry = {
   package: contracts.map((contract) => contract.package),

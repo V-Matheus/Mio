@@ -7,12 +7,27 @@ type AuthPayload {
   user: User!
 }
 
+type LessonDetail {
+  lessonSlug: ID!
+  sections: [SectionSummary!]!
+  title: String!
+  trackSlug: ID!
+}
+
+type LessonSummary {
+  completed: Boolean!
+  position: Int!
+  slug: ID!
+  title: String!
+}
+
 input LoginInput {
   email: String!
   password: String!
 }
 
 type Mutation {
+  enrollInTrack(trackSlug: ID!): Boolean!
   login(input: LoginInput!): AuthPayload!
   register(input: RegisterInput!): AuthPayload!
   requestPasswordReset(email: String!): Boolean!
@@ -21,13 +36,54 @@ type Mutation {
 }
 
 type Query {
+  lesson(lessonSlug: ID!, trackSlug: ID!): LessonDetail
   me: User!
+  section(lessonSlug: ID!, sectionSlug: ID!, trackSlug: ID!): SectionDetail
+  track(slug: ID!): TrackDetail
+  tracks: [Track!]!
 }
 
 input RegisterInput {
   email: String!
   name: String!
   password: String!
+}
+
+type SectionDetail {
+  contentMarkdown: String!
+  kind: SectionKind!
+  slug: ID!
+  title: String!
+}
+
+"""Tipo de seção de uma lição"""
+enum SectionKind {
+  EXERCISE
+  TEXT
+}
+
+type SectionSummary {
+  completed: Boolean!
+  kind: SectionKind!
+  position: Int!
+  slug: ID!
+  title: String!
+}
+
+type Track {
+  description: String
+  enrolled: Boolean!
+  lessonCount: Int!
+  slug: ID!
+  title: String!
+}
+
+type TrackDetail {
+  description: String
+  enrolled: Boolean!
+  lessons: [LessonSummary!]!
+  slug: ID!
+  title: String!
 }
 
 input UpsertOAuthInput {
