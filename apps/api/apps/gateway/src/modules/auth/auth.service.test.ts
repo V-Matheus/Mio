@@ -3,7 +3,7 @@ import type { ClientGrpc } from "@nestjs/microservices"
 import { GraphQLError } from "graphql"
 import { of, throwError } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { AuthService } from "../../apps/gateway/src/modules/auth/auth.service"
+import { AuthService } from "./auth.service"
 
 const grpcUser = {
   code: "abc123",

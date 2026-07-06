@@ -16,6 +16,6 @@ export default defineConfig({
     root: path.resolve(import.meta.dirname),
     environment: "jsdom",
     setupFiles: ["@mio/testing-config/setup"],
-    include: ["tests/**/*.test.{ts,tsx}"],
+    include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"],
   },
 })

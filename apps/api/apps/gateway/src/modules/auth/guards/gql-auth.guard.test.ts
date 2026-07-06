@@ -3,7 +3,7 @@ import { GqlExecutionContext } from "@nestjs/graphql"
 import type { JwtService } from "@nestjs/jwt"
 import { GraphQLError } from "graphql"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { GqlAuthGuard } from "../../apps/gateway/src/modules/auth/guards/gql-auth.guard"
+import { GqlAuthGuard } from "./gql-auth.guard"
 
 /** Faz o `GqlExecutionContext.create(ctx).getContext().req` resolver para `req`. */
 function contextWithReq(req: unknown): ExecutionContext {

@@ -2,8 +2,8 @@ import { AuthProvider } from ".prisma/core"
 import { RpcException } from "@nestjs/microservices"
 import { hash } from "@node-rs/argon2"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { UserEventsPublisher } from "../../apps/core/src/modules/users/events/user-events.publisher"
-import { UsersService } from "../../apps/core/src/modules/users/users.service"
+import type { UserEventsPublisher } from "./events/user-events.publisher"
+import { UsersService } from "./users.service"
 
 type PrismaMock = {
   user: {

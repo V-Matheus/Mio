@@ -1,6 +1,6 @@
 import { SectionKind } from ".prisma/core"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { LessonsService } from "../../apps/core/src/modules/catalog/lessons.service"
+import { LessonsService } from "./lessons.service"
 
 type PrismaMock = {
   lesson: { findFirst: ReturnType<typeof vi.fn> }

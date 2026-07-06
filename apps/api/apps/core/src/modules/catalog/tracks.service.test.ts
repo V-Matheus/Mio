@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { TracksService } from "../../apps/core/src/modules/catalog/tracks.service"
+import { TracksService } from "./tracks.service"
 
 type PrismaMock = {
   track: {

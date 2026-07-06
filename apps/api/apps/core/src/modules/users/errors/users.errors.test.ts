@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest"
 import {
   type UserErrorCode,
   userError,
-} from "../../apps/core/src/modules/users/errors/users.errors"
+} from "./users.errors"
 
 const cases: Array<[UserErrorCode, number]> = [
   ["INVALID_CREDENTIALS", status.UNAUTHENTICATED],

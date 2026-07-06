@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { EnrollmentsService } from "../../apps/core/src/modules/catalog/enrollments.service"
+import { EnrollmentsService } from "./enrollments.service"
 
 type PrismaMock = {
   user: { findUnique: ReturnType<typeof vi.fn> }
