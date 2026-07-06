@@ -11,6 +11,6 @@ export default defineConfig({
     ...sharedConfig,
     name: "api",
     root: path.resolve(import.meta.dirname),
-    include: ["apps/**/*.test.ts", "tests/**/*.test.ts"],
+    include: ["tests/**/*.test.ts"],
   },
 })
