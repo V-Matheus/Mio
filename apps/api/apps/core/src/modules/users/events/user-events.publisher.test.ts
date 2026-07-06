@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 const { connect } = vi.hoisted(() => ({ connect: vi.fn() }))
 vi.mock("amqplib", () => ({ connect }))
 
-import { UserEventsPublisher } from "../../apps/core/src/modules/users/events/user-events.publisher"
+import { UserEventsPublisher } from "./user-events.publisher"
 
 function makeChannel() {
   return {

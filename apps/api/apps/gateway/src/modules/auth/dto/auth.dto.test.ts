@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { loginSchema } from "../../apps/gateway/src/modules/auth/dto/login.input"
-import { registerSchema } from "../../apps/gateway/src/modules/auth/dto/register.input"
-import { upsertOAuthSchema } from "../../apps/gateway/src/modules/auth/dto/upsert-oauth.input"
+import { loginSchema } from "./login.input"
+import { registerSchema } from "./register.input"
+import { upsertOAuthSchema } from "./upsert-oauth.input"
 
 describe("loginSchema", () => {
   it("aceita email válido e senha não-vazia", () => {

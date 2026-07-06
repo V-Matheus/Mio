@@ -1,7 +1,7 @@
 import { GraphQLError } from "graphql"
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
-import { ZodValidationPipe } from "../../apps/gateway/src/common/pipes/zod-validation.pipe"
+import { ZodValidationPipe } from "./zod-validation.pipe"
 
 const schema = z.object({
   email: z.email(),

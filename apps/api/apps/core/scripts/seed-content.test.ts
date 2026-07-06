@@ -1,11 +1,11 @@
 import { SectionKind } from ".prisma/core"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import type { TrackEntry } from "../../apps/core/scripts/seed-content"
+import type { TrackEntry } from "./seed-content"
 import {
   syncContent,
   validateFixtures,
-} from "../../apps/core/scripts/seed-content"
-import { catalogFixtures } from "../../apps/core/scripts/seed-fixtures"
+} from "./seed-content"
+import { catalogFixtures } from "./seed-fixtures"
 
 afterEach(() => vi.restoreAllMocks())
 

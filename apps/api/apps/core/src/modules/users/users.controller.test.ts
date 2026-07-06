@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
-import { UsersController } from "../../apps/core/src/modules/users/users.controller"
-import type { UsersService } from "../../apps/core/src/modules/users/users.service"
+import { UsersController } from "./users.controller"
+import type { UsersService } from "./users.service"
 
 function makeController() {
   const users = {

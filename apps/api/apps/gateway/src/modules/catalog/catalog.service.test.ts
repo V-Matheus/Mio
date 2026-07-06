@@ -2,8 +2,8 @@ import type { ClientGrpc } from "@nestjs/microservices"
 import type { GraphQLError } from "graphql"
 import { of, throwError } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
-import { CatalogService } from "../../apps/gateway/src/modules/catalog/catalog.service"
-import { SectionKind } from "../../apps/gateway/src/modules/catalog/models/section-kind.enum"
+import { CatalogService } from "./catalog.service"
+import { SectionKind } from "./models/section-kind.enum"
 
 function setup(catalogService: Record<string, unknown>) {
   const client = {

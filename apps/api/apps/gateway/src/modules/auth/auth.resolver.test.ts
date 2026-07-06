@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
-import { AuthResolver } from "../../apps/gateway/src/modules/auth/auth.resolver"
-import type { AuthService } from "../../apps/gateway/src/modules/auth/auth.service"
+import { AuthResolver } from "./auth.resolver"
+import type { AuthService } from "./auth.service"
 
 function makeResolver() {
   const auth = {

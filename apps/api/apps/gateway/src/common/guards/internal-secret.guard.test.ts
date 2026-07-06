@@ -2,7 +2,7 @@ import type { ExecutionContext } from "@nestjs/common"
 import { GqlExecutionContext } from "@nestjs/graphql"
 import { GraphQLError } from "graphql"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { InternalSecretGuard } from "../../apps/gateway/src/common/guards/internal-secret.guard"
+import { InternalSecretGuard } from "./internal-secret.guard"
 
 const SECRET = "s3cr3t"
 
