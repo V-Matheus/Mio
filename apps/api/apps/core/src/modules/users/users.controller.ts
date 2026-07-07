@@ -62,4 +62,12 @@ export class UsersController {
   }): Promise<UserResponse> {
     return this.users.consumePasswordReset(data.token, data.newPassword)
   }
+
+  @GrpcMethod(USERS_SERVICE, "UpdateUserRole")
+  updateUserRole(data: {
+    code: string
+    role: string
+  }): Promise<UserResponse> {
+    return this.users.updateUserRole(data.code, data.role)
+  }
 }

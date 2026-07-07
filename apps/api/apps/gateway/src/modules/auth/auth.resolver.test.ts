@@ -10,6 +10,7 @@ function makeResolver() {
     requestPasswordReset: vi.fn().mockResolvedValue(true),
     resetPassword: vi.fn().mockResolvedValue(true),
     me: vi.fn().mockResolvedValue({ code: "c" }),
+    updateUserRole: vi.fn().mockResolvedValue({}),
   }
   return { resolver: new AuthResolver(auth as unknown as AuthService), auth }
 }
@@ -58,5 +59,12 @@ describe("AuthResolver", () => {
     const { resolver, auth } = makeResolver()
     await resolver.me("user-1")
     expect(auth.me).toHaveBeenCalledWith("user-1")
+  })
+
+  it("updateUserRole delega userCode e role", async () => {
+    const { resolver, auth } = makeResolver()
+    const role = "ADMIN" as any
+    await resolver.updateUserRole("user-1", role)
+    expect(auth.updateUserRole).toHaveBeenCalledWith("user-1", role)
   })
 })

@@ -1,13 +1,16 @@
 import { UseGuards } from "@nestjs/common"
-import { Args, Mutation, Query, Resolver } from "@nestjs/graphql"
+import { Args, ID, Mutation, Query, Resolver } from "@nestjs/graphql"
 import { z } from "zod"
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe"
 import { AuthService } from "./auth.service"
+import { Roles } from "./decorators/roles.decorator"
 import { LoginInput, loginSchema } from "./dto/login.input"
 import { RegisterInput, registerSchema } from "./dto/register.input"
 import { UpsertOAuthInput, upsertOAuthSchema } from "./dto/upsert-oauth.input"
 import { CurrentUserCode, GqlAuthGuard } from "./guards/gql-auth.guard"
+import { RolesGuard } from "./guards/roles.guard"
 import { AuthPayload } from "./models/auth-payload.model"
+import { UserRole } from "./models/user-role.enum"
 import { User } from "./models/user.model"
 
 @Resolver(() => User)
@@ -61,5 +64,15 @@ export class AuthResolver {
   @UseGuards(GqlAuthGuard)
   me(@CurrentUserCode() userCode: string): Promise<User> {
     return this.auth.me(userCode)
+  }
+
+  @Mutation(() => User)
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles("ADMIN")
+  updateUserRole(
+    @Args("userCode", { type: () => ID }) userCode: string,
+    @Args("role", { type: () => UserRole }) role: UserRole,
+  ): Promise<User> {
+    return this.auth.updateUserRole(userCode, role)
   }
 }

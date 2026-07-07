@@ -105,6 +105,9 @@ describe("syncContent", () => {
     }
     const prisma = {
       track: { findMany: vi.fn().mockResolvedValue([]) },
+      role: { upsert: vi.fn().mockResolvedValue({ id: 100n }) },
+      user: { upsert: vi.fn().mockResolvedValue({ id: 1000n }) },
+      userRole: { upsert: vi.fn().mockResolvedValue({}) },
       $transaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
         callback(tx),
       ),
@@ -123,6 +126,7 @@ describe("syncContent", () => {
         slug: "front-end",
         title: "Front-end",
         description: "HTML e CSS",
+        creatorId: 1000n,
       },
       update: { title: "Front-end", description: "HTML e CSS" },
     })

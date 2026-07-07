@@ -10,6 +10,7 @@ service UsersService {
   rpc UpsertOAuthUser(UpsertOAuthRequest) returns (UserResponse);
   rpc IssuePasswordReset(IssuePasswordResetRequest) returns (PasswordResetTokenResponse);
   rpc ConsumePasswordReset(ConsumePasswordResetRequest) returns (UserResponse);
+  rpc UpdateUserRole(UpdateUserRoleRequest) returns (UserResponse);
 }
 
 message RegisterRequest {
@@ -48,11 +49,17 @@ message ConsumePasswordResetRequest {
   string new_password = 2;
 }
 
+message UpdateUserRoleRequest {
+  string code = 1;
+  string role = 2;
+}
+
 message UserResponse {
   string code = 1;
   string email = 2;
   string name = 3;
   string avatar_url = 4;
+  repeated string roles = 5;
 }
 
 message PasswordResetTokenResponse {

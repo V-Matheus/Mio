@@ -32,6 +32,7 @@ type Mutation {
   register(input: RegisterInput!): AuthPayload!
   requestPasswordReset(email: String!): Boolean!
   resetPassword(newPassword: String!, token: String!): Boolean!
+  updateUserRole(role: UserRole!, userCode: ID!): User!
   upsertOAuthUser(input: UpsertOAuthInput!): AuthPayload!
 }
 
@@ -99,4 +100,12 @@ type User {
   code: ID!
   email: String!
   name: String!
+  roles: [String!]!
+}
+
+"""Perfil de acesso do usuário"""
+enum UserRole {
+  ADMIN
+  STUDENT
+  TEACHER
 }

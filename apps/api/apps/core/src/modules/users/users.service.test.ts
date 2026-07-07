@@ -20,16 +20,35 @@ type PrismaMock = {
     create: ReturnType<typeof vi.fn>
     update: ReturnType<typeof vi.fn>
   }
+  role: {
+    upsert: ReturnType<typeof vi.fn>
+    findUnique: ReturnType<typeof vi.fn>
+  }
+  userRole: {
+    create: ReturnType<typeof vi.fn>
+    deleteMany: ReturnType<typeof vi.fn>
+    upsert: ReturnType<typeof vi.fn>
+  }
   $transaction: ReturnType<typeof vi.fn>
 }
 
+let prisma: PrismaMock
+
 function makePrisma(): PrismaMock {
-  return {
+  const mock: PrismaMock = {
     user: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
     userIdentity: { findUnique: vi.fn(), create: vi.fn() },
     passwordReset: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
-    $transaction: vi.fn(),
+    role: { upsert: vi.fn().mockResolvedValue({ id: 100n }), findUnique: vi.fn() },
+    userRole: { create: vi.fn(), deleteMany: vi.fn(), upsert: vi.fn() },
+    $transaction: vi.fn(async (cb) => {
+      if (typeof cb === "function") {
+        return cb(mock)
+      }
+      return cb
+    }),
   }
+  return mock
 }
 
 const baseUser = {
@@ -41,10 +60,10 @@ const baseUser = {
   passwordHash: null,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+  roles: [],
 }
 
 describe("UsersService", () => {
-  let prisma: PrismaMock
   let events: {
     userRegistered: ReturnType<typeof vi.fn>
     userPasswordResetRequested: ReturnType<typeof vi.fn>
@@ -84,16 +103,17 @@ describe("UsersService", () => {
       expect(data?.passwordHash).toMatch(/^\$argon2id\$/)
       expect(data?.identities.create.provider).toBe(AuthProvider.CREDENTIALS)
       expect(events.userRegistered).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userCode: baseUser.code,
-          email: baseUser.email,
-        }),
-      )
+          expect.objectContaining({
+            userCode: baseUser.code,
+            email: baseUser.email,
+          }),
+        )
       expect(result).toEqual({
         code: baseUser.code,
         email: baseUser.email,
         name: baseUser.name,
         avatarUrl: "",
+        roles: [],
       })
     })
   })
@@ -247,6 +267,37 @@ describe("UsersService", () => {
       await expect(
         service.upsertOAuthUser({ ...oauthInput, provider: "facebook" }),
       ).rejects.toBeInstanceOf(RpcException)
+    })
+  })
+
+  describe("updateUserRole", () => {
+    it("atualiza a role do usuário com sucesso", async () => {
+      prisma.user.findUnique
+        .mockResolvedValueOnce(baseUser)
+        .mockResolvedValueOnce({
+          ...baseUser,
+          roles: [{ role: { name: "TEACHER" } }],
+        })
+
+      const result = await service.updateUserRole(baseUser.code, "TEACHER")
+
+      expect(prisma.userRole.deleteMany).toHaveBeenCalledWith({
+        where: { userId: baseUser.id },
+      })
+      expect(prisma.userRole.create).toHaveBeenCalledWith({
+        data: {
+          userId: baseUser.id,
+          roleId: 100n,
+        },
+      })
+      expect(result.roles).toEqual(["TEACHER"])
+    })
+
+    it("lança erro se usuário não for encontrado", async () => {
+      prisma.user.findUnique.mockResolvedValue(null)
+      await expect(
+        service.updateUserRole("ghost", "TEACHER"),
+      ).rejects.toThrow("USER_NOT_FOUND")
     })
   })
 })

@@ -5,6 +5,7 @@ export interface GrpcUserResponse {
   email: string
   name: string
   avatarUrl: string
+  roles: string[]
 }
 
 export interface GrpcPasswordResetToken {
@@ -44,5 +45,10 @@ export interface UsersServiceClient {
   consumePasswordReset(data: {
     token: string
     newPassword: string
+  }): Observable<GrpcUserResponse>
+
+  updateUserRole(data: {
+    code: string
+    role: string
   }): Observable<GrpcUserResponse>
 }

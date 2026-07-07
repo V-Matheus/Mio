@@ -27,8 +27,9 @@ export class GqlAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = this.jwt.verify<{ sub: string }>(header.slice(7))
+      const payload = this.jwt.verify<{ sub: string; roles: string[] }>(header.slice(7))
       req.userCode = payload.sub
+      req.userRoles = payload.roles || []
       return true
     } catch {
       throw unauthenticated()
@@ -40,4 +41,10 @@ export class GqlAuthGuard implements CanActivate {
 export const CurrentUserCode = createParamDecorator(
   (_data: unknown, context: ExecutionContext): string =>
     GqlExecutionContext.create(context).getContext().req.userCode,
+)
+
+/** Injeta as `userRoles` resolvidas pelo `GqlAuthGuard`. */
+export const CurrentUserRoles = createParamDecorator(
+  (_data: unknown, context: ExecutionContext): string[] =>
+    GqlExecutionContext.create(context).getContext().req.userRoles || [],
 )

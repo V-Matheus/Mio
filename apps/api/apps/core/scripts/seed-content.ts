@@ -86,6 +86,37 @@ export async function syncContent(
 ): Promise<SyncSummary> {
   const summary: SyncSummary = { tracks: 0, lessons: 0, sections: 0 }
 
+  // 1. Garantir que as roles padrões existam
+  await prisma.role.upsert({ where: { name: "STUDENT" }, update: {}, create: { name: "STUDENT" } })
+  await prisma.role.upsert({ where: { name: "TEACHER" }, update: {}, create: { name: "TEACHER" } })
+  const adminRole = await prisma.role.upsert({ where: { name: "ADMIN" }, update: {}, create: { name: "ADMIN" } })
+
+  // 2. Garantir o administrador do sistema
+  const defaultAdmin = await prisma.user.upsert({
+    where: { code: "system-admin" },
+    update: {},
+    create: {
+      code: "system-admin",
+      email: "admin@mio.dev",
+      name: "System Admin",
+    },
+  })
+
+  // 3. Associar admin com a role ADMIN
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
+        userId: defaultAdmin.id,
+        roleId: adminRole.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: defaultAdmin.id,
+      roleId: adminRole.id,
+    },
+  })
+
   await warnOrphanTracks(prisma, tracks)
 
   for (const track of tracks) {
@@ -96,6 +127,7 @@ export async function syncContent(
           slug: track.slug,
           title: track.title,
           description: track.description,
+          creatorId: defaultAdmin.id,
         },
         update: { title: track.title, description: track.description },
       })

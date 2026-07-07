@@ -29,10 +29,33 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  roles          UserRole[]
+  createdTracks  Track[]          @relation("TrackCreator")
   enrollments    Enrollment[]
   progress       LessonProgress[]
   identities     UserIdentity[]
   passwordResets PasswordReset[]
+}
+
+model Role {
+  id        BigInt     @id @default(autoincrement())
+  name      String     @unique // "STUDENT", "TEACHER", "ADMIN"
+  createdAt DateTime   @default(now())
+  
+  users     UserRole[]
+}
+
+model UserRole {
+  userId    BigInt
+  roleId    BigInt
+  createdAt DateTime   @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
 }
 
 model UserIdentity {
@@ -66,11 +89,15 @@ model Track {
   slug        String   @unique
   title       String
   description String?
+  creatorId   BigInt
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  creator     User     @relation("TrackCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   lessons     Lesson[]
   enrollments Enrollment[]
+
+  @@index([creatorId])
 }
 
 model Lesson {

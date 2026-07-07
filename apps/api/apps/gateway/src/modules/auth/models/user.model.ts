@@ -13,4 +13,7 @@ export class User {
 
   @Field(() => String, { nullable: true })
   avatarUrl!: string | null
+
+  @Field(() => [String])
+  roles!: string[]
 }

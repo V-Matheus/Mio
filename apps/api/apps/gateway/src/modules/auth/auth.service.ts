@@ -78,9 +78,19 @@ export class AuthService implements OnModuleInit {
     return toUser(user)
   }
 
+  async updateUserRole(code: string, role: string): Promise<User> {
+    const user = await this.call(
+      this.usersService.updateUserRole({ code, role }),
+    )
+    return toUser(user)
+  }
+
   private toAuthPayload(user: GrpcUserResponse): AuthPayload {
     return {
-      accessToken: this.jwt.sign({ sub: user.code }),
+      accessToken: this.jwt.sign({
+        sub: user.code,
+        roles: user.roles || [],
+      }),
       user: toUser(user),
     }
   }
@@ -100,6 +110,7 @@ function toUser(user: GrpcUserResponse): User {
     email: user.email,
     name: user.name,
     avatarUrl: user.avatarUrl || null,
+    roles: user.roles || [],
   }
 }
 
