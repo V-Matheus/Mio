@@ -80,6 +80,9 @@ export function validateFixtures(tracks: TrackEntry[]): void {
   }
 }
 
+const DEV_ADMIN_PASSWORD_HASH =
+  "$argon2id$v=19$m=19456,t=2,p=1$nesRkCPScwWFogKUGOmYRA$ok+cy+qOYlpzBfEsodP/k5eQ/I7u7cuQggEZS4sy16I"
+
 export async function syncContent(
   prisma: PrismaClient,
   tracks: TrackEntry[],
@@ -87,18 +90,32 @@ export async function syncContent(
   const summary: SyncSummary = { tracks: 0, lessons: 0, sections: 0 }
 
   // 1. Garantir que as roles padrões existam
-  await prisma.role.upsert({ where: { name: "STUDENT" }, update: {}, create: { name: "STUDENT" } })
-  await prisma.role.upsert({ where: { name: "TEACHER" }, update: {}, create: { name: "TEACHER" } })
-  const adminRole = await prisma.role.upsert({ where: { name: "ADMIN" }, update: {}, create: { name: "ADMIN" } })
+  await prisma.role.upsert({
+    where: { name: "STUDENT" },
+    update: {},
+    create: { name: "STUDENT" },
+  })
+  await prisma.role.upsert({
+    where: { name: "TEACHER" },
+    update: {},
+    create: { name: "TEACHER" },
+  })
+  const adminRole = await prisma.role.upsert({
+    where: { name: "ADMIN" },
+    update: {},
+    create: { name: "ADMIN" },
+  })
 
   // 2. Garantir o administrador do sistema
   const defaultAdmin = await prisma.user.upsert({
     where: { code: "system-admin" },
-    update: {},
+    // update também garante a senha em admins já criados sem passwordHash
+    update: { passwordHash: DEV_ADMIN_PASSWORD_HASH },
     create: {
       code: "system-admin",
       email: "admin@mio.dev",
       name: "System Admin",
+      passwordHash: DEV_ADMIN_PASSWORD_HASH,
     },
   })
 
