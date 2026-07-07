@@ -11,6 +11,15 @@ service UsersService {
   rpc IssuePasswordReset(IssuePasswordResetRequest) returns (PasswordResetTokenResponse);
   rpc ConsumePasswordReset(ConsumePasswordResetRequest) returns (UserResponse);
   rpc UpdateUserRole(UpdateUserRoleRequest) returns (UserResponse);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+}
+
+message ListUsersRequest {
+  string search = 1;
+}
+
+message ListUsersResponse {
+  repeated UserResponse users = 1;
 }
 
 message RegisterRequest {

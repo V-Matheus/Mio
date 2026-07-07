@@ -12,6 +12,7 @@ function makeController() {
     issuePasswordReset: vi.fn().mockResolvedValue({ token: "", expiresAt: "" }),
     consumePasswordReset: vi.fn().mockResolvedValue({}),
     updateUserRole: vi.fn().mockResolvedValue({}),
+    listUsers: vi.fn().mockResolvedValue([]),
   }
   return {
     controller: new UsersController(users as unknown as UsersService),
@@ -74,5 +75,11 @@ describe("UsersController", () => {
     const { controller, users } = makeController()
     await controller.updateUserRole({ code: "c1", role: "ADMIN" })
     expect(users.updateUserRole).toHaveBeenCalledWith("c1", "ADMIN")
+  })
+
+  it("listUsers desempacota o search", async () => {
+    const { controller, users } = makeController()
+    await controller.listUsers({ search: "john" })
+    expect(users.listUsers).toHaveBeenCalledWith("john")
   })
 })

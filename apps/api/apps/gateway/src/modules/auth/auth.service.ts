@@ -78,6 +78,13 @@ export class AuthService implements OnModuleInit {
     return toUser(user)
   }
 
+  async listUsers(search?: string): Promise<User[]> {
+    const { users } = await this.call(
+      this.usersService.listUsers({ search: search ?? "" }),
+    )
+    return users.map(toUser)
+  }
+
   async updateUserRole(code: string, role: string): Promise<User> {
     const user = await this.call(
       this.usersService.updateUserRole({ code, role }),

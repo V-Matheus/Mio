@@ -38,6 +38,7 @@ type Mutation {
 
 type Query {
   lesson(lessonSlug: ID!, trackSlug: ID!): LessonDetail
+  listUsers(search: String): [User!]!
   me: User!
   section(lessonSlug: ID!, sectionSlug: ID!, trackSlug: ID!): SectionDetail
   track(slug: ID!): TrackDetail

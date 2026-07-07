@@ -10,6 +10,7 @@ type PrismaMock = {
     findUnique: ReturnType<typeof vi.fn>
     create: ReturnType<typeof vi.fn>
     update: ReturnType<typeof vi.fn>
+    findMany: ReturnType<typeof vi.fn>
   }
   userIdentity: {
     findUnique: ReturnType<typeof vi.fn>
@@ -36,10 +37,18 @@ let prisma: PrismaMock
 
 function makePrisma(): PrismaMock {
   const mock: PrismaMock = {
-    user: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+    user: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      findMany: vi.fn(),
+    },
     userIdentity: { findUnique: vi.fn(), create: vi.fn() },
     passwordReset: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
-    role: { upsert: vi.fn().mockResolvedValue({ id: 100n }), findUnique: vi.fn() },
+    role: {
+      upsert: vi.fn().mockResolvedValue({ id: 100n }),
+      findUnique: vi.fn(),
+    },
     userRole: { create: vi.fn(), deleteMany: vi.fn(), upsert: vi.fn() },
     $transaction: vi.fn(async (cb) => {
       if (typeof cb === "function") {
@@ -103,11 +112,11 @@ describe("UsersService", () => {
       expect(data?.passwordHash).toMatch(/^\$argon2id\$/)
       expect(data?.identities.create.provider).toBe(AuthProvider.CREDENTIALS)
       expect(events.userRegistered).toHaveBeenCalledWith(
-          expect.objectContaining({
-            userCode: baseUser.code,
-            email: baseUser.email,
-          }),
-        )
+        expect.objectContaining({
+          userCode: baseUser.code,
+          email: baseUser.email,
+        }),
+      )
       expect(result).toEqual({
         code: baseUser.code,
         email: baseUser.email,
@@ -295,9 +304,34 @@ describe("UsersService", () => {
 
     it("lança erro se usuário não for encontrado", async () => {
       prisma.user.findUnique.mockResolvedValue(null)
-      await expect(
-        service.updateUserRole("ghost", "TEACHER"),
-      ).rejects.toThrow("USER_NOT_FOUND")
+      await expect(service.updateUserRole("ghost", "TEACHER")).rejects.toThrow(
+        "USER_NOT_FOUND",
+      )
+    })
+  })
+
+  describe("listUsers", () => {
+    it("lista e filtra usuários no banco", async () => {
+      prisma.user.findMany.mockResolvedValue([
+        { ...baseUser, name: "Ana Silva", email: "ana@example.com" },
+        { ...baseUser, name: "Lucas Troll", email: "lucas@example.com" },
+      ])
+
+      const result = await service.listUsers("example")
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              { name: { contains: "example", mode: "insensitive" } },
+              { email: { contains: "example", mode: "insensitive" } },
+            ],
+          },
+        }),
+      )
+      expect(result).toHaveLength(2)
+      expect(result[0]?.name).toBe("Ana Silva")
+      expect(result[1]?.name).toBe("Lucas Troll")
     })
   })
 })

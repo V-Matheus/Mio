@@ -51,4 +51,8 @@ export interface UsersServiceClient {
     code: string
     role: string
   }): Observable<GrpcUserResponse>
+
+  listUsers(data: {
+    search?: string
+  }): Observable<{ users: GrpcUserResponse[] }>
 }

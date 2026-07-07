@@ -10,8 +10,8 @@ import { UpsertOAuthInput, upsertOAuthSchema } from "./dto/upsert-oauth.input"
 import { CurrentUserCode, GqlAuthGuard } from "./guards/gql-auth.guard"
 import { RolesGuard } from "./guards/roles.guard"
 import { AuthPayload } from "./models/auth-payload.model"
-import { UserRole } from "./models/user-role.enum"
 import { User } from "./models/user.model"
+import { UserRole } from "./models/user-role.enum"
 
 @Resolver(() => User)
 export class AuthResolver {
@@ -74,5 +74,14 @@ export class AuthResolver {
     @Args("role", { type: () => UserRole }) role: UserRole,
   ): Promise<User> {
     return this.auth.updateUserRole(userCode, role)
+  }
+
+  @Query(() => [User])
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles("ADMIN")
+  listUsers(
+    @Args("search", { type: () => String, nullable: true }) search?: string,
+  ): Promise<User[]> {
+    return this.auth.listUsers(search)
   }
 }

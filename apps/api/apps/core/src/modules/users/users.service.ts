@@ -288,6 +288,22 @@ export class UsersService {
 
     return toUserResponse(updatedUser)
   }
+
+  async listUsers(search?: string): Promise<UserResponse[]> {
+    const users = await this.prisma.user.findMany({
+      where: search
+        ? {
+            OR: [
+              { name: { contains: search, mode: "insensitive" } },
+              { email: { contains: search, mode: "insensitive" } },
+            ],
+          }
+        : {},
+      include: INCLUDE_ROLES,
+      orderBy: { createdAt: "desc" },
+    })
+    return users.map(toUserResponse)
+  }
 }
 
 function toUserResponse(user: UserWithRoles): UserResponse {
