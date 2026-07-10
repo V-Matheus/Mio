@@ -1,9 +1,12 @@
 import { gatewayError, getGatewayClient } from "@/lib/gateway/client"
+import type { UserRole } from "@/lib/gql/generated/graphql"
 import {
+  LIST_USERS_QUERY,
   LOGIN_MUTATION,
   ME_QUERY,
   REGISTER_MUTATION,
   REQUEST_PASSWORD_RESET_MUTATION,
+  UPDATE_USER_ROLE_MUTATION,
   UPSERT_OAUTH_MUTATION,
 } from "./graphql"
 import type { ForgotPasswordInput, LoginInput, RegisterInput } from "./schemas"
@@ -11,6 +14,7 @@ import type {
   ForgotPasswordResult,
   LoginResult,
   MeResult,
+  MeUser,
   RegisterResult,
   UpsertOAuthInput,
   UpsertOAuthResult,
@@ -44,7 +48,7 @@ export const authService = {
     } catch (error) {
       return {
         ok: false,
-        error: gatewayError(error, "Falha no cadastro"),
+        error: gatewayError(error, "Falha ao cadastrar"),
       }
     }
   },
@@ -76,6 +80,55 @@ export const authService = {
       return {
         ok: false,
         error: gatewayError(error, "Falha ao carregar usuário"),
+      }
+    }
+  },
+
+  async listUsers(
+    accessToken: string,
+    search?: string,
+  ): Promise<{ ok: true; users: MeUser[] } | { ok: false; error: string }> {
+    if (!accessToken) {
+      return { ok: false, error: "Missing access token" }
+    }
+    try {
+      const { listUsers } = await getGatewayClient(accessToken).request(
+        LIST_USERS_QUERY,
+        { search },
+      )
+      return {
+        ok: true,
+        users: listUsers.map((u) => ({
+          ...u,
+          avatarUrl: u.avatarUrl ?? null,
+        })),
+      }
+    } catch (error) {
+      return {
+        ok: false,
+        error: gatewayError(error, "Falha ao carregar usuários"),
+      }
+    }
+  },
+
+  async updateUserRole(
+    accessToken: string,
+    userCode: string,
+    role: string,
+  ): Promise<{ ok: true } | { ok: false; error: string }> {
+    if (!accessToken) {
+      return { ok: false, error: "Missing access token" }
+    }
+    try {
+      await getGatewayClient(accessToken).request(UPDATE_USER_ROLE_MUTATION, {
+        userCode,
+        role: role as UserRole,
+      })
+      return { ok: true }
+    } catch (error) {
+      return {
+        ok: false,
+        error: gatewayError(error, "Falha ao atualizar papel do usuário"),
       }
     }
   },

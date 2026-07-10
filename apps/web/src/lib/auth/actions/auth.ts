@@ -162,3 +162,25 @@ export async function forgotPasswordAction(
       "Se o email estiver cadastrado, você receberá um link de recuperação em instantes.",
   }
 }
+
+export async function updateUserRoleAction(
+  userCode: string,
+  role: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const session = await auth()
+  if (!session?.accessToken || !session.user?.roles?.includes("ADMIN")) {
+    return { ok: false, error: "Não autorizado" }
+  }
+
+  const result = await authService.updateUserRole(
+    session.accessToken,
+    userCode,
+    role,
+  )
+
+  if (!result.ok) {
+    return { ok: false, error: result.error }
+  }
+
+  return { ok: true }
+}

@@ -1,5 +1,7 @@
+export { LIST_USERS_QUERY } from "./list-users"
 export { LOGIN_MUTATION } from "./login"
 export { ME_QUERY } from "./me"
 export { REGISTER_MUTATION } from "./register"
 export { REQUEST_PASSWORD_RESET_MUTATION } from "./request-password-reset"
+export { UPDATE_USER_ROLE_MUTATION } from "./update-user-role"
 export { UPSERT_OAUTH_MUTATION } from "./upsert-oauth"

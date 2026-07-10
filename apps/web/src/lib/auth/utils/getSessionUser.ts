@@ -12,6 +12,8 @@ export type SessionUser = {
   name: string | null
   email: string
   image: string | null
+  roles: string[]
+  role: string
 }
 
 /**
@@ -33,12 +35,21 @@ export async function getSessionUser(options?: {
 }): Promise<SessionUser | null> {
   const session = await auth()
 
+  const userRoles = session?.user?.roles || []
+  const priorityRole = userRoles.includes("ADMIN")
+    ? "ADMIN"
+    : userRoles.includes("TEACHER")
+      ? "TEACHER"
+      : "STUDENT"
+
   const user: SessionUser | null = session?.user
     ? {
         id: session.user.id,
         name: session.user.name ?? null,
         email: session.user.email ?? "",
         image: session.user.image ?? null,
+        roles: userRoles,
+        role: priorityRole,
       }
     : null
 

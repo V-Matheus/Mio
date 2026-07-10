@@ -48,30 +48,37 @@ export function Sidebar({ user, open = false, onNavigate }: SidebarProps) {
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 px-3 py-4">
-          {navItems.map((item) => {
-            const isActive =
-              pathname === item.href || pathname.startsWith(`${item.href}/`)
+          {navItems
+            .filter((item) => {
+              if (!item.roles) return true
+              return (user.roles || []).some((r) => item.roles?.includes(r))
+            })
+            .map((item) => {
+              const isActive =
+                pathname === item.href || pathname.startsWith(`${item.href}/`)
 
-            const classes = [
-              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-              isActive
-                ? "bg-primary/15 text-primary"
-                : "text-foreground/70 hover:bg-background hover:text-primary",
-            ].join(" ")
+              const classes = [
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                item.disabled
+                  ? "pointer-events-none opacity-50 text-foreground/40"
+                  : isActive
+                    ? "bg-primary/15 text-primary"
+                    : "text-foreground/70 hover:bg-background hover:text-primary",
+              ].join(" ")
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onNavigate}
-                aria-current={isActive ? "page" : undefined}
-                className={classes}
-              >
-                <Icon icon={item.icon} width={20} height={20} />
-                {item.label}
-              </Link>
-            )
-          })}
+              return (
+                <Link
+                  key={item.href}
+                  href={item.disabled ? "#" : item.href}
+                  onClick={item.disabled ? undefined : onNavigate}
+                  aria-current={isActive ? "page" : undefined}
+                  className={classes}
+                >
+                  <Icon icon={item.icon} width={20} height={20} />
+                  {item.label}
+                </Link>
+              )
+            })}
         </nav>
 
         <SidebarUser user={user} />

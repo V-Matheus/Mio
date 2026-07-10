@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { AuthResolver } from "./auth.resolver"
 import type { AuthService } from "./auth.service"
+import { UserRole } from "./models/user-role.enum"
 
 function makeResolver() {
   const auth = {
@@ -64,7 +65,7 @@ describe("AuthResolver", () => {
 
   it("updateUserRole delega userCode e role", async () => {
     const { resolver, auth } = makeResolver()
-    const role = "ADMIN" as any
+    const role = UserRole.ADMIN
     await resolver.updateUserRole("user-1", role)
     expect(auth.updateUserRole).toHaveBeenCalledWith("user-1", role)
   })
