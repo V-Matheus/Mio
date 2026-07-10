@@ -80,8 +80,13 @@ export function validateFixtures(tracks: TrackEntry[]): void {
   }
 }
 
-const DEV_ADMIN_PASSWORD_HASH =
-  "$argon2id$v=19$m=19456,t=2,p=1$nesRkCPScwWFogKUGOmYRA$ok+cy+qOYlpzBfEsodP/k5eQ/I7u7cuQggEZS4sy16I"
+const DEV_ADMIN_PASSWORD_HASH = process.env.DEV_ADMIN_PASSWORD_HASH
+
+if (!DEV_ADMIN_PASSWORD_HASH) {
+  throw new Error(
+    "A variável de ambiente DEV_ADMIN_PASSWORD_HASH é obrigatória para executar o seed.",
+  )
+}
 
 export async function syncContent(
   prisma: PrismaClient,

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { AvatarImage, AvatarWrapper } from "@/components/avatar"
 import { CardWrapper } from "@/components/card/card-wrapper"
 import { Icon } from "@/components/icon"
@@ -20,6 +20,36 @@ export function AdminDashboardClient({
   const [updatingCode, setUpdatingCode] = useState<string | null>(null)
   const [, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
+  const firstItemRef = useRef<HTMLButtonElement | null>(null)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setActiveDropdown(null)
+      }
+    }
+
+    if (activeDropdown) {
+      document.addEventListener("keydown", handleKeyDown)
+      const focusTimeout = setTimeout(() => {
+        firstItemRef.current?.focus()
+      }, 0)
+
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown)
+        clearTimeout(focusTimeout)
+      }
+    }
+  }, [activeDropdown])
+
+  useEffect(() => {
+    if (!activeDropdown && triggerRef.current) {
+      triggerRef.current.focus()
+      triggerRef.current = null
+    }
+  }, [activeDropdown])
 
   // Filtro de busca local instantâneo
   const filteredUsers = useMemo(() => {
@@ -245,13 +275,14 @@ export function AdminDashboardClient({
                           <div className="inline-block text-left">
                             <button
                               type="button"
-                              onClick={() =>
+                              onClick={(e) => {
+                                triggerRef.current = e.currentTarget
                                 setActiveDropdown(
                                   activeDropdown === user.code
                                     ? null
                                     : user.code,
                                 )
-                              }
+                              }}
                               className="inline-flex size-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-50 hover:text-zinc-600 transition-all focus:outline-none focus:ring-2 focus:ring-zinc-100"
                               aria-label="Ações do usuário"
                             >
@@ -271,6 +302,7 @@ export function AdminDashboardClient({
                                 />
                                 <div className="absolute right-6 mt-1 z-50 w-44 rounded-2xl border border-zinc-100 bg-white p-1.5 shadow-lg shadow-zinc-200/30 outline-none animate-in fade-in slide-in-from-top-1 duration-100">
                                   <button
+                                    ref={firstItemRef}
                                     type="button"
                                     onClick={() =>
                                       handleRoleUpdate(user.code, "ADMIN")
