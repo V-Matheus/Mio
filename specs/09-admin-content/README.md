@@ -44,7 +44,7 @@ graph TD
 
 ### Alterações no Prisma Schema
 
-Para suportar múltiplos perfis de forma escalável e segura, utilizaremos tabelas separadas para `Role` e `UserRole` (relação Many-to-Many). As mudanças necessárias em [schema.prisma](file:///home/victor-sousa/dev/tads/Mio/apps/api/apps/core/prisma/schema.prisma) são:
+Para suportar múltiplos perfis de forma escalável e segura, utilizaremos tabelas separadas para `Role` e `UserRole` (relação Many-to-Many). As mudanças necessárias em [schema.prisma](../../apps/api/apps/core/prisma/schema.prisma) são:
 
 ```prisma
 model User {
@@ -350,13 +350,13 @@ Toda a área de administração deve ficar sob `/admin` e utilizar um layout esp
 ## Plano de Execução & Tarefas
 
 ### Fase 1: Banco de Dados & Autenticação
-- [x] Criar migration para adicionar tabelas `Role` e `UserRole` e estabelecer relações no [schema.prisma](file:///home/victor-sousa/dev/tads/Mio/apps/api/apps/core/prisma/schema.prisma).
-- [x] Adicionar coluna `creatorId` e índice em `Track` no [schema.prisma](file:///home/victor-sousa/dev/tads/Mio/apps/api/apps/core/prisma/schema.prisma).
+- [x] Criar migration para adicionar tabelas `Role` e `UserRole` e estabelecer relações no [schema.prisma](../../apps/api/apps/core/prisma/schema.prisma).
+- [x] Adicionar coluna `creatorId` e índice em `Track` no [schema.prisma](../../apps/api/apps/core/prisma/schema.prisma).
 - [x] Atualizar o token JWT no NextAuth para propagar as `roles` do usuário.
 - [x] Implementar a lógica de propagação das `roles` na query GraphQL `me`.
 
 ### Fase 2: gRPC & Core Business Logic
-- [ ] Criar o arquivo de contrato [catalog-admin.proto](file:///home/victor-sousa/dev/tads/Mio/packages/grpc-contracts/src/catalog/catalog-admin.proto).
+- [ ] Criar o arquivo de contrato [catalog-admin.proto](../../packages/grpc-contracts/src/catalog/catalog-admin.proto).
 - [ ] Gerar as tipagens de gRPC para o novo contrato e registrar o client.
 - [ ] Implementar o `CatalogAdminController` e `CatalogAdminService` no Core.
 - [ ] Escrever validações de propriedade: verificar se `creatorId` da trilha é igual ao do requisitante antes de qualquer operação de escrita ou leitura administrativa se o requisitante for `TEACHER`.
