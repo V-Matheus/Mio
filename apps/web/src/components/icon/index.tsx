@@ -12,9 +12,15 @@ import deviconTypescript from "@iconify-icons/devicon/typescript"
 import logosGoogleIcon from "@iconify-icons/logos/google-icon"
 import lucideBookOpen from "@iconify-icons/lucide/book-open"
 import lucideChevronUp from "@iconify-icons/lucide/chevron-up"
+import lucideFeather from "@iconify-icons/lucide/feather"
+import lucideGamepad2 from "@iconify-icons/lucide/gamepad-2"
 import lucideHome from "@iconify-icons/lucide/home"
 import lucideLogOut from "@iconify-icons/lucide/log-out"
 import lucideMenu from "@iconify-icons/lucide/menu"
+import lucideMessageSquare from "@iconify-icons/lucide/message-square"
+import lucideMoreVertical from "@iconify-icons/lucide/more-vertical"
+import lucideSearch from "@iconify-icons/lucide/search"
+import lucideShieldAlert from "@iconify-icons/lucide/shield-alert"
 import lucideUser from "@iconify-icons/lucide/user"
 import mdiAccountGroupOutline from "@iconify-icons/mdi/account-group-outline"
 import mdiAccountStarOutline from "@iconify-icons/mdi/account-star-outline"
@@ -78,9 +84,15 @@ const registry: Record<string, IconProps["icon"]> = {
   "logos:google-icon": logosGoogleIcon,
   "lucide:book-open": lucideBookOpen,
   "lucide:chevron-up": lucideChevronUp,
+  "lucide:feather": lucideFeather,
+  "lucide:gamepad-2": lucideGamepad2,
   "lucide:home": lucideHome,
   "lucide:log-out": lucideLogOut,
   "lucide:menu": lucideMenu,
+  "lucide:message-square": lucideMessageSquare,
+  "lucide:more-vertical": lucideMoreVertical,
+  "lucide:search": lucideSearch,
+  "lucide:shield-alert": lucideShieldAlert,
   "lucide:user": lucideUser,
   "mdi:account-group-outline": mdiAccountGroupOutline,
   "mdi:account-star-outline": mdiAccountStarOutline,

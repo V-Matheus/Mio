@@ -31,7 +31,7 @@
     "prisma:migrate:deploy": "for s in core gamification achievements; do prisma migrate deploy --schema=apps/$s/prisma/schema.prisma || exit 1; done",
     "docker:prisma:migrate:dev": "docker compose -p mio-dev -f ../../docker-compose.dev.yml exec api-core yarn workspace @mio/api prisma:migrate:dev",
     "docker:prisma:migrate:deploy": "docker compose -p mio-dev -f ../../docker-compose.dev.yml exec api-core yarn workspace @mio/api prisma:migrate:deploy",
-    "seed:content": "tsx apps/core/scripts/seed-content.ts",
+    "seed:content": "dotenv -e .env tsx apps/core/scripts/seed-content.ts",
     "docker:seed:content": "docker compose -p mio-dev -f ../../docker-compose.dev.yml exec api-core yarn workspace @mio/api seed:content",
     "prisma:studio:core": "dotenv -e .env -- sh -c 'CORE_DATABASE_URL=postgresql://$CORE_POSTGRES_USER:$CORE_POSTGRES_PASSWORD@localhost:$CORE_POSTGRES_PORT/$CORE_POSTGRES_DB prisma studio --schema=apps/core/prisma/schema.prisma --port 5555'",
     "prisma:studio:gamification": "dotenv -e .env -- sh -c 'GAMIFICATION_DATABASE_URL=postgresql://$GAMIFICATION_POSTGRES_USER:$GAMIFICATION_POSTGRES_PASSWORD@localhost:$GAMIFICATION_POSTGRES_PORT/$GAMIFICATION_POSTGRES_DB prisma studio --schema=apps/gamification/prisma/schema.prisma --port 5556'",

@@ -80,11 +80,64 @@ export function validateFixtures(tracks: TrackEntry[]): void {
   }
 }
 
+const DEV_ADMIN_PASSWORD_HASH = process.env.DEV_ADMIN_PASSWORD_HASH
+
+if (!DEV_ADMIN_PASSWORD_HASH) {
+  throw new Error(
+    "A variável de ambiente DEV_ADMIN_PASSWORD_HASH é obrigatória para executar o seed.",
+  )
+}
+
 export async function syncContent(
   prisma: PrismaClient,
   tracks: TrackEntry[],
 ): Promise<SyncSummary> {
   const summary: SyncSummary = { tracks: 0, lessons: 0, sections: 0 }
+
+  // 1. Garantir que as roles padrões existam
+  await prisma.role.upsert({
+    where: { name: "STUDENT" },
+    update: {},
+    create: { name: "STUDENT" },
+  })
+  await prisma.role.upsert({
+    where: { name: "TEACHER" },
+    update: {},
+    create: { name: "TEACHER" },
+  })
+  const adminRole = await prisma.role.upsert({
+    where: { name: "ADMIN" },
+    update: {},
+    create: { name: "ADMIN" },
+  })
+
+  // 2. Garantir o administrador do sistema
+  const defaultAdmin = await prisma.user.upsert({
+    where: { code: "system-admin" },
+    // update também garante a senha em admins já criados sem passwordHash
+    update: { passwordHash: DEV_ADMIN_PASSWORD_HASH },
+    create: {
+      code: "system-admin",
+      email: "admin@mio.dev",
+      name: "System Admin",
+      passwordHash: DEV_ADMIN_PASSWORD_HASH,
+    },
+  })
+
+  // 3. Associar admin com a role ADMIN
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
+        userId: defaultAdmin.id,
+        roleId: adminRole.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: defaultAdmin.id,
+      roleId: adminRole.id,
+    },
+  })
 
   await warnOrphanTracks(prisma, tracks)
 
@@ -96,6 +149,7 @@ export async function syncContent(
           slug: track.slug,
           title: track.title,
           description: track.description,
+          creatorId: defaultAdmin.id,
         },
         update: { title: track.title, description: track.description },
       })

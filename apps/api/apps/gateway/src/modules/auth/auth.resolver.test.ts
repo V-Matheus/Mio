@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { AuthResolver } from "./auth.resolver"
 import type { AuthService } from "./auth.service"
+import { UserRole } from "./models/user-role.enum"
 
 function makeResolver() {
   const auth = {
@@ -10,6 +11,8 @@ function makeResolver() {
     requestPasswordReset: vi.fn().mockResolvedValue(true),
     resetPassword: vi.fn().mockResolvedValue(true),
     me: vi.fn().mockResolvedValue({ code: "c" }),
+    updateUserRole: vi.fn().mockResolvedValue({}),
+    listUsers: vi.fn().mockResolvedValue([]),
   }
   return { resolver: new AuthResolver(auth as unknown as AuthService), auth }
 }
@@ -58,5 +61,18 @@ describe("AuthResolver", () => {
     const { resolver, auth } = makeResolver()
     await resolver.me("user-1")
     expect(auth.me).toHaveBeenCalledWith("user-1")
+  })
+
+  it("updateUserRole delega userCode e role", async () => {
+    const { resolver, auth } = makeResolver()
+    const role = UserRole.ADMIN
+    await resolver.updateUserRole("user-1", role)
+    expect(auth.updateUserRole).toHaveBeenCalledWith("user-1", role)
+  })
+
+  it("listUsers delega o search para AuthService.listUsers", async () => {
+    const { resolver, auth } = makeResolver()
+    await resolver.listUsers("john")
+    expect(auth.listUsers).toHaveBeenCalledWith("john")
   })
 })

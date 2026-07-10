@@ -6,6 +6,7 @@ import { AuthResolver } from "./auth.resolver"
 import { AuthService } from "./auth.service"
 import { GqlAuthGuard } from "./guards/gql-auth.guard"
 import { OptionalGqlAuthGuard } from "./guards/optional-gql-auth.guard"
+import { RolesGuard } from "./guards/roles.guard"
 
 @Module({
   imports: [
@@ -19,9 +20,15 @@ import { OptionalGqlAuthGuard } from "./guards/optional-gql-auth.guard"
       },
     }),
   ],
-  providers: [AuthService, AuthResolver, GqlAuthGuard, OptionalGqlAuthGuard],
+  providers: [
+    AuthService,
+    AuthResolver,
+    GqlAuthGuard,
+    OptionalGqlAuthGuard,
+    RolesGuard,
+  ],
   // JwtModule + guards são reexportados para módulos que protegem operações
   // próprias (ex.: catalog) sem redeclarar a config de JWT.
-  exports: [JwtModule, GqlAuthGuard, OptionalGqlAuthGuard],
+  exports: [JwtModule, GqlAuthGuard, OptionalGqlAuthGuard, RolesGuard],
 })
 export class AuthModule {}

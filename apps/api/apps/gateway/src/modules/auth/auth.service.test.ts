@@ -35,13 +35,14 @@ describe("AuthService", () => {
       password: "pw",
     })
 
-    expect(jwt.sign).toHaveBeenCalledWith({ sub: grpcUser.code })
+    expect(jwt.sign).toHaveBeenCalledWith({ sub: grpcUser.code, roles: [] })
     expect(result.accessToken).toBe("signed.jwt")
     expect(result.user).toEqual({
       code: grpcUser.code,
       email: grpcUser.email,
       name: grpcUser.name,
       avatarUrl: null,
+      roles: [],
     })
   })
 
@@ -76,7 +77,7 @@ describe("AuthService", () => {
       name: grpcUser.name,
       avatarUrl: "",
     })
-    expect(jwt.sign).toHaveBeenCalledWith({ sub: grpcUser.code })
+    expect(jwt.sign).toHaveBeenCalledWith({ sub: grpcUser.code, roles: [] })
     expect(result.accessToken).toBe("signed.jwt")
     expect(result.user.code).toBe(grpcUser.code)
   })

@@ -62,4 +62,14 @@ export class UsersController {
   }): Promise<UserResponse> {
     return this.users.consumePasswordReset(data.token, data.newPassword)
   }
+
+  @GrpcMethod(USERS_SERVICE, "UpdateUserRole")
+  updateUserRole(data: { code: string; role: string }): Promise<UserResponse> {
+    return this.users.updateUserRole(data.code, data.role)
+  }
+
+  @GrpcMethod(USERS_SERVICE, "ListUsers")
+  listUsers(data: { search?: string }): Promise<{ users: UserResponse[] }> {
+    return this.users.listUsers(data.search).then((users) => ({ users }))
+  }
 }

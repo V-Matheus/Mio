@@ -116,6 +116,7 @@ describe("authService", () => {
           email: "victor@example.com",
           name: "Victor",
           avatarUrl: null,
+          roles: ["STUDENT"],
         },
       })
 
@@ -128,6 +129,7 @@ describe("authService", () => {
           email: "victor@example.com",
           name: "Victor",
           avatarUrl: null,
+          roles: ["STUDENT"],
         },
       })
       expect(mockGetClient).toHaveBeenCalledWith("any-token")

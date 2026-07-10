@@ -34,6 +34,7 @@ const nextAuth = NextAuth({
           email: meResult.user.email,
           image: meResult.user.avatarUrl,
           accessToken: loginResult.accessToken,
+          roles: meResult.user.roles,
         }
       },
     }),
@@ -77,6 +78,7 @@ const nextAuth = NextAuth({
       user.email = meResult.user.email
       user.image = meResult.user.avatarUrl
       user.accessToken = upsertResult.accessToken
+      user.roles = meResult.user.roles
 
       return true
     },
@@ -87,6 +89,7 @@ const nextAuth = NextAuth({
         token.name = user.name
         token.email = user.email
         token.picture = user.image
+        token.roles = user.roles
         return token
       }
 
@@ -97,6 +100,7 @@ const nextAuth = NextAuth({
           token.name = meResult.user.name
           token.email = meResult.user.email
           token.picture = meResult.user.avatarUrl
+          token.roles = meResult.user.roles
         }
       }
 
@@ -110,6 +114,7 @@ const nextAuth = NextAuth({
         session.user.name = token.name || null
         session.user.email = (token.email as string) || ""
         session.user.image = (token.picture as string | null) ?? null
+        session.user.roles = token.roles || []
       }
 
       return session

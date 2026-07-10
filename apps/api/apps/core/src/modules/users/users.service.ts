@@ -15,6 +15,7 @@ export type UserResponse = {
   email: string
   name: string
   avatarUrl: string
+  roles: string[]
 }
 
 export type RegisterInput = {
@@ -31,12 +32,36 @@ export type UpsertOAuthInput = {
   avatarUrl: string
 }
 
+type UserWithRoles = User & {
+  roles?: {
+    role: {
+      name: string
+    }
+  }[]
+}
+
+const INCLUDE_ROLES = {
+  roles: {
+    include: {
+      role: true,
+    },
+  },
+}
+
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly events: UserEventsPublisher,
   ) {}
+
+  private async ensureRoleExists(name: string) {
+    return this.prisma.role.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    })
+  }
 
   async register({
     email,
@@ -47,6 +72,8 @@ export class UsersService {
     if (existing) {
       throw userError("EMAIL_IN_USE")
     }
+
+    const studentRole = await this.ensureRoleExists("STUDENT")
 
     const user = await this.prisma.user.create({
       data: {
@@ -60,7 +87,13 @@ export class UsersService {
             providerAccountId: email,
           },
         },
+        roles: {
+          create: {
+            roleId: studentRole.id,
+          },
+        },
       },
+      include: INCLUDE_ROLES,
     })
 
     await this.events.userRegistered({
@@ -77,7 +110,10 @@ export class UsersService {
     email: string,
     password: string,
   ): Promise<UserResponse> {
-    const user = await this.prisma.user.findUnique({ where: { email } })
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: INCLUDE_ROLES,
+    })
     if (!user?.passwordHash || !(await verify(user.passwordHash, password))) {
       throw userError("INVALID_CREDENTIALS")
     }
@@ -85,7 +121,10 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<UserResponse> {
-    const user = await this.prisma.user.findUnique({ where: { email } })
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: INCLUDE_ROLES,
+    })
     if (!user) {
       throw userError("USER_NOT_FOUND")
     }
@@ -93,7 +132,10 @@ export class UsersService {
   }
 
   async findByCode(code: string): Promise<UserResponse> {
-    const user = await this.prisma.user.findUnique({ where: { code } })
+    const user = await this.prisma.user.findUnique({
+      where: { code },
+      include: INCLUDE_ROLES,
+    })
     if (!user) {
       throw userError("USER_NOT_FOUND")
     }
@@ -110,7 +152,11 @@ export class UsersService {
           providerAccountId: input.providerAccountId,
         },
       },
-      include: { user: true },
+      include: {
+        user: {
+          include: INCLUDE_ROLES,
+        },
+      },
     })
     if (identity) {
       return toUserResponse(identity.user)
@@ -119,6 +165,7 @@ export class UsersService {
     // Política da spec: vincular automaticamente a um User existente de mesmo email.
     const existing = await this.prisma.user.findUnique({
       where: { email: input.email },
+      include: INCLUDE_ROLES,
     })
     if (existing) {
       await this.prisma.userIdentity.create({
@@ -131,6 +178,8 @@ export class UsersService {
       return toUserResponse(existing)
     }
 
+    const studentRole = await this.ensureRoleExists("STUDENT")
+
     const user = await this.prisma.user.create({
       data: {
         code: nanoid(USER_CODE_SIZE),
@@ -140,7 +189,13 @@ export class UsersService {
         identities: {
           create: { provider, providerAccountId: input.providerAccountId },
         },
+        roles: {
+          create: {
+            roleId: studentRole.id,
+          },
+        },
       },
+      include: INCLUDE_ROLES,
     })
 
     await this.events.userRegistered({
@@ -194,6 +249,7 @@ export class UsersService {
       this.prisma.user.update({
         where: { id: reset.userId },
         data: { passwordHash: await hash(newPassword) },
+        include: INCLUDE_ROLES,
       }),
       this.prisma.passwordReset.update({
         where: { id: reset.id },
@@ -203,14 +259,60 @@ export class UsersService {
 
     return toUserResponse(user)
   }
+
+  async updateUserRole(code: string, roleName: string): Promise<UserResponse> {
+    const user = await this.prisma.user.findUnique({ where: { code } })
+    if (!user) {
+      throw userError("USER_NOT_FOUND")
+    }
+
+    const role = await this.ensureRoleExists(roleName)
+
+    await this.prisma.$transaction([
+      this.prisma.userRole.deleteMany({ where: { userId: user.id } }),
+      this.prisma.userRole.create({
+        data: {
+          userId: user.id,
+          roleId: role.id,
+        },
+      }),
+    ])
+
+    const updatedUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: INCLUDE_ROLES,
+    })
+    if (!updatedUser) {
+      throw userError("USER_NOT_FOUND")
+    }
+
+    return toUserResponse(updatedUser)
+  }
+
+  async listUsers(search?: string): Promise<UserResponse[]> {
+    const users = await this.prisma.user.findMany({
+      where: search
+        ? {
+            OR: [
+              { name: { contains: search, mode: "insensitive" } },
+              { email: { contains: search, mode: "insensitive" } },
+            ],
+          }
+        : {},
+      include: INCLUDE_ROLES,
+      orderBy: { createdAt: "desc" },
+    })
+    return users.map(toUserResponse)
+  }
 }
 
-function toUserResponse(user: User): UserResponse {
+function toUserResponse(user: UserWithRoles): UserResponse {
   return {
     code: user.code,
     email: user.email,
     name: user.name,
     avatarUrl: user.avatarUrl ?? "",
+    roles: user.roles?.map((r) => r.role.name) ?? [],
   }
 }
 
