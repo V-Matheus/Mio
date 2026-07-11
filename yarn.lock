@@ -2164,9 +2164,9 @@
     tslib "2.8.1"
 
 "@nestjs/cli@^11.0.0":
-  version "11.0.23"
-  resolved "https://registry.yarnpkg.com/@nestjs/cli/-/cli-11.0.23.tgz#ace0634d80ebbdbadd21c2cddffa450c62e41ea0"
-  integrity sha512-2V0Bf5jz0KXhUZk3eJi9GljIyqH04otwsE/mYLbqJR+X0iiYx+6bkNJ2Qz28uHNFj1cpHgimf9xDzHkqarie0g==
+  version "11.0.24"
+  resolved "https://registry.yarnpkg.com/@nestjs/cli/-/cli-11.0.24.tgz#afcff6ecab265e31abf539126ff2a6e9414f030d"
+  integrity sha512-aIHxQLSYtXShifA3zwWIeznEsZnNa3Iz2QRykFj+sl9IcbERBHr5nH87FRgywM+He3NxoF5WazHfR8FsmVeWxw==
   dependencies:
     "@angular-devkit/core" "19.2.27"
     "@angular-devkit/schematics" "19.2.27"
@@ -2188,9 +2188,9 @@
     webpack-node-externals "3.0.0"
 
 "@nestjs/common@^11.0.1":
-  version "11.1.27"
-  resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-11.1.27.tgz#30099df1bd4f9e7572095f8f8ca785ce1b0d9bd3"
-  integrity sha512-kEGSzqM2lWr4whh4Ubflw+oPZSEzxvRMu9WL+LveZploJWTjec5bBlCiRVlVzTPg2kIwBiLwWSvCCW7Wnin1gg==
+  version "11.1.28"
+  resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-11.1.28.tgz#5963f799dcf59aacb1c4db77108a538b6d893d66"
+  integrity sha512-bRImsxibie+AM7xjdwcrm/gr5YeacI65kSBNzTufa1Ib5iwziaY/lqMtRh9THq6pbV4e1HP9aI2ZxGUumnmaoQ==
   dependencies:
     uid "2.0.2"
     file-type "21.3.4"
@@ -2199,9 +2199,9 @@
     tslib "2.8.1"
 
 "@nestjs/core@^11.0.1":
-  version "11.1.27"
-  resolved "https://registry.yarnpkg.com/@nestjs/core/-/core-11.1.27.tgz#c94ffa34da8e24e04e9eb2a492d235265c2addc0"
-  integrity sha512-K6DX7hcqmZdeXkv7tsPakKBRCgqL19a4mtbX4FluY0hWtFdtPKp6lbe+lb8gWPfvLdbOWr/CPScn7BSjBX+Ecg==
+  version "11.1.28"
+  resolved "https://registry.yarnpkg.com/@nestjs/core/-/core-11.1.28.tgz#366ce726211358d5022520cead7a84830bbca7af"
+  integrity sha512-06m63xIRj8+l8uOeh/8LnYupGubkyu4f+bPKIadaSui6vK9KpXgoz7HveT1yOVLcEt0M0oCOEW5EuEXZkEmBBQ==
   dependencies:
     uid "2.0.2"
     fast-safe-stringify "2.1.1"
@@ -2242,21 +2242,21 @@
   integrity sha512-SCCoMEJ6jdeI5h/N+KCVF1+pmg/hmEkNA5nHTS8Gvww7T/LCl4o1gFLinw2iQ60w7slFkszHcGLKGdazVI4F8A==
 
 "@nestjs/microservices@^11.1.19":
-  version "11.1.27"
-  resolved "https://registry.yarnpkg.com/@nestjs/microservices/-/microservices-11.1.27.tgz#0e6f6776b1cee3bd3bbb1ebab622563b6c3e226e"
-  integrity sha512-wVUuNNFxILFtG6CvzvdcF/2/CtwWTKNR8AXsHzH7+JKoJY1xAXqvw8b6LArUKyRpOfsiKMLCC/KKvvA4Enh/xg==
+  version "11.1.28"
+  resolved "https://registry.yarnpkg.com/@nestjs/microservices/-/microservices-11.1.28.tgz#80849a53fb9f75c04cf8f6236cf0b9547432a30b"
+  integrity sha512-8uRs6/UrhXvd8YCrYKcNUwWA7b8jcbYH03WBKWJ2A3bc6+WcHA6yXq7Px30yemAGBtIIMXkHeL88dO2usVI5zg==
   dependencies:
     iterare "1.2.1"
     tslib "2.8.1"
 
 "@nestjs/platform-express@^11.0.1":
-  version "11.1.27"
-  resolved "https://registry.yarnpkg.com/@nestjs/platform-express/-/platform-express-11.1.27.tgz#a1a7bc8516ee6acd0ba5ee3eb414608779f40c9e"
-  integrity sha512-0ZFhz6H6EdGh4xQVbUNwjoAwBuz73P7FvUAl67h9CTdMqQlJDaQYJApBv8pKfVZ1fGjMCbl0m9DcC6pXaZPWSQ==
+  version "11.1.28"
+  resolved "https://registry.yarnpkg.com/@nestjs/platform-express/-/platform-express-11.1.28.tgz#d90edd6329d8a23a33e851727b876a52e3bd53c3"
+  integrity sha512-hU+9Sz4m+onHrR5AmelI59QKmY/Re546bPnygnpqqeQdHDiJpBgjWbL4t6Jr73CBpS60cpyng7WzjgphNB9iwA==
   dependencies:
     cors "2.8.6"
     express "5.2.1"
-    multer "2.1.1"
+    multer "2.2.0"
     path-to-regexp "8.4.2"
     tslib "2.8.1"
 
@@ -2280,9 +2280,9 @@
     check-disk-space "3.4.0"
 
 "@nestjs/testing@^11.0.1":
-  version "11.1.27"
-  resolved "https://registry.yarnpkg.com/@nestjs/testing/-/testing-11.1.27.tgz#1aeb3535d8965753b42e9d931848456f70f51e5d"
-  integrity sha512-I35po13UHZZeGenLWJ3QYwh77RsLau5RcFKWBZ4waVHeARpwjtC7v7n7lGh98swLQdGmZgTnbvKaZ0B5dsUIKA==
+  version "11.1.28"
+  resolved "https://registry.yarnpkg.com/@nestjs/testing/-/testing-11.1.28.tgz#87be34d906a75cc0962ab3e83efc727a5847edc7"
+  integrity sha512-B+VgRxeLaH7jkOMgAyUP3N3rpFlisQ7JRxixRbgHvG6a0VgKbbkNSofKExexCgKmQQak80undb3+2kE1lUBmRQ==
   dependencies:
     tslib "2.8.1"
 
@@ -6504,10 +6504,10 @@ ms@^2.1.1, ms@^2.1.3:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.3.tgz#574c8138ce1d2b5861f0b44579dbadd60c6615b2"
   integrity sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==
 
-multer@2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/multer/-/multer-2.1.1.tgz#122d819244fbdfee1efddd9147426691014385b7"
-  integrity sha512-mo+QTzKlx8R7E5ylSXxWzGoXoZbOsRMpyitcht8By2KHvMbf3tjwosZ/Mu/XYU6UuJ3VZnODIrak5ZrPiPyB6A==
+multer@2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/multer/-/multer-2.2.0.tgz#f005268ca816324ba7335e3b48166896a3fa5d79"
+  integrity sha512-6rdyFg2kLrMh9Jee7/BMPuV9lEAd7lLW2YUpF9/YxR7njyoUwwQ0ZPh3TaIY50Sw6vlyD2HW3wGOkTS4P79xrQ==
   dependencies:
     append-field "^1.0.0"
     busboy "^1.6.0"
