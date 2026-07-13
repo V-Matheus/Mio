@@ -1,10 +1,7 @@
 import { SectionKind } from ".prisma/core"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { TrackEntry } from "./seed-content"
-import {
-  syncContent,
-  validateFixtures,
-} from "./seed-content"
+import { syncContent, validateFixtures } from "./seed-content"
 import { catalogFixtures } from "./seed-fixtures"
 
 afterEach(() => vi.restoreAllMocks())
@@ -89,6 +86,8 @@ describe("validateFixtures", () => {
 })
 
 describe("syncContent", () => {
+  const adminPasswordHash = "$argon2id$fake-hash"
+
   function makePrisma() {
     const tx = {
       track: { upsert: vi.fn().mockResolvedValue({ id: 1n }) },
@@ -118,7 +117,11 @@ describe("syncContent", () => {
   it("faz upsert de track, lesson e section (com contentMarkdown) e devolve o resumo", async () => {
     const { prisma, tx } = makePrisma()
 
-    const summary = await syncContent(prisma as never, makeTree())
+    const summary = await syncContent(
+      prisma as never,
+      makeTree(),
+      adminPasswordHash,
+    )
 
     expect(tx.track.upsert).toHaveBeenCalledWith({
       where: { slug: "front-end" },
@@ -160,10 +163,24 @@ describe("syncContent", () => {
     expect(summary).toEqual({ tracks: 1, lessons: 1, sections: 1 })
   })
 
+  it("grava o hash de senha recebido no admin do sistema", async () => {
+    const { prisma } = makePrisma()
+
+    await syncContent(prisma as never, makeTree(), adminPasswordHash)
+
+    expect(prisma.user.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { code: "system-admin" },
+        update: { passwordHash: adminPasswordHash },
+        create: expect.objectContaining({ passwordHash: adminPasswordHash }),
+      }),
+    )
+  })
+
   it("nega as posições existentes antes de regravar (reordenação segura)", async () => {
     const { prisma, tx } = makePrisma()
 
-    await syncContent(prisma as never, makeTree())
+    await syncContent(prisma as never, makeTree(), adminPasswordHash)
 
     expect(tx.lesson.updateMany).toHaveBeenCalledWith({
       where: { trackId: 1n, slug: { in: ["intro-html"] } },
@@ -182,7 +199,7 @@ describe("syncContent", () => {
     tx.lesson.findMany.mockResolvedValue([{ slug: "aula-removida" }])
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
 
-    await syncContent(prisma as never, makeTree())
+    await syncContent(prisma as never, makeTree(), adminPasswordHash)
 
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("aula-removida"))
   })

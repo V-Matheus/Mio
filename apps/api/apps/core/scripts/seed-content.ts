@@ -80,17 +80,10 @@ export function validateFixtures(tracks: TrackEntry[]): void {
   }
 }
 
-const DEV_ADMIN_PASSWORD_HASH = process.env.DEV_ADMIN_PASSWORD_HASH
-
-if (!DEV_ADMIN_PASSWORD_HASH) {
-  throw new Error(
-    "A variável de ambiente DEV_ADMIN_PASSWORD_HASH é obrigatória para executar o seed.",
-  )
-}
-
 export async function syncContent(
   prisma: PrismaClient,
   tracks: TrackEntry[],
+  adminPasswordHash: string,
 ): Promise<SyncSummary> {
   const summary: SyncSummary = { tracks: 0, lessons: 0, sections: 0 }
 
@@ -115,12 +108,12 @@ export async function syncContent(
   const defaultAdmin = await prisma.user.upsert({
     where: { code: "system-admin" },
     // update também garante a senha em admins já criados sem passwordHash
-    update: { passwordHash: DEV_ADMIN_PASSWORD_HASH },
+    update: { passwordHash: adminPasswordHash },
     create: {
       code: "system-admin",
       email: "admin@mio.dev",
       name: "System Admin",
-      passwordHash: DEV_ADMIN_PASSWORD_HASH,
+      passwordHash: adminPasswordHash,
     },
   })
 
@@ -275,11 +268,22 @@ function requirePosition(value: number, origin: string): void {
 }
 
 async function main(): Promise<void> {
+  const adminPasswordHash = process.env.DEV_ADMIN_PASSWORD_HASH
+  if (!adminPasswordHash) {
+    throw new Error(
+      "A variável de ambiente DEV_ADMIN_PASSWORD_HASH é obrigatória para executar o seed.",
+    )
+  }
+
   validateFixtures(catalogFixtures)
 
   const prisma = new PrismaClient()
   try {
-    const summary = await syncContent(prisma, catalogFixtures)
+    const summary = await syncContent(
+      prisma,
+      catalogFixtures,
+      adminPasswordHash,
+    )
     console.log(
       `Seed concluído: ${summary.tracks} trilha(s), ${summary.lessons} lição(ões), ${summary.sections} seção(ões).`,
     )
