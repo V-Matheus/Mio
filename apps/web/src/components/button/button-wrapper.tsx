@@ -5,6 +5,7 @@ type ButtonColorScheme = "primary" | "success" | "disabled"
 
 type ButtonWrapperBaseProps = ComponentProps<"button"> & {
   colorScheme?: ButtonColorScheme
+  border?: boolean
 }
 
 type ButtonWrapperProps =
@@ -38,6 +39,7 @@ const iconColorStyles: Record<ButtonColorScheme, string> = {
 export function ButtonWrapper({
   variant = "primary",
   colorScheme = "primary",
+  border = true,
   className = "",
   children,
   ...props
@@ -46,6 +48,7 @@ export function ButtonWrapper({
     baseStyles,
     variantStyles[variant],
     variant === "icon" ? iconColorStyles[colorScheme] : "",
+    border === false ? "border-0!" : "",
     className,
   ]
     .filter(Boolean)

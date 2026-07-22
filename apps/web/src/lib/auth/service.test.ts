@@ -2,7 +2,7 @@ import { authService } from "@/lib/auth/service"
 
 const { mockRequest, mockGetClient } = vi.hoisted(() => {
   const mockRequest = vi.fn()
-  const mockGetClient = vi.fn(() => ({ request: mockRequest }))
+  const mockGetClient = vi.fn(async () => ({ request: mockRequest }))
   return { mockRequest, mockGetClient }
 })
 
@@ -133,13 +133,6 @@ describe("authService", () => {
         },
       })
       expect(mockGetClient).toHaveBeenCalledWith("any-token")
-    })
-
-    it("resolves with ok: false when no token is provided", async () => {
-      const result = await authService.me("")
-
-      expect(result).toEqual({ ok: false, error: expect.any(String) })
-      expect(mockRequest).not.toHaveBeenCalled()
     })
 
     it("resolves with ok: false when the gateway rejects", async () => {

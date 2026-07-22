@@ -167,16 +167,7 @@ export async function updateUserRoleAction(
   userCode: string,
   role: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const session = await auth()
-  if (!session?.accessToken || !session.user?.roles?.includes("ADMIN")) {
-    return { ok: false, error: "Não autorizado" }
-  }
-
-  const result = await authService.updateUserRole(
-    session.accessToken,
-    userCode,
-    role,
-  )
+  const result = await authService.updateUserRole(userCode, role)
 
   if (!result.ok) {
     return { ok: false, error: result.error }

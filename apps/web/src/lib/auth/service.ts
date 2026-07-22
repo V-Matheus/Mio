@@ -26,7 +26,8 @@ export type * from "./types"
 export const authService = {
   async login(input: LoginInput): Promise<LoginResult> {
     try {
-      const { login } = await getGatewayClient().request(LOGIN_MUTATION, {
+      const client = await getGatewayClient()
+      const { login } = await client.request(LOGIN_MUTATION, {
         input,
       })
       return { ok: true, accessToken: login.accessToken }
@@ -37,7 +38,8 @@ export const authService = {
 
   async register(input: RegisterInput): Promise<RegisterResult> {
     try {
-      const { register } = await getGatewayClient().request(REGISTER_MUTATION, {
+      const client = await getGatewayClient()
+      const { register } = await client.request(REGISTER_MUTATION, {
         input: {
           email: input.email,
           name: input.name,
@@ -57,7 +59,8 @@ export const authService = {
     input: ForgotPasswordInput,
   ): Promise<ForgotPasswordResult> {
     try {
-      await getGatewayClient().request(REQUEST_PASSWORD_RESET_MUTATION, {
+      const client = await getGatewayClient()
+      await client.request(REQUEST_PASSWORD_RESET_MUTATION, {
         email: input.email,
       })
       return { ok: true }
@@ -69,12 +72,10 @@ export const authService = {
     }
   },
 
-  async me(accessToken: string): Promise<MeResult> {
-    if (!accessToken) {
-      return { ok: false, error: "Missing access token" }
-    }
+  async me(accessToken?: string): Promise<MeResult> {
     try {
-      const { me } = await getGatewayClient(accessToken).request(ME_QUERY)
+      const client = await getGatewayClient(accessToken)
+      const { me } = await client.request(ME_QUERY)
       return { ok: true, user: { ...me, avatarUrl: me.avatarUrl ?? null } }
     } catch (error) {
       return {
@@ -85,17 +86,12 @@ export const authService = {
   },
 
   async listUsers(
-    accessToken: string,
     search?: string,
+    accessToken?: string,
   ): Promise<{ ok: true; users: MeUser[] } | { ok: false; error: string }> {
-    if (!accessToken) {
-      return { ok: false, error: "Missing access token" }
-    }
     try {
-      const { listUsers } = await getGatewayClient(accessToken).request(
-        LIST_USERS_QUERY,
-        { search },
-      )
+      const client = await getGatewayClient(accessToken)
+      const { listUsers } = await client.request(LIST_USERS_QUERY, { search })
       return {
         ok: true,
         users: listUsers.map((u) => ({
@@ -112,15 +108,13 @@ export const authService = {
   },
 
   async updateUserRole(
-    accessToken: string,
     userCode: string,
     role: string,
+    accessToken?: string,
   ): Promise<{ ok: true } | { ok: false; error: string }> {
-    if (!accessToken) {
-      return { ok: false, error: "Missing access token" }
-    }
     try {
-      await getGatewayClient(accessToken).request(UPDATE_USER_ROLE_MUTATION, {
+      const client = await getGatewayClient(accessToken)
+      await client.request(UPDATE_USER_ROLE_MUTATION, {
         userCode,
         role: role as UserRole,
       })
@@ -138,10 +132,10 @@ export const authService = {
       return { ok: false, error: "Missing OAuth identification" }
     }
     try {
-      const { upsertOAuthUser } = await getGatewayClient().request(
-        UPSERT_OAUTH_MUTATION,
-        { input },
-      )
+      const client = await getGatewayClient()
+      const { upsertOAuthUser } = await client.request(UPSERT_OAUTH_MUTATION, {
+        input,
+      })
       return { ok: true, accessToken: upsertOAuthUser.accessToken }
     } catch (error) {
       return {
