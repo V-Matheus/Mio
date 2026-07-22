@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package mio.catalog.admin.v1;
+
+service CatalogAdminService {
+  // Trilhas (Tracks)
+  rpc ListAdminTracks(ListAdminTracksRequest) returns (AdminTracksResponse);
+  rpc GetAdminTrack(GetAdminTrackRequest) returns (AdminTrackDetailResponse);
+  rpc CreateTrack(CreateTrackRequest) returns (AdminTrackResponse);
+  rpc UpdateTrack(UpdateTrackRequest) returns (AdminTrackResponse);
+  rpc DeleteTrack(DeleteTrackRequest) returns (DeleteResponse);
+
+  // Lições (Lessons)
+  rpc UpsertLesson(UpsertLessonRequest) returns (AdminLessonResponse);
+  rpc DeleteLesson(DeleteLessonRequest) returns (DeleteResponse);
+
+  // Seções (Sections)
+  rpc UpsertSection(UpsertSectionRequest) returns (AdminSectionResponse);
+  rpc DeleteSection(DeleteSectionRequest) returns (DeleteResponse);
+}
+
+message ListAdminTracksRequest {
+  string requestor_code = 1;
+  string requestor_role = 2; // "TEACHER" | "ADMIN"
+}
+
+message GetAdminTrackRequest {
+  string slug = 1;
+  string requestor_code = 2;
+  string requestor_role = 3;
+}
+
+message AdminTrackResponse {
+  string slug = 1;
+  string title = 2;
+  string description = 3;
+  string creator_code = 4;
+  int32 lesson_count = 5;
+}
+
+message AdminTracksResponse {
+  repeated AdminTrackResponse tracks = 1;
+}
+
+message AdminSectionSummary {
+  string slug = 1;
+  string title = 2;
+  int32 position = 3;
+  string kind = 4;
+  string content_markdown = 5;
+}
+
+message AdminLessonSummary {
+  string slug = 1;
+  string title = 2;
+  int32 position = 3;
+  repeated AdminSectionSummary sections = 4;
+}
+
+message AdminTrackDetailResponse {
+  string slug = 1;
+  string title = 2;
+  string description = 3;
+  string creator_code = 4;
+  repeated AdminLessonSummary lessons = 5;
+}
+
+message CreateTrackRequest {
+  string title = 1;
+  string description = 2;
+  string requestor_code = 3;
+}
+
+message UpdateTrackRequest {
+  string current_slug = 1;
+  string title = 2;
+  string description = 3;
+  string requestor_code = 4;
+  string requestor_role = 5;
+}
+
+message DeleteTrackRequest {
+  string slug = 1;
+  string requestor_code = 2;
+  string requestor_role = 3;
+}
+
+message UpsertLessonRequest {
+  string track_slug = 1;
+  string slug = 2;
+  string title = 3;
+  int32 position = 4;
+  string requestor_code = 5;
+  string requestor_role = 6;
+}
+
+message AdminLessonResponse {
+  string track_slug = 1;
+  string slug = 2;
+  string title = 3;
+  int32 position = 4;
+}
+
+message DeleteLessonRequest {
+  string track_slug = 1;
+  string lesson_slug = 2;
+  string requestor_code = 3;
+  string requestor_role = 4;
+}
+
+message UpsertSectionRequest {
+  string track_slug = 1;
+  string lesson_slug = 2;
+  string slug = 3;
+  string title = 4;
+  int32 position = 5;
+  string kind = 6; // "TEXT" | "EXERCISE"
+  string content_markdown = 7;
+  string requestor_code = 8;
+  string requestor_role = 9;
+}
+
+message AdminSectionResponse {
+  string slug = 1;
+  string title = 2;
+  int32 position = 3;
+  string kind = 4;
+  string content_markdown = 5;
+}
+
+message DeleteSectionRequest {
+  string track_slug = 1;
+  string lesson_slug = 2;
+  string section_slug = 3;
+  string requestor_code = 4;
+  string requestor_role = 5;
+}
+
+message DeleteResponse {
+  bool success = 1;
+}

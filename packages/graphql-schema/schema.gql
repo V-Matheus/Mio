@@ -2,9 +2,45 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type AdminLessonSummary {
+  position: Int!
+  sections: [AdminSectionSummary!]!
+  slug: ID!
+  title: String!
+}
+
+type AdminSectionSummary {
+  contentMarkdown: String!
+  kind: SectionKind!
+  position: Int!
+  slug: ID!
+  title: String!
+}
+
+type AdminTrack {
+  creatorCode: String!
+  description: String
+  lessonCount: Int!
+  slug: ID!
+  title: String!
+}
+
+type AdminTrackDetail {
+  creatorCode: String!
+  description: String
+  lessons: [AdminLessonSummary!]!
+  slug: ID!
+  title: String!
+}
+
 type AuthPayload {
   accessToken: String!
   user: User!
+}
+
+input CreateTrackInput {
+  description: String
+  title: String!
 }
 
 type LessonDetail {
@@ -27,16 +63,25 @@ input LoginInput {
 }
 
 type Mutation {
+  createTrack(input: CreateTrackInput!): AdminTrack!
+  deleteLesson(lessonSlug: ID!, trackSlug: ID!): Boolean!
+  deleteSection(lessonSlug: ID!, sectionSlug: ID!, trackSlug: ID!): Boolean!
+  deleteTrack(slug: ID!): Boolean!
   enrollInTrack(trackSlug: ID!): Boolean!
   login(input: LoginInput!): AuthPayload!
   register(input: RegisterInput!): AuthPayload!
   requestPasswordReset(email: String!): Boolean!
   resetPassword(newPassword: String!, token: String!): Boolean!
+  updateTrack(input: UpdateTrackInput!, slug: ID!): AdminTrack!
   updateUserRole(role: UserRole!, userCode: ID!): User!
+  upsertLesson(input: UpsertLessonInput!): Boolean!
   upsertOAuthUser(input: UpsertOAuthInput!): AuthPayload!
+  upsertSection(input: UpsertSectionInput!): Boolean!
 }
 
 type Query {
+  adminTrack(slug: ID!): AdminTrackDetail
+  adminTracks: [AdminTrack!]!
   lesson(lessonSlug: ID!, trackSlug: ID!): LessonDetail
   listUsers(search: String): [User!]!
   me: User!
@@ -88,12 +133,34 @@ type TrackDetail {
   title: String!
 }
 
+input UpdateTrackInput {
+  description: String
+  title: String!
+}
+
+input UpsertLessonInput {
+  position: Int
+  slug: ID
+  title: String!
+  trackSlug: ID!
+}
+
 input UpsertOAuthInput {
   avatarUrl: String
   email: String!
   name: String!
   provider: String!
   providerAccountId: String!
+}
+
+input UpsertSectionInput {
+  contentMarkdown: String
+  kind: SectionKind
+  lessonSlug: ID!
+  position: Int
+  slug: ID
+  title: String!
+  trackSlug: ID!
 }
 
 type User {

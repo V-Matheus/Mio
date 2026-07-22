@@ -1,18 +1,20 @@
 import { Module } from "@nestjs/common"
 import { PrismaModule } from "../prisma/prisma.module"
 import { CatalogController } from "./catalog.controller"
+import { CatalogAdminController } from "./catalog-admin.controller"
+import { CatalogAdminService } from "./catalog-admin.service"
 import { EnrollmentsService } from "./enrollments.service"
 import { LessonsService } from "./lessons.service"
 import { TracksService } from "./tracks.service"
 
-/**
- * Catálogo de conteúdo (spec 02): trilhas → lições → seções. Serve o
- * `CatalogService` (mio.catalog.v1) unificando tracks/lessons/enrollments,
- * conforme a opção prevista na spec.
- */
 @Module({
   imports: [PrismaModule],
-  controllers: [CatalogController],
-  providers: [TracksService, LessonsService, EnrollmentsService],
+  controllers: [CatalogController, CatalogAdminController],
+  providers: [
+    TracksService,
+    LessonsService,
+    EnrollmentsService,
+    CatalogAdminService,
+  ],
 })
 export class CatalogModule {}
