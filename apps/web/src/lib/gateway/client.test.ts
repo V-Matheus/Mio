@@ -1,9 +1,10 @@
 import { ClientError } from "graphql-request"
 import { gatewayError, getGatewayClient } from "@/lib/gateway/client"
 
-// `server-only` lança fora de um ambiente RSC (inclusive no Vitest); aqui o
-// client é importado direto, então neutralizamos o guard.
 vi.mock("server-only", () => ({}))
+vi.mock("@/auth", () => ({
+  auth: vi.fn().mockResolvedValue(null),
+}))
 
 type ClientErrorArgs = ConstructorParameters<typeof ClientError>
 
@@ -28,22 +29,22 @@ describe("getGatewayClient", () => {
     process.env.INTERNAL_API_SECRET = original
   })
 
-  it("always sends the internal secret header", () => {
-    const client = getGatewayClient()
+  it("always sends the internal secret header", async () => {
+    const client = await getGatewayClient()
 
     expect(client.requestConfig.headers).toMatchObject({
       "x-internal-secret": "test-secret",
     })
   })
 
-  it("does not include authorization when no access token is given", () => {
-    const client = getGatewayClient()
+  it("does not include authorization when no access token is given and session has no token", async () => {
+    const client = await getGatewayClient()
 
     expect(client.requestConfig.headers).not.toHaveProperty("authorization")
   })
 
-  it("includes the Bearer token alongside the secret when given", () => {
-    const client = getGatewayClient("jwt-123")
+  it("includes the Bearer token alongside the secret when given", async () => {
+    const client = await getGatewayClient("jwt-123")
 
     expect(client.requestConfig.headers).toMatchObject({
       "x-internal-secret": "test-secret",
@@ -51,9 +52,9 @@ describe("getGatewayClient", () => {
     })
   })
 
-  it("falls back to an empty secret when the env var is unset", () => {
+  it("falls back to an empty secret when the env var is unset", async () => {
     process.env.INTERNAL_API_SECRET = ""
-    const client = getGatewayClient()
+    const client = await getGatewayClient()
 
     expect(client.requestConfig.headers).toMatchObject({
       "x-internal-secret": "",
