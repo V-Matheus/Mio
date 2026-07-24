@@ -78,7 +78,7 @@
     "@types/amqplib": "^0.10.8",
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
-    "@types/supertest": "^6.0.2",
+    "@types/supertest": "^7.0.0",
     "dotenv-cli": "^11.0.0",
     "prisma": "^6.2.0",
     "source-map-support": "^0.5.21",
