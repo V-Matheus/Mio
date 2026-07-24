@@ -63,7 +63,7 @@
     "@node-rs/argon2": "^2.0.2",
     "@prisma/client": "^6.2.0",
     "amqplib": "^2.0.1",
-    "graphql": "^16.14.0",
+    "graphql": "^17.0.0",
     "nanoid": "^5.0.9",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
