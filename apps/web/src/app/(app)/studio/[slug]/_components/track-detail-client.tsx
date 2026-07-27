@@ -97,18 +97,23 @@ export function TrackDetailClient({
         if (existing) {
           updatedLessons = prev.lessons.map((l) =>
             l.slug === lessonModal.lesson?.slug
-              ? { ...l, title, position: position || l.position }
+              ? {
+                  ...l,
+                  slug: res.lesson.slug,
+                  title: res.lesson.title,
+                  position: res.lesson.position || l.position,
+                }
               : l,
           )
         } else {
-          const newSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-")
           updatedLessons = [
             ...prev.lessons,
             {
-              slug: newSlug,
-              title,
-              position: position || prev.lessons.length + 1,
-              sections: [],
+              slug: res.lesson.slug,
+              title: res.lesson.title,
+              position:
+                res.lesson.position || position || prev.lessons.length + 1,
+              sections: res.lesson.sections || [],
             },
           ]
         }
@@ -208,19 +213,30 @@ export function TrackDetailClient({
             if (existingSec) {
               updatedSections = lesson.sections.map((s) =>
                 s.slug === sectionModal.section?.slug
-                  ? { ...s, title, kind, position: position || s.position }
+                  ? {
+                      ...s,
+                      slug: res.section.slug,
+                      title: res.section.title,
+                      kind: res.section.kind,
+                      position: res.section.position || s.position,
+                      contentMarkdown:
+                        res.section.contentMarkdown || s.contentMarkdown,
+                    }
                   : s,
               )
             } else {
-              const newSecSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-")
               updatedSections = [
                 ...lesson.sections,
                 {
-                  slug: newSecSlug,
-                  title,
-                  kind,
-                  position: position || lesson.sections.length + 1,
+                  slug: res.section.slug,
+                  title: res.section.title,
+                  kind: res.section.kind,
+                  position:
+                    res.section.position ||
+                    position ||
+                    lesson.sections.length + 1,
                   contentMarkdown:
+                    res.section.contentMarkdown ||
                     "# Conteúdo da Seção\n\nEscreva seu conteúdo em markdown aqui...",
                 },
               ]

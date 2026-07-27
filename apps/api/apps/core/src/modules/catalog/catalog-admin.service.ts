@@ -229,7 +229,7 @@ export class CatalogAdminService {
     if (existing) {
       lesson = await this.prisma.lesson.update({
         where: { id: existing.id },
-        data: { title, position },
+        data: { title, position: position || existing.position },
       })
     } else {
       const count = await this.prisma.lesson.count({
@@ -308,7 +308,7 @@ export class CatalogAdminService {
         where: { id: existing.id },
         data: {
           title,
-          position,
+          position: position || existing.position,
           kind: kind === "EXERCISE" ? "EXERCISE" : "TEXT",
           contentMarkdown,
         },

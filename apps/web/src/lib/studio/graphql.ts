@@ -65,7 +65,18 @@ export const DELETE_TRACK_MUTATION = graphql(`
 
 export const UPSERT_LESSON_MUTATION = graphql(`
   mutation UpsertLesson($input: UpsertLessonInput!) {
-    upsertLesson(input: $input)
+    upsertLesson(input: $input) {
+      slug
+      title
+      position
+      sections {
+        slug
+        title
+        position
+        kind
+        contentMarkdown
+      }
+    }
   }
 `)
 
@@ -77,7 +88,13 @@ export const DELETE_LESSON_MUTATION = graphql(`
 
 export const UPSERT_SECTION_MUTATION = graphql(`
   mutation UpsertSection($input: UpsertSectionInput!) {
-    upsertSection(input: $input)
+    upsertSection(input: $input) {
+      slug
+      title
+      position
+      kind
+      contentMarkdown
+    }
   }
 `)
 

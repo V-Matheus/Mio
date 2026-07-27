@@ -8,7 +8,12 @@ import type {
   UpsertLessonInput,
   UpsertSectionInput,
 } from "./dto/admin-track.dto"
-import type { AdminTrack, AdminTrackDetail } from "./models/admin-track.model"
+import type {
+  AdminLessonSummary,
+  AdminSectionSummary,
+  AdminTrack,
+  AdminTrackDetail,
+} from "./models/admin-track.model"
 import { SectionKind } from "./models/section-kind.enum"
 
 export interface ProtoSection {
@@ -162,8 +167,15 @@ export class CatalogAdminGatewayService implements OnModuleInit {
           })),
         })),
       }
-    } catch {
-      return null
+    } catch (error: any) {
+      const details = error?.details || error?.message
+      if (
+        details === "TRACK_NOT_FOUND" ||
+        details?.includes("TRACK_NOT_FOUND")
+      ) {
+        return null
+      }
+      throw error
     }
   }
 
@@ -226,7 +238,11 @@ export class CatalogAdminGatewayService implements OnModuleInit {
     return !!res.success
   }
 
-  async upsertLesson(input: UpsertLessonInput, userCode: string, role: string) {
+  async upsertLesson(
+    input: UpsertLessonInput,
+    userCode: string,
+    role: string,
+  ): Promise<AdminLessonSummary> {
     const res = await firstValueFrom(
       this.client.upsertLesson({
         trackSlug: input.trackSlug,
@@ -237,7 +253,12 @@ export class CatalogAdminGatewayService implements OnModuleInit {
         requestorRole: role,
       }),
     )
-    return res
+    return {
+      slug: res.slug,
+      title: res.title,
+      position: res.position || 0,
+      sections: [],
+    }
   }
 
   async deleteLesson(
@@ -261,7 +282,7 @@ export class CatalogAdminGatewayService implements OnModuleInit {
     input: UpsertSectionInput,
     userCode: string,
     role: string,
-  ) {
+  ): Promise<AdminSectionSummary> {
     const res = await firstValueFrom(
       this.client.upsertSection({
         trackSlug: input.trackSlug,

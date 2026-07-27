@@ -10,7 +10,12 @@ import {
   UPSERT_LESSON_MUTATION,
   UPSERT_SECTION_MUTATION,
 } from "./graphql"
-import type { AdminTrack, AdminTrackDetail } from "./types"
+import type {
+  AdminLessonSummary,
+  AdminSectionSummary,
+  AdminTrack,
+  AdminTrackDetail,
+} from "./types"
 
 export const studioService = {
   async listTracks(
@@ -149,13 +154,15 @@ export const studioService = {
     slug?: string,
     position?: number,
     accessToken?: string,
-  ): Promise<{ ok: true } | { ok: false; error: string }> {
+  ): Promise<
+    { ok: true; lesson: AdminLessonSummary } | { ok: false; error: string }
+  > {
     try {
       const client = await getGatewayClient(accessToken)
-      await client.request(UPSERT_LESSON_MUTATION, {
+      const data = await client.request(UPSERT_LESSON_MUTATION, {
         input: { trackSlug, title, slug, position },
       })
-      return { ok: true }
+      return { ok: true, lesson: data.upsertLesson as AdminLessonSummary }
     } catch (error) {
       return { ok: false, error: gatewayError(error, "Falha ao salvar aula") }
     }
@@ -187,10 +194,12 @@ export const studioService = {
     kind?: "TEXT" | "EXERCISE",
     contentMarkdown?: string,
     accessToken?: string,
-  ): Promise<{ ok: true } | { ok: false; error: string }> {
+  ): Promise<
+    { ok: true; section: AdminSectionSummary } | { ok: false; error: string }
+  > {
     try {
       const client = await getGatewayClient(accessToken)
-      await client.request(UPSERT_SECTION_MUTATION, {
+      const data = await client.request(UPSERT_SECTION_MUTATION, {
         input: {
           trackSlug,
           lessonSlug,
@@ -201,7 +210,7 @@ export const studioService = {
           contentMarkdown,
         },
       })
-      return { ok: true }
+      return { ok: true, section: data.upsertSection as AdminSectionSummary }
     } catch (error) {
       return { ok: false, error: gatewayError(error, "Falha ao salvar seção") }
     }

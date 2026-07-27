@@ -9,5 +9,5 @@ import type { GrpcContract } from "../grpc-contract"
 export const healthContract: GrpcContract = {
   package: "grpc.health.v1",
   service: "Health",
-  protoPath: join(__dirname, "health.proto"),
+  protoPath: join(__dirname, "../grpc/health/v1/health.proto"),
 }

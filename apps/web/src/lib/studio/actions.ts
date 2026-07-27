@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { studioService } from "./service"
+import type { AdminLessonSummary, AdminSectionSummary } from "./types"
 
 export async function createTrackAction(formData: FormData) {
   const title = formData.get("title") as string
@@ -53,7 +54,9 @@ export async function upsertLessonAction(
   lessonSlug: string | undefined,
   title: string,
   position?: number,
-) {
+): Promise<
+  { ok: true; lesson: AdminLessonSummary } | { ok: false; error: string }
+> {
   if (!title.trim()) {
     return { ok: false, error: "Título da aula é obrigatório" }
   }
@@ -91,7 +94,9 @@ export async function upsertSectionAction(
   kind?: "TEXT" | "EXERCISE",
   contentMarkdown?: string,
   position?: number,
-) {
+): Promise<
+  { ok: true; section: AdminSectionSummary } | { ok: false; error: string }
+> {
   if (!title.trim()) {
     return { ok: false, error: "Título da seção é obrigatório" }
   }

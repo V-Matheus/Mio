@@ -74,9 +74,9 @@ type Mutation {
   resetPassword(newPassword: String!, token: String!): Boolean!
   updateTrack(input: UpdateTrackInput!, slug: ID!): AdminTrack!
   updateUserRole(role: UserRole!, userCode: ID!): User!
-  upsertLesson(input: UpsertLessonInput!): Boolean!
+  upsertLesson(input: UpsertLessonInput!): AdminLessonSummary!
   upsertOAuthUser(input: UpsertOAuthInput!): AuthPayload!
-  upsertSection(input: UpsertSectionInput!): Boolean!
+  upsertSection(input: UpsertSectionInput!): AdminSectionSummary!
 }
 
 type Query {

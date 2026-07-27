@@ -15,7 +15,12 @@ import {
   UpsertSectionInput,
 } from "./dto/admin-track.dto"
 import { slugSchema } from "./dto/slug.schema"
-import { AdminTrack, AdminTrackDetail } from "./models/admin-track.model"
+import {
+  AdminLessonSummary,
+  AdminSectionSummary,
+  AdminTrack,
+  AdminTrackDetail,
+} from "./models/admin-track.model"
 
 @Resolver(() => AdminTrack)
 @UseGuards(PermissionsGuard)
@@ -70,15 +75,13 @@ export class CatalogAdminResolver {
     return this.catalogAdmin.deleteTrack(slug, userCode, role)
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(() => AdminLessonSummary)
   upsertLesson(
     @Args("input") input: UpsertLessonInput,
     @CurrentUserCode() userCode: string,
     @CurrentUserPrimaryRole() role: string,
-  ): Promise<boolean> {
-    return this.catalogAdmin
-      .upsertLesson(input, userCode, role)
-      .then(() => true)
+  ): Promise<AdminLessonSummary> {
+    return this.catalogAdmin.upsertLesson(input, userCode, role)
   }
 
   @Mutation(() => Boolean)
@@ -93,15 +96,13 @@ export class CatalogAdminResolver {
     return this.catalogAdmin.deleteLesson(trackSlug, lessonSlug, userCode, role)
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(() => AdminSectionSummary)
   upsertSection(
     @Args("input") input: UpsertSectionInput,
     @CurrentUserCode() userCode: string,
     @CurrentUserPrimaryRole() role: string,
-  ): Promise<boolean> {
-    return this.catalogAdmin
-      .upsertSection(input, userCode, role)
-      .then(() => true)
+  ): Promise<AdminSectionSummary> {
+    return this.catalogAdmin.upsertSection(input, userCode, role)
   }
 
   @Mutation(() => Boolean)
