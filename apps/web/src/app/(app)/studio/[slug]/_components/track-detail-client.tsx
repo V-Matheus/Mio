@@ -101,7 +101,7 @@ export function TrackDetailClient({
                   ...l,
                   slug: res.lesson.slug,
                   title: res.lesson.title,
-                  position: res.lesson.position || l.position,
+                  position: res.lesson.position ?? l.position,
                 }
               : l,
           )
@@ -112,8 +112,9 @@ export function TrackDetailClient({
               slug: res.lesson.slug,
               title: res.lesson.title,
               position:
-                res.lesson.position || position || prev.lessons.length + 1,
-              sections: res.lesson.sections || [],
+                res.lesson.position ??
+                (position > 0 ? position : prev.lessons.length + 1),
+              sections: res.lesson.sections ?? [],
             },
           ]
         }
@@ -189,8 +190,7 @@ export function TrackDetailClient({
         sectionModal.section?.slug,
         title,
         kind,
-        sectionModal.section?.contentMarkdown ||
-          "# Conteúdo da Seção\n\nEscreva seu conteúdo em markdown aqui...",
+        sectionModal.section?.contentMarkdown ?? "",
         position,
       )
 
@@ -218,9 +218,8 @@ export function TrackDetailClient({
                       slug: res.section.slug,
                       title: res.section.title,
                       kind: res.section.kind,
-                      position: res.section.position || s.position,
-                      contentMarkdown:
-                        res.section.contentMarkdown || s.contentMarkdown,
+                      position: res.section.position ?? s.position,
+                      contentMarkdown: res.section.contentMarkdown,
                     }
                   : s,
               )
@@ -232,12 +231,9 @@ export function TrackDetailClient({
                   title: res.section.title,
                   kind: res.section.kind,
                   position:
-                    res.section.position ||
-                    position ||
-                    lesson.sections.length + 1,
-                  contentMarkdown:
-                    res.section.contentMarkdown ||
-                    "# Conteúdo da Seção\n\nEscreva seu conteúdo em markdown aqui...",
+                    res.section.position ??
+                    (position > 0 ? position : lesson.sections.length + 1),
+                  contentMarkdown: res.section.contentMarkdown,
                 },
               ]
             }

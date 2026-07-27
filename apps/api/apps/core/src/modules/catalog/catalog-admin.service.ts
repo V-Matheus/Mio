@@ -223,13 +223,15 @@ export class CatalogAdminService {
 
     const existing = await this.prisma.lesson.findFirst({
       where: { trackId: track.id, slug: lessonSlug },
+      include: { sections: { orderBy: { position: "asc" } } },
     })
 
-    let lesson: LessonRecord
+    let lesson: LessonRecord & { sections?: SectionRecord[] }
     if (existing) {
       lesson = await this.prisma.lesson.update({
         where: { id: existing.id },
         data: { title, position: position || existing.position },
+        include: { sections: { orderBy: { position: "asc" } } },
       })
     } else {
       const count = await this.prisma.lesson.count({
@@ -243,6 +245,7 @@ export class CatalogAdminService {
           title,
           position: pos,
         },
+        include: { sections: { orderBy: { position: "asc" } } },
       })
     }
 
@@ -251,6 +254,13 @@ export class CatalogAdminService {
       slug: lesson.slug,
       title: lesson.title,
       position: lesson.position,
+      sections: (lesson.sections || []).map((s: SectionRecord) => ({
+        slug: s.slug,
+        title: s.title,
+        position: s.position,
+        kind: s.kind,
+        contentMarkdown: s.contentMarkdown,
+      })),
     }
   }
 

@@ -32,7 +32,7 @@ export const authService = {
       })
       return { ok: true, accessToken: login.accessToken }
     } catch (error) {
-      return { ok: false, error: gatewayError(error, "Falha no login") }
+      return { ok: false, error: await gatewayError(error, "Falha no login") }
     }
   },
 
@@ -50,7 +50,7 @@ export const authService = {
     } catch (error) {
       return {
         ok: false,
-        error: gatewayError(error, "Falha ao cadastrar"),
+        error: await gatewayError(error, "Falha ao cadastrar"),
       }
     }
   },
@@ -67,7 +67,7 @@ export const authService = {
     } catch (error) {
       return {
         ok: false,
-        error: gatewayError(error, "Falha ao solicitar redefinição"),
+        error: await gatewayError(error, "Falha ao solicitar redefinição"),
       }
     }
   },
@@ -80,7 +80,7 @@ export const authService = {
     } catch (error) {
       return {
         ok: false,
-        error: gatewayError(error, "Falha ao carregar usuário"),
+        error: await gatewayError(error, "Falha ao carregar usuário"),
       }
     }
   },
@@ -102,7 +102,7 @@ export const authService = {
     } catch (error) {
       return {
         ok: false,
-        error: gatewayError(error, "Falha ao carregar usuários"),
+        error: await gatewayError(error, "Falha ao carregar usuários"),
       }
     }
   },
@@ -122,7 +122,7 @@ export const authService = {
     } catch (error) {
       return {
         ok: false,
-        error: gatewayError(error, "Falha ao atualizar papel do usuário"),
+        error: await gatewayError(error, "Falha ao atualizar papel do usuário"),
       }
     }
   },
@@ -140,7 +140,7 @@ export const authService = {
     } catch (error) {
       return {
         ok: false,
-        error: gatewayError(error, "Falha no login social"),
+        error: await gatewayError(error, "Falha no login social"),
       }
     }
   },

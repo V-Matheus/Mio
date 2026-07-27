@@ -167,8 +167,9 @@ export class CatalogAdminGatewayService implements OnModuleInit {
           })),
         })),
       }
-    } catch (error: any) {
-      const details = error?.details || error?.message
+    } catch (error: unknown) {
+      const err = error as { details?: string; message?: string }
+      const details = err?.details || err?.message
       if (
         details === "TRACK_NOT_FOUND" ||
         details?.includes("TRACK_NOT_FOUND")
@@ -257,7 +258,13 @@ export class CatalogAdminGatewayService implements OnModuleInit {
       slug: res.slug,
       title: res.title,
       position: res.position || 0,
-      sections: [],
+      sections: (res.sections || []).map((s) => ({
+        slug: s.slug,
+        title: s.title,
+        position: s.position || 0,
+        kind: s.kind === "EXERCISE" ? SectionKind.EXERCISE : SectionKind.TEXT,
+        contentMarkdown: s.contentMarkdown || "",
+      })),
     }
   }
 

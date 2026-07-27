@@ -39,7 +39,10 @@ export const studioService = {
     } catch (error) {
       return {
         ok: false,
-        error: gatewayError(error, "Falha ao carregar trilhas do estúdio"),
+        error: await gatewayError(
+          error,
+          "Falha ao carregar trilhas do estúdio",
+        ),
       }
     }
   },
@@ -81,7 +84,7 @@ export const studioService = {
     } catch (error) {
       return {
         ok: false,
-        error: gatewayError(error, "Falha ao carregar detalhe da trilha"),
+        error: await gatewayError(error, "Falha ao carregar detalhe da trilha"),
       }
     }
   },
@@ -107,7 +110,10 @@ export const studioService = {
         },
       }
     } catch (error) {
-      return { ok: false, error: gatewayError(error, "Falha ao criar trilha") }
+      return {
+        ok: false,
+        error: await gatewayError(error, "Falha ao criar trilha"),
+      }
     }
   },
 
@@ -127,7 +133,7 @@ export const studioService = {
     } catch (error) {
       return {
         ok: false,
-        error: gatewayError(error, "Falha ao atualizar trilha"),
+        error: await gatewayError(error, "Falha ao atualizar trilha"),
       }
     }
   },
@@ -143,7 +149,7 @@ export const studioService = {
     } catch (error) {
       return {
         ok: false,
-        error: gatewayError(error, "Falha ao excluir trilha"),
+        error: await gatewayError(error, "Falha ao excluir trilha"),
       }
     }
   },
@@ -164,7 +170,10 @@ export const studioService = {
       })
       return { ok: true, lesson: data.upsertLesson as AdminLessonSummary }
     } catch (error) {
-      return { ok: false, error: gatewayError(error, "Falha ao salvar aula") }
+      return {
+        ok: false,
+        error: await gatewayError(error, "Falha ao salvar aula"),
+      }
     }
   },
 
@@ -181,7 +190,10 @@ export const studioService = {
       })
       return { ok: true }
     } catch (error) {
-      return { ok: false, error: gatewayError(error, "Falha ao excluir aula") }
+      return {
+        ok: false,
+        error: await gatewayError(error, "Falha ao excluir aula"),
+      }
     }
   },
 
@@ -212,7 +224,10 @@ export const studioService = {
       })
       return { ok: true, section: data.upsertSection as AdminSectionSummary }
     } catch (error) {
-      return { ok: false, error: gatewayError(error, "Falha ao salvar seção") }
+      return {
+        ok: false,
+        error: await gatewayError(error, "Falha ao salvar seção"),
+      }
     }
   },
 
@@ -231,7 +246,10 @@ export const studioService = {
       })
       return { ok: true }
     } catch (error) {
-      return { ok: false, error: gatewayError(error, "Falha ao excluir seção") }
+      return {
+        ok: false,
+        error: await gatewayError(error, "Falha ao excluir seção"),
+      }
     }
   },
 }

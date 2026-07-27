@@ -2,6 +2,7 @@ import type { ClientGrpc } from "@nestjs/microservices"
 import { of, throwError } from "rxjs"
 import { describe, expect, it, vi } from "vitest"
 import { CatalogAdminGatewayService } from "./catalog-admin.service"
+import { SectionKind } from "./models/section-kind.enum"
 
 function setup(catalogAdminService: Record<string, unknown>) {
   const client = {
@@ -73,6 +74,50 @@ describe("CatalogAdminGatewayService", () => {
         description: "Descrição",
         creatorCode: "user1",
         lessons: [],
+      })
+    })
+  })
+
+  describe("upsertLesson", () => {
+    it("mapeia as seções retornadas pelo RPC", async () => {
+      const service = setup({
+        upsertLesson: vi.fn().mockReturnValue(
+          of({
+            slug: "licao-1",
+            title: "Lição 1",
+            position: 1,
+            sections: [
+              {
+                slug: "sec-1",
+                title: "Seção 1",
+                position: 1,
+                kind: "TEXT",
+                contentMarkdown: "md content",
+              },
+            ],
+          }),
+        ),
+      })
+
+      const result = await service.upsertLesson(
+        { trackSlug: "trilha-1", title: "Lição 1" },
+        "user1",
+        "ADMIN",
+      )
+
+      expect(result).toEqual({
+        slug: "licao-1",
+        title: "Lição 1",
+        position: 1,
+        sections: [
+          {
+            slug: "sec-1",
+            title: "Seção 1",
+            position: 1,
+            kind: SectionKind.TEXT,
+            contentMarkdown: "md content",
+          },
+        ],
       })
     })
   })

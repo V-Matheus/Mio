@@ -99,6 +99,7 @@ message AdminLessonResponse {
   string slug = 2;
   string title = 3;
   int32 position = 4;
+  repeated AdminSectionSummary sections = 5;
 }
 
 message DeleteLessonRequest {
