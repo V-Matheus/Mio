@@ -23,13 +23,13 @@ export const navItems: NavItem[] = [
   },
   {
     label: "Estúdio",
-    href: "/admin/tracks",
+    href: "/studio",
     icon: "lucide:feather",
     roles: ["TEACHER", "ADMIN"],
   },
   {
     label: "Painel Geral",
-    href: "/admin",
+    href: "/painel",
     icon: "lucide:shield-alert",
     roles: ["ADMIN"],
   },

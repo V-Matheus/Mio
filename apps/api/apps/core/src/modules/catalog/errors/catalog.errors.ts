@@ -11,6 +11,7 @@ export const CatalogErrorCode = {
   LessonNotFound: "LESSON_NOT_FOUND",
   SectionNotFound: "SECTION_NOT_FOUND",
   UserNotFound: "USER_NOT_FOUND",
+  Forbidden: "FORBIDDEN",
 } as const
 
 export type CatalogErrorCode =
@@ -21,6 +22,7 @@ const grpcStatusByCode: Record<CatalogErrorCode, number> = {
   LESSON_NOT_FOUND: status.NOT_FOUND,
   SECTION_NOT_FOUND: status.NOT_FOUND,
   USER_NOT_FOUND: status.NOT_FOUND,
+  FORBIDDEN: status.PERMISSION_DENIED,
 }
 
 export function catalogError(code: CatalogErrorCode): RpcException {

@@ -151,4 +151,15 @@ describe("ButtonWrapper", () => {
     const button = screen.getByRole("button")
     expect(button.className).toContain("my-custom-class")
   })
+
+  it("should support border={false} to remove border", () => {
+    render(
+      <ButtonWrapper variant="secondary" border={false}>
+        Borderless
+      </ButtonWrapper>,
+    )
+
+    const button = screen.getByRole("button")
+    expect(button.className).toContain("border-0!")
+  })
 })

@@ -5,7 +5,7 @@ import { auth } from "@/auth"
 
 /**
  * Usuário da sessão NextAuth, normalizado para os campos que vêm de `/me`
- * (`code` é exposto como `id`). Use em Server Components do shell autenticado.
+ * (`code` é exposto como `id`). Inclui a role primária e o accessToken.
  */
 export type SessionUser = {
   id: string
@@ -14,15 +14,15 @@ export type SessionUser = {
   image: string | null
   roles: string[]
   role: string
+  accessToken: string
 }
 
 /**
  * Lê o usuário autenticado da sessão NextAuth.
  *
- * Por padrão (`require: true`) redireciona para `/login` quando não há sessão e
- * devolve um `SessionUser` não-nulo — evitando repetir o guard
- * `if (!user) redirect(...)` em cada Server Component. Passe `require: false`
- * para apenas obter o usuário (ou `null`) sem redirecionar.
+ * Por padrão (`require: true`) redireciona para `/login` quando não há sessão ou accessToken
+ * e devolve um `SessionUser` completo não-nulo. Passe `require: false` para apenas obter
+ * o usuário (ou `null`) sem redirecionar.
  */
 export async function getSessionUser(options?: {
   require?: true
@@ -50,12 +50,15 @@ export async function getSessionUser(options?: {
         image: session.user.image ?? null,
         roles: userRoles,
         role: priorityRole,
+        accessToken: session.accessToken ?? "",
       }
     : null
 
-  if (!user && (options?.require ?? true)) {
+  if (!user?.accessToken && (options?.require ?? true)) {
     redirect("/login")
   }
 
   return user
 }
+
+export const requireAuthSession = getSessionUser

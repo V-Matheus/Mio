@@ -5,5 +5,5 @@ export const usersContract: GrpcContract = {
   package: "mio.users.v1",
   service: "UsersService",
   clientToken: "USERS_PACKAGE",
-  protoPath: join(__dirname, "users.proto"),
+  protoPath: join(__dirname, "../mio/users/v1/users.proto"),
 }

@@ -5,5 +5,5 @@ export const catalogContract: GrpcContract = {
   package: "mio.catalog.v1",
   service: "CatalogService",
   clientToken: "CATALOG_PACKAGE",
-  protoPath: join(__dirname, "catalog.proto"),
+  protoPath: join(__dirname, "../mio/catalog/v1/catalog.proto"),
 }
