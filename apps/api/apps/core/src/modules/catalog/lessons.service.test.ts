@@ -5,6 +5,8 @@ import { LessonsService } from "./lessons.service"
 type PrismaMock = {
   lesson: { findFirst: ReturnType<typeof vi.fn> }
   section: { findFirst: ReturnType<typeof vi.fn> }
+  enrollment: { findFirst: ReturnType<typeof vi.fn> }
+  sectionView: { findMany: ReturnType<typeof vi.fn> }
 }
 
 const dbSections = [
@@ -33,7 +35,12 @@ describe("LessonsService", () => {
   let service: LessonsService
 
   beforeEach(() => {
-    prisma = { lesson: { findFirst: vi.fn() }, section: { findFirst: vi.fn() } }
+    prisma = {
+      lesson: { findFirst: vi.fn() },
+      section: { findFirst: vi.fn() },
+      enrollment: { findFirst: vi.fn() },
+      sectionView: { findMany: vi.fn().mockResolvedValue([]) },
+    }
     service = new LessonsService(prisma as never)
   })
 
@@ -45,20 +52,32 @@ describe("LessonsService", () => {
       )
     })
 
-    it("mapeia seções com kind e completed=false (progresso é spec 03)", async () => {
+    it("rejeita acesso se usuário não estiver autenticado ou matriculado com FORBIDDEN", async () => {
       prisma.lesson.findFirst.mockResolvedValue({
         id: 10,
+        trackId: 1,
+        slug: "intro-html",
+        sections: dbSections,
+      })
+      prisma.enrollment.findFirst.mockResolvedValue(null)
+
+      await expect(
+        service.getLesson("front-end", "intro-html", "usr1"),
+      ).rejects.toThrow("FORBIDDEN")
+    })
+
+    it("mapeia seções com kind quando usuário estiver matriculado", async () => {
+      prisma.lesson.findFirst.mockResolvedValue({
+        id: 10,
+        trackId: 1,
         slug: "intro-html",
         title: "Introdução ao HTML",
         sections: dbSections,
       })
+      prisma.enrollment.findFirst.mockResolvedValue({ id: BigInt(1) })
 
-      const result = await service.getLesson("front-end", "intro-html")
+      const result = await service.getLesson("front-end", "intro-html", "usr1")
 
-      expect(prisma.lesson.findFirst).toHaveBeenCalledWith({
-        where: { slug: "intro-html", track: { slug: "front-end" } },
-        include: { sections: { orderBy: { position: "asc" } } },
-      })
       expect(result).toEqual({
         id: 10,
         trackSlug: "front-end",
@@ -94,13 +113,30 @@ describe("LessonsService", () => {
       ).rejects.toThrow("SECTION_NOT_FOUND")
     })
 
-    it("devolve o contentMarkdown armazenado no banco", async () => {
-      prisma.section.findFirst.mockResolvedValue(dbSections[0])
+    it("rejeita acesso se usuário não estiver matriculado com FORBIDDEN", async () => {
+      prisma.section.findFirst.mockResolvedValue({
+        ...dbSections[0],
+        lesson: { trackId: 1 },
+      })
+      prisma.enrollment.findFirst.mockResolvedValue(null)
+
+      await expect(
+        service.getSection("front-end", "intro-html", "o-que-e-html", "usr1"),
+      ).rejects.toThrow("FORBIDDEN")
+    })
+
+    it("devolve o contentMarkdown armazenado no banco quando matriculado", async () => {
+      prisma.section.findFirst.mockResolvedValue({
+        ...dbSections[0],
+        lesson: { trackId: 1 },
+      })
+      prisma.enrollment.findFirst.mockResolvedValue({ id: BigInt(1) })
 
       const result = await service.getSection(
         "front-end",
         "intro-html",
         "o-que-e-html",
+        "usr1",
       )
 
       expect(result).toEqual({

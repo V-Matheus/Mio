@@ -11,7 +11,6 @@ export interface TrackCardProps extends ComponentProps<"div"> {
   category?: Category | null
   lessonCount: number
   enrolled?: boolean
-  estimatedHours?: number
   studentCount?: number
   rating?: number
 }
@@ -23,7 +22,6 @@ export function TrackCard({
   category,
   lessonCount,
   enrolled = false,
-  estimatedHours = 8,
   studentCount = 15420,
   rating = 4.8,
   className,
@@ -75,13 +73,6 @@ export function TrackCard({
 
         {/* Stats Grid */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-y-2 text-xs font-medium text-foreground/60 border-t border-foreground/5 pt-3">
-          <span className="flex items-center gap-1">
-            <Icon
-              icon="mdi:clock-outline"
-              className="size-4 text-foreground/50"
-            />
-            {estimatedHours} horas
-          </span>
           <span className="flex items-center gap-1">
             <Icon
               icon="lucide:book-open"

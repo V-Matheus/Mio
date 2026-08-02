@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package mio.progress.v1;
+
+service ProgressService {
+  rpc MarkSectionViewed(MarkSectionViewedRequest) returns (ProgressResponse);
+  rpc MarkLessonCompleted(MarkLessonCompletedRequest) returns (ProgressResponse);
+  rpc GetLessonProgress(GetLessonProgressRequest) returns (LessonProgressResponse);
+}
+
+message MarkSectionViewedRequest {
+  string user_code = 1;
+  int32 section_id = 2;
+}
+
+message MarkLessonCompletedRequest {
+  string user_code = 1;
+  int32 lesson_id = 2;
+}
+
+message GetLessonProgressRequest {
+  string user_code = 1;
+  int32 lesson_id = 2;
+}
+
+message ProgressResponse {
+  bool ok = 1;
+  bool lesson_completed = 2;
+}
+
+message LessonProgressResponse {
+  int32 last_section_id = 1;
+  string completed_at = 2;
+  repeated int32 viewed_section_ids = 3;
+}

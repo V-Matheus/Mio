@@ -1,7 +1,8 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { enrollInTrack } from "@/lib/catalog/service"
+import { enrollInTrack, getSection } from "@/lib/catalog/service"
+import type { SectionDetail } from "@/lib/catalog/types"
 
 export async function enrollInTrackAction(
   trackId: number,
@@ -15,4 +16,12 @@ export async function enrollInTrackAction(
     }
   }
   return result
+}
+
+export async function getSectionAction(
+  trackSlug: string,
+  lessonSlug: string,
+  sectionSlug: string,
+): Promise<SectionDetail | null> {
+  return getSection(trackSlug, lessonSlug, sectionSlug)
 }

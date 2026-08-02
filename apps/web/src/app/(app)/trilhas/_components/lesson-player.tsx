@@ -1,10 +1,15 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import type { ComponentProps } from "react"
-import { useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { Icon } from "@/components/icon"
+import { MarkdownRenderer } from "@/components/markdown-renderer"
+import { Modal } from "@/components/modal"
+import { getSectionAction } from "@/lib/catalog/actions"
 import type { SectionDetail, SectionSummary } from "@/lib/catalog/types"
+import { markSectionViewedAction } from "@/lib/progress/actions"
 import { cn } from "@/utils"
 
 export interface LessonPlayerProps extends ComponentProps<"div"> {
@@ -25,22 +30,108 @@ export function LessonPlayer({
   className,
   ...props
 }: LessonPlayerProps) {
+  const router = useRouter()
   const [activeSectionSlug, setActiveSectionSlug] = useState(
     currentSection?.slug ?? sections[0]?.slug ?? "",
   )
+  const [sectionsMap, setSectionsMap] = useState<Record<string, SectionDetail>>(
+    () => (currentSection ? { [currentSection.slug]: currentSection } : {}),
+  )
+  const [viewedSectionIds, setViewedSectionIds] = useState<Set<number>>(
+    () => new Set(sections.filter((s) => s.completed).map((s) => s.id)),
+  )
+  const [showCompletionModal, setShowCompletionModal] = useState(false)
+  const [isBookmarked, setIsBookmarked] = useState(false)
+  const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    if (currentSection) {
+      setSectionsMap((prev) => ({
+        ...prev,
+        [currentSection.slug]: currentSection,
+      }))
+    }
+  }, [currentSection])
 
   const activeIndex = sections.findIndex((s) => s.slug === activeSectionSlug)
   const currentSectionMeta = sections[activeIndex] ?? sections[0]
-  const completedCount = sections.filter((s) => s.completed).length
+  const activeSectionDetail = activeSectionSlug
+    ? sectionsMap[activeSectionSlug]
+    : null
+
+  const isLastSection = activeIndex === sections.length - 1
+  const isCurrentSectionViewed = currentSectionMeta
+    ? viewedSectionIds.has(currentSectionMeta.id)
+    : false
+
+  const completedCount = viewedSectionIds.size
   const progressPercent = Math.round(
     (completedCount / (sections.length || 1)) * 100,
   )
+
+  const handleSelectSection = (targetSlug: string) => {
+    setActiveSectionSlug(targetSlug)
+    router.replace(
+      `/trilhas/${trackSlug}/aula/${lessonSlug}?section=${targetSlug}`,
+      { scroll: false },
+    )
+
+    if (!sectionsMap[targetSlug]) {
+      startTransition(async () => {
+        const fetched = await getSectionAction(
+          trackSlug,
+          lessonSlug,
+          targetSlug,
+        )
+        if (fetched) {
+          setSectionsMap((prev) => ({ ...prev, [targetSlug]: fetched }))
+        }
+      })
+    }
+  }
+
+  const handleMarkSectionDone = () => {
+    if (!currentSectionMeta) return
+
+    const isLessonFullyCompleted =
+      sections.length > 0 && sections.every((s) => viewedSectionIds.has(s.id))
+
+    if (isCurrentSectionViewed && (isLastSection || isLessonFullyCompleted)) {
+      router.push(`/trilhas/${trackSlug}`)
+      return
+    }
+
+    startTransition(async () => {
+      const res = await markSectionViewedAction(
+        currentSectionMeta.id,
+        trackSlug,
+        lessonSlug,
+      )
+
+      setViewedSectionIds((prev) => {
+        const next = new Set(prev)
+        next.add(currentSectionMeta.id)
+        return next
+      })
+
+      if (res.lessonCompleted) {
+        setShowCompletionModal(true)
+      } else if (activeIndex < sections.length - 1) {
+        const nextSection = sections[activeIndex + 1]
+        if (nextSection) {
+          handleSelectSection(nextSection.slug)
+        }
+      } else {
+        router.push(`/trilhas/${trackSlug}`)
+      }
+    })
+  }
 
   return (
     <div
       data-slot="lesson-player"
       className={cn(
-        "flex flex-col gap-6 w-full max-w-6xl mx-auto pb-16",
+        "flex flex-col gap-6 w-full max-w-6xl mx-auto pb-16 relative",
         className,
       )}
       {...props}
@@ -84,60 +175,62 @@ export function LessonPlayer({
         <div className="lg:col-span-8 flex flex-col gap-6">
           {/* Main Card */}
           <div className="overflow-hidden rounded-2xl border border-foreground/10 bg-white p-6 md:p-8 shadow-sm">
-            {/* Section Title */}
-            <h2 className="font-display text-2xl font-bold text-foreground">
-              {currentSection?.title ??
-                currentSectionMeta?.title ??
-                "Conteúdo da Seção"}
-            </h2>
-
-            {/* Video / Media Placeholder */}
-            <div className="mt-6 flex h-64 w-full items-center justify-center rounded-xl bg-foreground/10 relative group overflow-hidden">
-              <div className="size-16 rounded-full bg-primary flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
-                <Icon icon="mdi:play" className="size-8 ml-1" />
-              </div>
-              <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-md text-xs font-medium text-white">
-                Vídeo: Introdução às Tags
-              </div>
-              <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-md text-xs font-medium text-white">
-                12:45
-              </div>
-            </div>
-
-            {/* Section Content Markdown / Code Box */}
-            <div className="mt-6 space-y-4 text-foreground/90 leading-relaxed text-base">
-              {currentSection?.contentMarkdown ? (
-                <div className="prose max-w-none text-foreground">
-                  <p>{currentSection.contentMarkdown}</p>
-                </div>
-              ) : (
-                <p>
-                  Tags são os elementos básicos da estrutura do HTML. Elas dizem
-                  ao navegador qual o tipo de conteúdo exibido.
-                </p>
-              )}
-
-              {/* Styled Code Box matching Figma design */}
-              <div className="mt-6 rounded-xl border border-amber-200/80 bg-[#F7F1E8] p-5 font-mono text-sm font-bold text-primary shadow-inner">
-                <code>{"<h1>olá, Mundo!</h1>"}</code>
-              </div>
+            {/* Section Content Markdown */}
+            <div className="mt-6">
+              <MarkdownRenderer
+                content={activeSectionDetail?.contentMarkdown}
+              />
             </div>
 
             {/* Action Buttons */}
             <div className="mt-8 flex items-center gap-4 pt-6 border-t border-foreground/10">
               <button
                 type="button"
-                className="flex-1 rounded-xl bg-primary py-3.5 text-center text-sm font-bold text-white shadow-[0_4px_0_#CC3300] hover:bg-orange-600 active:translate-y-0.5 transition-all"
+                onClick={handleMarkSectionDone}
+                disabled={isPending}
+                className={cn(
+                  "flex-1 rounded-xl py-3.5 text-center text-sm font-bold text-white transition-all active:translate-y-0.5",
+                  isCurrentSectionViewed
+                    ? "bg-emerald-600 hover:bg-emerald-700 shadow-[0_4px_0_#047857]"
+                    : "bg-primary hover:bg-orange-600 shadow-[0_4px_0_#CC3300]",
+                  isPending && "opacity-60 cursor-not-allowed",
+                )}
               >
-                Marcar como concluída
+                {isPending
+                  ? "Salvando..."
+                  : isLastSection
+                    ? isCurrentSectionViewed
+                      ? "Voltar para a Trilha"
+                      : "Concluir aula"
+                    : isCurrentSectionViewed
+                      ? "Próxima seção"
+                      : "Marcar como vista e avançar"}
               </button>
 
               <button
                 type="button"
-                aria-label="Salvar nos favoritos"
-                className="flex size-12 items-center justify-center rounded-xl border border-foreground/15 bg-white text-foreground hover:bg-foreground/5 transition-colors shadow-sm"
+                onClick={() => setIsBookmarked((prev) => !prev)}
+                aria-label={
+                  isBookmarked
+                    ? "Remover dos favoritos"
+                    : "Salvar nos favoritos"
+                }
+                title={
+                  isBookmarked
+                    ? "Remover dos favoritos"
+                    : "Salvar nos favoritos"
+                }
+                className={cn(
+                  "flex size-12 items-center justify-center rounded-xl border transition-all shadow-sm cursor-pointer",
+                  isBookmarked
+                    ? "border-amber-300 bg-amber-50 text-amber-600"
+                    : "border-foreground/15 bg-white text-foreground/70 hover:bg-foreground/5 hover:text-foreground",
+                )}
               >
-                <Icon icon="lucide:book-open" className="size-5" />
+                <Icon
+                  icon={isBookmarked ? "mdi:bookmark" : "mdi:bookmark-outline"}
+                  className="size-5"
+                />
               </button>
             </div>
           </div>
@@ -155,15 +248,15 @@ export function LessonPlayer({
             <div className="flex flex-col gap-3">
               {sections.map((section, idx) => {
                 const isActive = section.slug === activeSectionSlug
-                const isCompleted = section.completed
+                const isCompleted = viewedSectionIds.has(section.id)
 
                 return (
                   <button
                     key={section.slug}
                     type="button"
-                    onClick={() => setActiveSectionSlug(section.slug)}
+                    onClick={() => handleSelectSection(section.slug)}
                     className={cn(
-                      "flex items-center gap-3 w-full rounded-xl p-3.5 text-left transition-all border",
+                      "flex items-center gap-3 w-full rounded-xl p-3.5 text-left transition-all border cursor-pointer",
                       isActive
                         ? "border-primary bg-orange-50/70 shadow-sm"
                         : "border-foreground/10 bg-surface hover:bg-foreground/5",
@@ -194,34 +287,55 @@ export function LessonPlayer({
                       >
                         {section.title}
                       </span>
-                      <span className="text-xs text-foreground/60">
-                        {section.kind === "EXERCISE"
-                          ? "Desafio Prático"
-                          : "12 min"}
+                      <span className="text-xs font-bold text-amber-700">
+                        ⚡ 50 XP
                       </span>
                     </div>
                   </button>
                 )
               })}
             </div>
-
-            {/* XP Reward Card */}
-            <div className="mt-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <div className="flex size-10 items-center justify-center rounded-full bg-amber-400 text-amber-900 shadow-sm">
-                <Icon icon="mdi:trophy" className="size-6" />
-              </div>
-              <div>
-                <span className="block text-xs font-bold text-amber-800">
-                  Recompensa da aula
-                </span>
-                <span className="font-display text-lg font-extrabold text-amber-900">
-                  +50 XP
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
+
+      {/* Global Modal Component for Completion Prompt */}
+      <Modal
+        isOpen={showCompletionModal}
+        onClose={() => setShowCompletionModal(false)}
+        closeOnOverlayClick={true}
+        showCloseButton={true}
+      >
+        <div className="flex size-20 items-center justify-center rounded-full bg-amber-100 text-amber-500 shadow-inner">
+          <Icon icon="mdi:trophy" className="size-12 animate-bounce" />
+        </div>
+
+        <h3 className="mt-4 font-display text-2xl font-extrabold text-foreground">
+          Aula Concluída! 🎉
+        </h3>
+
+        <p className="mt-2 text-sm text-foreground/70">
+          Você completou todas as seções desta aula. Seus XP e conquistas estão
+          a caminho!
+        </p>
+
+        <div className="mt-6 flex w-full flex-col gap-3">
+          <button
+            type="button"
+            onClick={() => setShowCompletionModal(false)}
+            className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-[0_4px_0_#CC3300] hover:bg-orange-600 transition-all cursor-pointer"
+          >
+            Continuar aprendendo
+          </button>
+
+          <Link
+            href={`/trilhas/${trackSlug}`}
+            className="w-full rounded-xl border border-foreground/15 py-3 text-center text-sm font-bold text-foreground hover:bg-foreground/5 transition-colors"
+          >
+            Voltar para a Trilha
+          </Link>
+        </div>
+      </Modal>
     </div>
   )
 }

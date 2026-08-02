@@ -3,8 +3,12 @@
   "compilerOptions": {
     "outDir": "./dist",
     "baseUrl": "./",
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals"],
+    "paths": {
+      "@mio/events": ["libs/events/src"],
+      "@mio/events/*": ["libs/events/src/*"]
+    }
   },
-  "include": ["apps/**/*", "tests/**/*"],
+  "include": ["apps/**/*", "libs/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]
 }

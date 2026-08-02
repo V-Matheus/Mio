@@ -9,6 +9,7 @@ import { resolve } from "node:path"
  *   explicitamente para o client gerado.
  * - `@mio/grpc-contracts`: resolve para o fonte, evitando exigir o build do
  *   pacote só para rodar os testes.
+ * - `@mio/events`: resolve para o fonte da biblioteca de eventos do backend.
  */
 export const testAlias = {
   ".prisma/core": resolve(import.meta.dirname, "node_modules/.prisma/core"),
@@ -16,4 +17,5 @@ export const testAlias = {
     import.meta.dirname,
     "../../packages/grpc-contracts/src",
   ),
+  "@mio/events": resolve(import.meta.dirname, "libs/events/src"),
 }

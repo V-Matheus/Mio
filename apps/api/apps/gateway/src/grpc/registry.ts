@@ -2,6 +2,7 @@ import {
   catalogAdminContract,
   catalogContract,
   type GrpcContract,
+  progressContract,
   usersContract,
 } from "@mio/grpc-contracts"
 import { type ClientProviderOptions, Transport } from "@nestjs/microservices"
@@ -20,6 +21,11 @@ const targets: GrpcTarget[] = [
     host: "api-core",
     portEnv: "CORE_GRPC_PORT",
   },
+  {
+    contract: progressContract,
+    host: "api-core",
+    portEnv: "CORE_GRPC_PORT",
+  },
 ]
 
 function requireClientToken(contract: GrpcContract): string {
@@ -33,6 +39,7 @@ export const USERS_PACKAGE_TOKEN = requireClientToken(usersContract)
 export const CATALOG_PACKAGE_TOKEN = requireClientToken(catalogContract)
 export const CATALOG_ADMIN_PACKAGE_TOKEN =
   requireClientToken(catalogAdminContract)
+export const PROGRESS_PACKAGE_TOKEN = requireClientToken(progressContract)
 
 export const gatewayGrpcClients: ClientProviderOptions[] = targets.map(
   ({ contract, host, portEnv }) => ({

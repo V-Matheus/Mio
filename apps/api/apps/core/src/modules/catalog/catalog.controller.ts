@@ -33,8 +33,16 @@ export class CatalogController {
   }
 
   @GrpcMethod(SERVICE_NAME, "GetLesson")
-  async getLesson(data: { trackSlug: string; lessonSlug: string }) {
-    return this.lessonsService.getLesson(data.trackSlug, data.lessonSlug)
+  async getLesson(data: {
+    trackSlug: string
+    lessonSlug: string
+    userCode?: string
+  }) {
+    return this.lessonsService.getLesson(
+      data.trackSlug,
+      data.lessonSlug,
+      data.userCode,
+    )
   }
 
   @GrpcMethod(SERVICE_NAME, "GetSection")
@@ -42,11 +50,13 @@ export class CatalogController {
     trackSlug: string
     lessonSlug: string
     sectionSlug: string
+    userCode?: string
   }) {
     return this.lessonsService.getSection(
       data.trackSlug,
       data.lessonSlug,
       data.sectionSlug,
+      data.userCode,
     )
   }
 

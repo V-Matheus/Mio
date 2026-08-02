@@ -91,9 +91,15 @@ export class CatalogService implements OnModuleInit {
     trackSlug: string,
     lessonSlug: string,
     sectionSlug: string,
+    userCode?: string,
   ): Promise<SectionDetail | null> {
     return this.callNullable(
-      this.catalogService.getSection({ trackSlug, lessonSlug, sectionSlug }),
+      this.catalogService.getSection({
+        trackSlug,
+        lessonSlug,
+        sectionSlug,
+        userCode: userCode ?? "",
+      }),
       toSectionDetail,
     )
   }

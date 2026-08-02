@@ -4,10 +4,15 @@ import { getTrackQuery } from "@/lib/catalog/queries"
 
 interface TrackPageProps {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ enroll?: string }>
 }
 
-export default async function TrackDetailPage({ params }: TrackPageProps) {
+export default async function TrackDetailPage({
+  params,
+  searchParams,
+}: TrackPageProps) {
   const { slug } = await params
+  const { enroll } = await searchParams
   const track = await getTrackQuery(slug)
 
   if (!track) {
@@ -23,6 +28,7 @@ export default async function TrackDetailPage({ params }: TrackPageProps) {
         trackDescription={track.description}
         lessons={track.lessons}
         enrolled={track.enrolled}
+        autoOpenEnrollModal={enroll === "true"}
       />
     </div>
   )

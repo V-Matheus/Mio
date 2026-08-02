@@ -10,26 +10,53 @@ import deviconPython from "@iconify-icons/devicon/python"
 import deviconReact from "@iconify-icons/devicon/react"
 import deviconTypescript from "@iconify-icons/devicon/typescript"
 import logosGoogleIcon from "@iconify-icons/logos/google-icon"
+import lucideAlertCircle from "@iconify-icons/lucide/alert-circle"
+import lucideAlertTriangle from "@iconify-icons/lucide/alert-triangle"
+import lucideArrowLeft from "@iconify-icons/lucide/arrow-left"
+import lucideBold from "@iconify-icons/lucide/bold"
 import lucideBookOpen from "@iconify-icons/lucide/book-open"
+import lucideChevronRight from "@iconify-icons/lucide/chevron-right"
 import lucideChevronUp from "@iconify-icons/lucide/chevron-up"
+import lucideCode from "@iconify-icons/lucide/code"
+import lucideCode2 from "@iconify-icons/lucide/code-2"
+import lucideEye from "@iconify-icons/lucide/eye"
 import lucideFeather from "@iconify-icons/lucide/feather"
+import lucideFolderOpen from "@iconify-icons/lucide/folder-open"
+import lucideFolderPlus from "@iconify-icons/lucide/folder-plus"
 import lucideGamepad2 from "@iconify-icons/lucide/gamepad-2"
 import lucideHome from "@iconify-icons/lucide/home"
+import lucideInfo from "@iconify-icons/lucide/info"
+import lucideItalic from "@iconify-icons/lucide/italic"
+import lucideLayers from "@iconify-icons/lucide/layers"
+import lucideLayoutDashboard from "@iconify-icons/lucide/layout-dashboard"
+import lucideLink from "@iconify-icons/lucide/link"
+import lucideList from "@iconify-icons/lucide/list"
 import lucideLogOut from "@iconify-icons/lucide/log-out"
 import lucideMenu from "@iconify-icons/lucide/menu"
 import lucideMessageSquare from "@iconify-icons/lucide/message-square"
 import lucideMoreVertical from "@iconify-icons/lucide/more-vertical"
+import lucidePencil from "@iconify-icons/lucide/pencil"
+import lucidePlus from "@iconify-icons/lucide/plus"
+import lucidePlusCircle from "@iconify-icons/lucide/plus-circle"
+import lucideQuote from "@iconify-icons/lucide/quote"
+import lucideSave from "@iconify-icons/lucide/save"
 import lucideSearch from "@iconify-icons/lucide/search"
 import lucideShieldAlert from "@iconify-icons/lucide/shield-alert"
+import lucideShieldCheck from "@iconify-icons/lucide/shield-check"
+import lucideTrash2 from "@iconify-icons/lucide/trash-2"
 import lucideUser from "@iconify-icons/lucide/user"
+import lucideX from "@iconify-icons/lucide/x"
 import mdiAccountGroupOutline from "@iconify-icons/mdi/account-group-outline"
 import mdiAccountStarOutline from "@iconify-icons/mdi/account-star-outline"
 import mdiArrowLeft from "@iconify-icons/mdi/arrow-left"
+import mdiBookmark from "@iconify-icons/mdi/bookmark"
+import mdiBookmarkOutline from "@iconify-icons/mdi/bookmark-outline"
 import mdiCertificateOutline from "@iconify-icons/mdi/certificate-outline"
 import mdiCheck from "@iconify-icons/mdi/check"
 import mdiCheckBold from "@iconify-icons/mdi/check-bold"
 import mdiCheckCircle from "@iconify-icons/mdi/check-circle"
 import mdiClockOutline from "@iconify-icons/mdi/clock-outline"
+import mdiClose from "@iconify-icons/mdi/close"
 import mdiCloseCircle from "@iconify-icons/mdi/close-circle"
 import mdiCodeBraces from "@iconify-icons/mdi/code-braces"
 import mdiEmailOutline from "@iconify-icons/mdi/email-outline"
@@ -43,6 +70,7 @@ import mdiLeaf from "@iconify-icons/mdi/leaf"
 import mdiLightbulb from "@iconify-icons/mdi/lightbulb"
 import mdiLinkedin from "@iconify-icons/mdi/linkedin"
 import mdiLock from "@iconify-icons/mdi/lock"
+import mdiLockAlert from "@iconify-icons/mdi/lock-alert"
 import mdiMagnify from "@iconify-icons/mdi/magnify"
 import mdiPlay from "@iconify-icons/mdi/play"
 import mdiSeedOutline from "@iconify-icons/mdi/seed-outline"
@@ -57,21 +85,6 @@ import mdiTwitter from "@iconify-icons/mdi/twitter"
 import mdiUpdate from "@iconify-icons/mdi/update"
 import { useId } from "react"
 
-/**
- * Registro central de ícones. Renderiza offline (síncrono) só os ícones que o
- * projeto usa — cada um vem como módulo ESM próprio de `@iconify-icons/<set>`,
- * então só os listados aqui entram no bundle (os pacotes são devDependencies).
- *
- * Por que existe: o `@iconify/react` busca cada SVG na API em runtime e inicia
- * com `mounted=false`, renderizando um `<span/>` vazio até o `useEffect` do
- * cliente — é o que fazia os ícones "piscarem" ao recarregar. Aqui registramos
- * os dados offline (`addIcon`) e passamos `ssr`, então o SVG sai já no HTML do
- * servidor e no 1º render. (`@iconify/react` é client-only — daí o `"use client"`.)
- *
- * Para adicionar um ícone: `yarn add -D @iconify-icons/<set>` (se o set ainda
- * não estiver instalado), importe-o de `@iconify-icons/<set>/<nome>` e registre
- * uma linha em `registry`. O uso continua `<Icon icon="set:nome" />`.
- */
 const registry: Record<string, IconProps["icon"]> = {
   "devicon:git": deviconGit,
   "devicon:html5": deviconHtml5,
@@ -82,26 +95,53 @@ const registry: Record<string, IconProps["icon"]> = {
   "devicon:react": deviconReact,
   "devicon:typescript": deviconTypescript,
   "logos:google-icon": logosGoogleIcon,
+  "lucide:alert-circle": lucideAlertCircle,
+  "lucide:alert-triangle": lucideAlertTriangle,
+  "lucide:arrow-left": lucideArrowLeft,
+  "lucide:bold": lucideBold,
   "lucide:book-open": lucideBookOpen,
+  "lucide:chevron-right": lucideChevronRight,
   "lucide:chevron-up": lucideChevronUp,
+  "lucide:code": lucideCode,
+  "lucide:code-2": lucideCode2,
+  "lucide:eye": lucideEye,
   "lucide:feather": lucideFeather,
+  "lucide:folder-open": lucideFolderOpen,
+  "lucide:folder-plus": lucideFolderPlus,
   "lucide:gamepad-2": lucideGamepad2,
   "lucide:home": lucideHome,
+  "lucide:info": lucideInfo,
+  "lucide:italic": lucideItalic,
+  "lucide:layers": lucideLayers,
+  "lucide:layout-dashboard": lucideLayoutDashboard,
+  "lucide:link": lucideLink,
+  "lucide:list": lucideList,
   "lucide:log-out": lucideLogOut,
   "lucide:menu": lucideMenu,
   "lucide:message-square": lucideMessageSquare,
   "lucide:more-vertical": lucideMoreVertical,
+  "lucide:pencil": lucidePencil,
+  "lucide:plus": lucidePlus,
+  "lucide:plus-circle": lucidePlusCircle,
+  "lucide:quote": lucideQuote,
+  "lucide:save": lucideSave,
   "lucide:search": lucideSearch,
   "lucide:shield-alert": lucideShieldAlert,
+  "lucide:shield-check": lucideShieldCheck,
+  "lucide:trash-2": lucideTrash2,
   "lucide:user": lucideUser,
+  "lucide:x": lucideX,
   "mdi:account-group-outline": mdiAccountGroupOutline,
   "mdi:account-star-outline": mdiAccountStarOutline,
   "mdi:arrow-left": mdiArrowLeft,
+  "mdi:bookmark": mdiBookmark,
+  "mdi:bookmark-outline": mdiBookmarkOutline,
   "mdi:certificate-outline": mdiCertificateOutline,
   "mdi:check": mdiCheck,
   "mdi:check-bold": mdiCheckBold,
   "mdi:check-circle": mdiCheckCircle,
   "mdi:clock-outline": mdiClockOutline,
+  "mdi:close": mdiClose,
   "mdi:close-circle": mdiCloseCircle,
   "mdi:code-braces": mdiCodeBraces,
   "mdi:email-outline": mdiEmailOutline,
@@ -115,6 +155,7 @@ const registry: Record<string, IconProps["icon"]> = {
   "mdi:lightbulb": mdiLightbulb,
   "mdi:linkedin": mdiLinkedin,
   "mdi:lock": mdiLock,
+  "mdi:lock-alert": mdiLockAlert,
   "mdi:magnify": mdiMagnify,
   "mdi:play": mdiPlay,
   "mdi:seed-outline": mdiSeedOutline,
