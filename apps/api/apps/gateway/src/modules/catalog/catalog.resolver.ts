@@ -49,6 +49,7 @@ export class CatalogResolver {
   }
 
   @Query(() => SectionDetail, { nullable: true })
+  @UseGuards(OptionalGqlAuthGuard)
   section(
     @Args("trackSlug", { type: () => ID }, new ZodValidationPipe(slugSchema))
     trackSlug: string,
@@ -56,8 +57,9 @@ export class CatalogResolver {
     lessonSlug: string,
     @Args("sectionSlug", { type: () => ID }, new ZodValidationPipe(slugSchema))
     sectionSlug: string,
+    @CurrentUserCode() userCode?: string,
   ): Promise<SectionDetail | null> {
-    return this.catalog.section(trackSlug, lessonSlug, sectionSlug)
+    return this.catalog.section(trackSlug, lessonSlug, sectionSlug, userCode)
   }
 
   @Mutation(() => Boolean)

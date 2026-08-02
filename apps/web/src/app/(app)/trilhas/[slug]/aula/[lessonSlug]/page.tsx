@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation"
+import { redirect } from "next/navigation"
 import { LessonPlayer } from "@/app/(app)/trilhas/_components/lesson-player"
 import { getLessonQuery, getSectionQuery } from "@/lib/catalog/queries"
 
@@ -17,7 +17,7 @@ export default async function LessonDetailPage({
   const lesson = await getLessonQuery(trackSlug, lessonSlug)
 
   if (!lesson) {
-    notFound()
+    redirect(`/trilhas/${trackSlug}?enroll=true`)
   }
 
   const activeSectionSlug = sectionSlugParam ?? lesson.sections[0]?.slug ?? ""

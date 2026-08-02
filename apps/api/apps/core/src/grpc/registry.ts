@@ -2,6 +2,7 @@ import {
   catalogAdminContract,
   catalogContract,
   healthContract,
+  progressContract,
   usersContract,
 } from "@mio/grpc-contracts"
 
@@ -15,6 +16,7 @@ const contracts = [
   usersContract,
   catalogContract,
   catalogAdminContract,
+  progressContract,
 ]
 
 export const coreGrpcRegistry = {

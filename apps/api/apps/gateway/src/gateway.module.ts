@@ -9,6 +9,7 @@ import { InternalSecretGuard } from "./common/guards/internal-secret.guard"
 import { AuthModule } from "./modules/auth/auth.module"
 import { CatalogModule } from "./modules/catalog/catalog.module"
 import { HealthModule } from "./modules/health/health.module"
+import { ProgressModule } from "./modules/progress/progress.module"
 
 const isProduction = process.env.NODE_ENV === "production"
 
@@ -33,6 +34,7 @@ const autoSchemaFile = isProduction
     HealthModule,
     AuthModule,
     CatalogModule,
+    ProgressModule,
   ],
   controllers: [],
   providers: [

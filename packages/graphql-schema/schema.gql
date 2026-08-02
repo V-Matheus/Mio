@@ -65,6 +65,12 @@ type LessonDetail {
   trackSlug: ID!
 }
 
+type LessonProgress {
+  completedAt: String
+  lastSectionId: Int
+  viewedSectionIds: [Int!]!
+}
+
 type LessonSummary {
   completed: Boolean!
   id: Int!
@@ -78,6 +84,11 @@ input LoginInput {
   password: String!
 }
 
+type MarkSectionResult {
+  lessonCompleted: Boolean!
+  ok: Boolean!
+}
+
 type Mutation {
   createTrack(input: CreateTrackInput!): AdminTrack!
   deleteLesson(id: Int!): Boolean!
@@ -85,6 +96,8 @@ type Mutation {
   deleteTrack(id: Int!): Boolean!
   enrollInTrack(trackId: Int!): Boolean!
   login(input: LoginInput!): AuthPayload!
+  markLessonCompleted(lessonId: Int!): Boolean!
+  markSectionViewed(sectionId: Int!): MarkSectionResult!
   register(input: RegisterInput!): AuthPayload!
   requestPasswordReset(email: String!): Boolean!
   resetPassword(newPassword: String!, token: String!): Boolean!
@@ -100,6 +113,7 @@ type Query {
   adminTracks: [AdminTrack!]!
   categories: [Category!]!
   lesson(lessonSlug: ID!, trackSlug: ID!): LessonDetail
+  lessonProgress(lessonId: Int!): LessonProgress!
   listUsers(search: String): [User!]!
   me: User!
   section(lessonSlug: ID!, sectionSlug: ID!, trackSlug: ID!): SectionDetail
@@ -121,9 +135,7 @@ type SectionDetail {
   title: String!
 }
 
-"""
-Tipo de seção de uma lição
-"""
+"""Tipo de seção de uma lição"""
 enum SectionKind {
   EXERCISE
   TEXT
@@ -196,9 +208,7 @@ type User {
   roles: [String!]!
 }
 
-"""
-Perfil de acesso do usuário
-"""
+"""Perfil de acesso do usuário"""
 enum UserRole {
   ADMIN
   STUDENT

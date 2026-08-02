@@ -92,6 +92,7 @@ message GetSectionRequest {
   string track_slug = 1;
   string lesson_slug = 2;
   string section_slug = 3;
+  string user_code = 4;
 }
 
 message SectionDetailResponse {

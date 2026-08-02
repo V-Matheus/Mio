@@ -35,6 +35,7 @@ model User {
   progress       LessonProgress[]
   identities     UserIdentity[]
   passwordResets PasswordReset[]
+  sectionViews   SectionView[]
 }
 
 model Role {
@@ -140,6 +141,7 @@ model Section {
 
   lesson   Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   progress LessonProgress[]
+  views    SectionView[]
 
   @@unique([lessonId, slug])
   @@unique([lessonId, position])
@@ -171,3 +173,29 @@ model LessonProgress {
 
   @@unique([userId, lessonId])
 }
+
+model SectionView {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  sectionId Int
+  viewedAt  DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sectionId])
+  @@index([userId])
+  @@index([sectionId])
+}
+
+model OutboxEvent {
+  id          BigInt    @id @default(autoincrement())
+  routingKey  String
+  payload     Json
+  headers     Json?
+  createdAt   DateTime  @default(now())
+  publishedAt DateTime?
+
+  @@index([publishedAt])
+}
+

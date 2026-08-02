@@ -83,6 +83,7 @@ export interface CatalogServiceClient {
     trackSlug: string
     lessonSlug: string
     sectionSlug: string
+    userCode: string
   }): Observable<GrpcSectionDetail>
 
   enrollUser(data: {
