@@ -14,9 +14,9 @@ Catálogo de conteúdo: trilhas → lições → seções (texto / exercício). 
 - ✅ Gateway expõe queries `tracks/track/lesson/section` e mutation `enrollInTrack` (schema.gql regenerado).
 
 ### Frontend (`apps/web`)
-- ❌ Nenhuma página `/trilhas`, `/trilha/[slug]`, `/aula/[slug]`.
-- ❌ Nenhum componente de player de lição.
-- ❌ Nenhum renderer de markdown / exercício.
+- ✅ Páginas `/trilhas`, `/trilhas/[slug]` e `/trilhas/[slug]/aula/[lessonSlug]` criadas e integradas.
+- ✅ Componente `LessonPlayer` de navegação entre lições e seções.
+- ✅ Renderer de markdown (`react-markdown` + `rehype-highlight`) e placeholder de exercícios.
 
 ## Escopo
 
@@ -73,22 +73,32 @@ message SectionDetailResponse {
   string content_markdown = 4;
 }
 
-message EnrollUserRequest { string user_code = 1; string track_slug = 2; }
+message EnrollUserRequest { string user_code = 1; int32 track_id = 2; }
 message EnrollmentResponse { bool ok = 1; }
 ```
 
 ### GraphQL (gateway)
 
 ```graphql
+type Category {
+  id: Int!
+  slug: ID!
+  name: String!
+  color: String!
+}
+
 type Track {
+  id: Int!
   slug: ID!
   title: String!
   description: String
+  category: Category
   lessonCount: Int!
   enrolled: Boolean!
 }
 
 type LessonSummary {
+  id: Int!
   slug: ID!
   title: String!
   position: Int!
@@ -96,14 +106,17 @@ type LessonSummary {
 }
 
 type TrackDetail {
+  id: Int!
   slug: ID!
   title: String!
   description: String
+  category: Category
   lessons: [LessonSummary!]!
   enrolled: Boolean!
 }
 
 type SectionSummary {
+  id: Int!
   slug: ID!
   title: String!
   position: Int!
@@ -114,6 +127,7 @@ type SectionSummary {
 enum SectionKind { TEXT EXERCISE }
 
 type LessonDetail {
+  id: Int!
   trackSlug: ID!
   lessonSlug: ID!
   title: String!
@@ -121,6 +135,7 @@ type LessonDetail {
 }
 
 type SectionDetail {
+  id: Int!
   slug: ID!
   title: String!
   kind: SectionKind!
@@ -129,13 +144,14 @@ type SectionDetail {
 
 extend type Query {
   tracks: [Track!]!
+  categories: [Category!]!
   track(slug: ID!): TrackDetail
   lesson(trackSlug: ID!, lessonSlug: ID!): LessonDetail
   section(trackSlug: ID!, lessonSlug: ID!, sectionSlug: ID!): SectionDetail
 }
 
 extend type Mutation {
-  enrollInTrack(trackSlug: ID!): Boolean!
+  enrollInTrack(trackId: Int!): Boolean!
 }
 ```
 
@@ -162,13 +178,13 @@ Não existem arquivos de aula no repo nem em runtime: em produção o conteúdo 
 - [x] Guard de auth para `enrollInTrack` (`GqlAuthGuard`); queries usam `OptionalGqlAuthGuard` — `userCode` opcional só personaliza `enrolled`/`completed`.
 
 ### Web
-- [ ] Página `/trilhas` (`app/(app)/trilhas/page.tsx`) — server component que chama `tracks` via GraphQL.
-- [ ] Página `/trilhas/[slug]` — mostra detalhe + botão "Matricular" se `enrolled === false`.
-- [ ] Server Action `enrollInTrackAction(slug)` chamando mutation.
-- [ ] Página `/trilhas/[trackSlug]/aula/[lessonSlug]` — layout dividido (sidebar com seções, área principal com conteúdo).
-- [ ] Componente `LessonPlayer` (client) gerencia navegação entre seções dentro da lição.
-- [ ] Renderer de markdown: `react-markdown` + `rehype-highlight` para code blocks.
-- [ ] Placeholder visual de `EXERCISE` (botão "Em breve" — exercício real fica para spec futura).
+- [x] Página `/trilhas` (`app/(app)/trilhas/page.tsx`) — server component que chama `tracks` via GraphQL.
+- [x] Página `/trilhas/[slug]` — mostra detalhe + botão "Matricular" se `enrolled === false`.
+- [x] Server Action `enrollInTrackAction(trackId)` chamando mutation.
+- [x] Página `/trilhas/[trackSlug]/aula/[lessonSlug]` — layout dividido (sidebar com seções, área principal com conteúdo).
+- [x] Componente `LessonPlayer` (client) gerencia navegação entre seções dentro da lição.
+- [x] Renderer de markdown: `react-markdown` + `rehype-highlight` para code blocks.
+- [x] Placeholder visual de `EXERCISE` (botão "Em breve" — exercício real fica para spec futura).
 
 ## Critérios de aceite
 

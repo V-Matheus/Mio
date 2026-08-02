@@ -4,7 +4,7 @@
   html {
     scroll-behavior: smooth;
     scrollbar-width: thin;
-    scrollbar-color: #FF9100 #FDF5EE;
+    scrollbar-color: #ff9100 #fdf5ee;
   }
 
   ::-webkit-scrollbar {
@@ -12,16 +12,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #FDF5EE;
+    background: #fdf5ee;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #FF9100;
+    background: #ff9100;
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #CC3300;
+    background: #cc3300;
   }
 
   section[id] {
@@ -36,17 +36,17 @@
 }
 
 @theme {
-  --color-primary: #FF9100;
-  --color-secondary: #FBBF24;
-  --color-accent: #38BDF8;
-  --color-success: #10B981;
-  --color-background: #FDF5EE;
-  --color-foreground: #332D28;
-  --color-primary-shadow: #CC3300;
-  --color-success-shadow: #0A8C62;
-  --color-disabled: #D4D4D4;
-  --color-disabled-foreground: #9E9E9E;
-  --color-disabled-shadow: #B0B0B0;
+  --color-primary: #ff9100;
+  --color-secondary: #fbbf24;
+  --color-accent: #38bdf8;
+  --color-success: #10b981;
+  --color-background: #fdf5ee;
+  --color-foreground: #332d28;
+  --color-primary-shadow: #cc3300;
+  --color-success-shadow: #0a8c62;
+  --color-disabled: #d4d4d4;
+  --color-disabled-foreground: #9e9e9e;
+  --color-disabled-shadow: #b0b0b0;
 
   --font-display: var(--font-outfit), sans-serif;
   --font-body: var(--font-plus-jakarta-sans), sans-serif;

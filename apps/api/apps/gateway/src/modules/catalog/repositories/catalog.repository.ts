@@ -1,20 +1,24 @@
 import type { Observable } from "rxjs"
 
-/**
- * Tipos de resposta do `mio.catalog.v1` como chegam pelo proto-loader: campos
- * proto3 com valor default (string vazia, 0, false, repeated vazio) são
- * omitidos da mensagem, então quase tudo é opcional aqui — o `CatalogService`
- * normaliza os defaults ao mapear para os models GraphQL.
- */
+export interface GrpcCategory {
+  id: string
+  slug: string
+  name: string
+  color: string
+}
+
 export interface GrpcTrack {
+  id: number
   slug: string
   title: string
   description?: string
+  category?: GrpcCategory
   lessonCount?: number
   enrolled?: boolean
 }
 
 export interface GrpcLessonSummary {
+  id: number
   slug: string
   title: string
   position?: number
@@ -22,14 +26,17 @@ export interface GrpcLessonSummary {
 }
 
 export interface GrpcTrackDetail {
+  id: number
   slug: string
   title: string
   description?: string
+  category?: GrpcCategory
   lessons?: GrpcLessonSummary[]
   enrolled?: boolean
 }
 
 export interface GrpcSectionSummary {
+  id: number
   slug: string
   title: string
   position?: number
@@ -38,6 +45,7 @@ export interface GrpcSectionSummary {
 }
 
 export interface GrpcLessonDetail {
+  id: number
   trackSlug: string
   lessonSlug: string
   title: string
@@ -45,6 +53,7 @@ export interface GrpcLessonDetail {
 }
 
 export interface GrpcSectionDetail {
+  id: number
   slug: string
   title: string
   kind?: string
@@ -53,6 +62,10 @@ export interface GrpcSectionDetail {
 
 /** Espelha `CatalogService` do `mio.catalog.v1` (proto em `@mio/grpc-contracts`). */
 export interface CatalogServiceClient {
+  listCategories(
+    data: Record<string, never>,
+  ): Observable<{ categories?: GrpcCategory[] }>
+
   listTracks(data: { userCode: string }): Observable<{ tracks?: GrpcTrack[] }>
 
   getTrack(data: {
@@ -74,6 +87,6 @@ export interface CatalogServiceClient {
 
   enrollUser(data: {
     userCode: string
-    trackSlug: string
+    trackId: number
   }): Observable<{ ok?: boolean }>
 }

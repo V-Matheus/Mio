@@ -27,7 +27,9 @@ export class GqlAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = this.jwt.verify<{ sub: string; roles: string[] }>(header.slice(7))
+      const payload = this.jwt.verify<{ sub: string; roles: string[] }>(
+        header.slice(7),
+      )
       req.userCode = payload.sub
       req.userRoles = payload.roles || []
       return true

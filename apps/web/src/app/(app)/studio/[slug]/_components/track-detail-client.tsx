@@ -56,6 +56,8 @@ export function TrackDetailClient({
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
     isOpen: boolean
     type: "lesson" | "section"
+    lessonId?: number
+    sectionId?: number
     lessonSlug: string
     sectionSlug?: string
     title: string
@@ -77,10 +79,11 @@ export function TrackDetailClient({
 
     startTransition(async () => {
       const res = await upsertLessonAction(
-        track.slug,
-        lessonModal.lesson?.slug,
+        track.id,
         title,
+        lessonModal.lesson?.id,
         position,
+        track.slug,
       )
 
       if (!res.ok) {
@@ -90,15 +93,16 @@ export function TrackDetailClient({
 
       setTrack((prev) => {
         const existing = prev.lessons.find(
-          (l) => l.slug === lessonModal.lesson?.slug,
+          (l) => l.id === lessonModal.lesson?.id,
         )
         let updatedLessons: AdminLessonSummary[]
 
         if (existing) {
           updatedLessons = prev.lessons.map((l) =>
-            l.slug === lessonModal.lesson?.slug
+            l.id === lessonModal.lesson?.id
               ? {
                   ...l,
+                  id: res.lesson.id,
                   slug: res.lesson.slug,
                   title: res.lesson.title,
                   position: res.lesson.position ?? l.position,
@@ -109,6 +113,7 @@ export function TrackDetailClient({
           updatedLessons = [
             ...prev.lessons,
             {
+              id: res.lesson.id,
               slug: res.lesson.slug,
               title: res.lesson.title,
               position:
@@ -133,11 +138,11 @@ export function TrackDetailClient({
     if (!deleteConfirmModal) return
     setError(null)
 
-    const { type, lessonSlug, sectionSlug } = deleteConfirmModal
+    const { type, lessonId, sectionId, lessonSlug } = deleteConfirmModal
 
     startTransition(async () => {
-      if (type === "lesson") {
-        const res = await deleteLessonAction(track.slug, lessonSlug)
+      if (type === "lesson" && lessonId) {
+        const res = await deleteLessonAction(lessonId, track.slug)
         setDeleteConfirmModal(null)
         if (!res.ok) {
           setError(res.error || "Erro ao excluir aula.")
@@ -145,14 +150,10 @@ export function TrackDetailClient({
         }
         setTrack((prev) => ({
           ...prev,
-          lessons: prev.lessons.filter((l) => l.slug !== lessonSlug),
+          lessons: prev.lessons.filter((l) => l.id !== lessonId),
         }))
-      } else if (type === "section" && sectionSlug) {
-        const res = await deleteSectionAction(
-          track.slug,
-          lessonSlug,
-          sectionSlug,
-        )
+      } else if (type === "section" && sectionId) {
+        const res = await deleteSectionAction(sectionId, track.slug)
         setDeleteConfirmModal(null)
         if (!res.ok) {
           setError(res.error || "Erro ao excluir seção.")
@@ -161,10 +162,10 @@ export function TrackDetailClient({
         setTrack((prev) => ({
           ...prev,
           lessons: prev.lessons.map((l) =>
-            l.slug === lessonSlug
+            l.id === lessonId || l.slug === lessonSlug
               ? {
                   ...l,
-                  sections: l.sections.filter((s) => s.slug !== sectionSlug),
+                  sections: l.sections.filter((s) => s.id !== sectionId),
                 }
               : l,
           ),
@@ -175,8 +176,10 @@ export function TrackDetailClient({
 
   const handleUpsertSection = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const targetLessonSlug = sectionModal.lessonSlug
-    if (!targetLessonSlug) return
+    const targetLesson = track.lessons.find(
+      (l) => l.slug === sectionModal.lessonSlug,
+    )
+    if (!targetLesson) return
     setError(null)
     const formData = new FormData(e.currentTarget)
     const title = formData.get("title") as string
@@ -185,13 +188,15 @@ export function TrackDetailClient({
 
     startTransition(async () => {
       const res = await upsertSectionAction(
-        track.slug,
-        targetLessonSlug,
-        sectionModal.section?.slug,
+        targetLesson.id,
         title,
+        sectionModal.section?.id,
         kind,
         sectionModal.section?.contentMarkdown ?? "",
         position,
+        track.slug,
+        targetLesson.slug,
+        sectionModal.section?.slug,
       )
 
       if (!res.ok) {
@@ -203,23 +208,23 @@ export function TrackDetailClient({
         return {
           ...prev,
           lessons: prev.lessons.map((lesson) => {
-            if (lesson.slug !== sectionModal.lessonSlug) return lesson
+            if (lesson.id !== targetLesson.id) return lesson
 
             const existingSec = lesson.sections.find(
-              (s) => s.slug === sectionModal.section?.slug,
+              (s) => s.id === sectionModal.section?.id,
             )
             let updatedSections: AdminSectionSummary[]
 
             if (existingSec) {
               updatedSections = lesson.sections.map((s) =>
-                s.slug === sectionModal.section?.slug
+                s.id === sectionModal.section?.id
                   ? {
                       ...s,
+                      id: res.section.id,
                       slug: res.section.slug,
                       title: res.section.title,
                       kind: res.section.kind,
-                      position: res.section.position ?? s.position,
-                      contentMarkdown: res.section.contentMarkdown,
+                      position: res.section.position,
                     }
                   : s,
               )
@@ -227,21 +232,19 @@ export function TrackDetailClient({
               updatedSections = [
                 ...lesson.sections,
                 {
+                  id: res.section.id,
                   slug: res.section.slug,
                   title: res.section.title,
                   kind: res.section.kind,
-                  position:
-                    res.section.position ??
-                    (position > 0 ? position : lesson.sections.length + 1),
+                  position: res.section.position,
                   contentMarkdown: res.section.contentMarkdown,
                 },
               ]
             }
 
-            return {
-              ...lesson,
-              sections: updatedSections.sort((a, b) => a.position - b.position),
-            }
+            updatedSections.sort((a, b) => a.position - b.position)
+
+            return { ...lesson, sections: updatedSections }
           }),
         }
       })
@@ -251,52 +254,89 @@ export function TrackDetailClient({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Botão de Voltar e Cabeçalho */}
-      <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto pb-16">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-xs font-semibold text-foreground/60">
         <Link
           href="/studio"
-          className="inline-flex items-center gap-2 text-xs font-bold text-foreground/60 hover:text-primary transition-colors w-fit"
+          className="hover:text-primary transition-colors flex items-center gap-1"
         >
-          <Icon icon="lucide:arrow-left" className="size-4" />
-          Voltar para o Estúdio
+          <Icon icon="lucide:layout-dashboard" className="size-3.5" />
+          <span>Studio</span>
         </Link>
-
-        <CardWrapper className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6">
-          <div className="flex flex-col gap-1">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 w-fit px-3 py-0.5 rounded-full border border-primary/20">
-              <Icon icon="lucide:book-open" className="size-3.5" />
-              {track.slug}
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground tracking-tight">
-              {track.title}
-            </h1>
-            <p className="text-foreground/60 text-sm font-medium">
-              {track.description || "Sem descrição informada."}
-            </p>
-          </div>
-
-          {/* Botão Primário: Criar / Nova Aula */}
-          <ButtonWrapper
-            variant="primary"
-            type="button"
-            onClick={() => setLessonModal({ isOpen: true })}
-            className="px-6! py-3! text-sm! gap-2 shrink-0"
-          >
-            <Icon icon="lucide:plus" className="size-4.5 text-white" />
-            <ButtonText className="text-sm! font-bold">Nova Aula</ButtonText>
-          </ButtonWrapper>
-        </CardWrapper>
+        <span>/</span>
+        <span className="text-foreground font-bold line-clamp-1">
+          {track.title}
+        </span>
       </div>
 
+      {/* Header com Info da Trilha */}
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between rounded-2xl border border-foreground/10 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-3 max-w-3xl">
+          <div className="flex flex-wrap items-center gap-2">
+            {track.category && (
+              <span
+                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold text-white shadow-xs"
+                style={{ backgroundColor: track.category.color }}
+              >
+                {track.category.name}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground/60 bg-foreground/5 px-3 py-1 rounded-full">
+              <Icon icon="lucide:book-open" className="size-3.5" />
+              {track.lessons.length}{" "}
+              {track.lessons.length === 1 ? "aula" : "aulas"}
+            </span>
+          </div>
+
+          <h1 className="font-display text-2xl font-extrabold text-foreground md:text-3xl">
+            {track.title}
+          </h1>
+
+          <p className="text-sm text-foreground/70 leading-relaxed">
+            {track.description || "Sem descrição informada para esta trilha."}
+          </p>
+
+          <div className="flex items-center gap-4 text-xs font-mono text-foreground/40 pt-1">
+            <span>slug: {track.slug}</span>
+            <span>•</span>
+            <span>id: {track.id}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0 self-start md:self-auto pt-2 md:pt-0">
+          <ButtonWrapper
+            variant="primary"
+            onClick={() => {
+              setError(null)
+              setLessonModal({ isOpen: true })
+            }}
+            className="px-4 py-2.5 rounded-xl shadow-xs text-xs!"
+          >
+            <Icon icon="lucide:plus" className="size-4" />
+            <ButtonText className="font-bold text-xs">Nova Aula</ButtonText>
+          </ButtonWrapper>
+        </div>
+      </div>
+
+      {/* Global Error Alert */}
       {error && (
-        <div className="flex items-center gap-2.5 rounded-2xl bg-red-50 border border-red-100 p-4 text-sm text-red-600">
-          <Icon icon="lucide:alert-circle" className="size-5 shrink-0" />
-          <span>{error}</span>
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="flex items-center gap-2">
+            <Icon icon="lucide:alert-circle" className="size-5 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="text-red-500 hover:text-red-700 font-bold"
+          >
+            &times;
+          </button>
         </div>
       )}
 
-      {/* Lista de Aulas */}
+      {/* Lista de Aulas e Seções */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between px-1">
           <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2">
@@ -341,7 +381,7 @@ export function TrackDetailClient({
                           </span>
                         </h3>
                         <div className="text-xxs font-semibold text-foreground/40">
-                          slug: {lesson.slug}
+                          slug: {lesson.slug} • id: {lesson.id}
                         </div>
                       </div>
                     </button>
@@ -390,6 +430,7 @@ export function TrackDetailClient({
                           setDeleteConfirmModal({
                             isOpen: true,
                             type: "lesson",
+                            lessonId: lesson.id,
                             lessonSlug: lesson.slug,
                             title: lesson.title,
                           })
@@ -468,7 +509,7 @@ export function TrackDetailClient({
                                   </BadgeWrapper>
                                 </div>
                                 <div className="text-xxs font-medium text-foreground/40">
-                                  slug: {section.slug}
+                                  slug: {section.slug} • id: {section.id}
                                 </div>
                               </div>
                             </Link>
@@ -502,6 +543,8 @@ export function TrackDetailClient({
                                   setDeleteConfirmModal({
                                     isOpen: true,
                                     type: "section",
+                                    lessonId: lesson.id,
+                                    sectionId: section.id,
                                     lessonSlug: lesson.slug,
                                     sectionSlug: section.slug,
                                     title: section.title,
@@ -533,15 +576,9 @@ export function TrackDetailClient({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-foreground/10 flex flex-col gap-5">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="p-2 bg-red-50 text-red-600 rounded-xl">
-                  <Icon icon="lucide:trash-2" className="size-5" />
-                </span>
-                <h2 className="text-lg font-display font-bold text-foreground">
-                  Excluir{" "}
-                  {deleteConfirmModal.type === "lesson" ? "Aula" : "Seção"}
-                </h2>
-              </div>
+              <h3 className="text-lg font-display font-bold text-foreground">
+                Confirmar Exclusão
+              </h3>
               <button
                 type="button"
                 onClick={() => setDeleteConfirmModal(null)}
@@ -658,19 +695,14 @@ export function TrackDetailClient({
                     Cancelar
                   </ButtonText>
                 </ButtonWrapper>
-
-                {/* Botão Primário: Criar / Salvar Aula */}
                 <ButtonWrapper
                   variant="primary"
                   type="submit"
                   disabled={isPending}
-                  className="px-5! py-2! text-xs! gap-1.5"
+                  className="px-5! py-2! text-xs!"
                 >
                   {isPending && (
-                    <Icon
-                      icon="mdi:update"
-                      className="size-3.5 animate-spin text-white"
-                    />
+                    <Icon icon="mdi:update" className="size-4 animate-spin" />
                   )}
                   <ButtonText className="text-xs! font-bold">
                     Salvar Aula
@@ -683,104 +715,118 @@ export function TrackDetailClient({
       )}
 
       {/* Modal de Seção */}
-      {sectionModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-foreground/10 flex flex-col gap-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-display font-bold text-foreground">
-                {sectionModal.section ? "Editar Seção" : "Nova Seção"}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setSectionModal({ isOpen: false })}
-                className="text-foreground/40 hover:text-foreground transition-colors cursor-pointer"
-              >
-                <Icon icon="lucide:x" className="size-5" />
-              </button>
-            </div>
+      {sectionModal.isOpen &&
+        (() => {
+          const currentLesson = track.lessons.find(
+            (l) => l.slug === sectionModal.lessonSlug,
+          )
+          const defaultPosition =
+            sectionModal.section?.position ??
+            (currentLesson?.sections.length || 0) + 1
 
-            <form
-              onSubmit={handleUpsertSection}
-              className="flex flex-col gap-4"
-            >
-              <InputWrapper>
-                <InputLabel htmlFor="sec-title">Título da Seção *</InputLabel>
-                <InputField>
-                  <InputControl
-                    id="sec-title"
-                    name="title"
-                    type="text"
-                    required
-                    defaultValue={sectionModal.section?.title || ""}
-                    placeholder="Ex: Conceitos Fundamentais de DTOs"
-                  />
-                </InputField>
-              </InputWrapper>
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-xs animate-in fade-in duration-150">
+              <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-foreground/10 flex flex-col gap-5">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-display font-bold text-foreground">
+                    {sectionModal.section ? "Editar Seção" : "Nova Seção"}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setSectionModal({ isOpen: false })}
+                    className="text-foreground/40 hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    <Icon icon="lucide:x" className="size-5" />
+                  </button>
+                </div>
 
-              <InputWrapper>
-                <InputLabel htmlFor="sec-kind">Tipo de Conteúdo</InputLabel>
-                <select
-                  id="sec-kind"
-                  name="kind"
-                  defaultValue={sectionModal.section?.kind || "TEXT"}
-                  className="rounded-2xl border-2 border-foreground/10 bg-white px-4 py-3 text-sm text-foreground outline-none focus:border-primary transition-all font-medium"
+                <form
+                  onSubmit={handleUpsertSection}
+                  className="flex flex-col gap-4"
                 >
-                  <option value="TEXT">
-                    TEXTO (Artigo / Teoria em Markdown)
-                  </option>
-                  <option value="EXERCISE">
-                    EXERCÍCIO (Prática / Desafio)
-                  </option>
-                </select>
-              </InputWrapper>
+                  <InputWrapper>
+                    <InputLabel htmlFor="sec-title">
+                      Título da Seção *
+                    </InputLabel>
+                    <InputField>
+                      <InputControl
+                        id="sec-title"
+                        name="title"
+                        type="text"
+                        required
+                        defaultValue={sectionModal.section?.title || ""}
+                        placeholder="Ex: Conceitos Fundamentais de DTOs"
+                      />
+                    </InputField>
+                  </InputWrapper>
 
-              <InputWrapper>
-                <InputLabel htmlFor="sec-position">Ordem / Posição</InputLabel>
-                <InputField>
-                  <InputControl
-                    id="sec-position"
-                    name="position"
-                    type="number"
-                    min={1}
-                    defaultValue={sectionModal.section?.position || 1}
-                  />
-                </InputField>
-              </InputWrapper>
+                  <InputWrapper>
+                    <InputLabel htmlFor="sec-kind">Tipo de Conteúdo</InputLabel>
+                    <select
+                      id="sec-kind"
+                      name="kind"
+                      defaultValue={sectionModal.section?.kind || "TEXT"}
+                      className="rounded-2xl border-2 border-foreground/10 bg-white px-4 py-3 text-sm text-foreground outline-none focus:border-primary transition-all font-medium"
+                    >
+                      <option value="TEXT">
+                        TEXTO (Artigo / Teoria em Markdown)
+                      </option>
+                      <option value="EXERCISE">
+                        EXERCÍCIO (Prática / Desafio)
+                      </option>
+                    </select>
+                  </InputWrapper>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <ButtonWrapper
-                  variant="secondary"
-                  border={false}
-                  type="button"
-                  onClick={() => setSectionModal({ isOpen: false })}
-                  className="px-5! py-2! text-xs!"
-                >
-                  <ButtonText className="text-xs! font-bold">
-                    Cancelar
-                  </ButtonText>
-                </ButtonWrapper>
-                <ButtonWrapper
-                  variant="secondary"
-                  border={false}
-                  type="submit"
-                  disabled={isPending}
-                  className="px-5! py-2! text-xs! gap-1.5"
-                >
-                  {isPending && (
-                    <Icon
-                      icon="mdi:update"
-                      className="size-3.5 animate-spin text-foreground"
-                    />
-                  )}
-                  <ButtonText className="text-xs! font-bold">
-                    Salvar Seção
-                  </ButtonText>
-                </ButtonWrapper>
+                  <InputWrapper>
+                    <InputLabel htmlFor="sec-position">
+                      Ordem / Posição
+                    </InputLabel>
+                    <InputField>
+                      <InputControl
+                        id="sec-position"
+                        name="position"
+                        type="number"
+                        min={1}
+                        defaultValue={defaultPosition}
+                      />
+                    </InputField>
+                  </InputWrapper>
+
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <ButtonWrapper
+                      variant="secondary"
+                      border={false}
+                      type="button"
+                      onClick={() => setSectionModal({ isOpen: false })}
+                      className="px-5! py-2! text-xs!"
+                    >
+                      <ButtonText className="text-xs! font-bold">
+                        Cancelar
+                      </ButtonText>
+                    </ButtonWrapper>
+                    <ButtonWrapper
+                      variant="secondary"
+                      border={false}
+                      type="submit"
+                      disabled={isPending}
+                      className="px-5! py-2! text-xs! gap-1.5"
+                    >
+                      {isPending && (
+                        <Icon
+                          icon="mdi:update"
+                          className="size-3.5 animate-spin text-foreground"
+                        />
+                      )}
+                      <ButtonText className="text-xs! font-bold">
+                        Salvar Seção
+                      </ButtonText>
+                    </ButtonWrapper>
+                  </div>
+                </form>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+          )
+        })()}
     </div>
   )
 }

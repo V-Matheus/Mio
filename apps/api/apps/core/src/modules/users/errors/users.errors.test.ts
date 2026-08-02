@@ -1,10 +1,7 @@
 import { status } from "@grpc/grpc-js"
 import { RpcException } from "@nestjs/microservices"
 import { describe, expect, it } from "vitest"
-import {
-  type UserErrorCode,
-  userError,
-} from "./users.errors"
+import { type UserErrorCode, userError } from "./users.errors"
 
 const cases: Array<[UserErrorCode, number]> = [
   ["INVALID_CREDENTIALS", status.UNAUTHENTICATED],

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { studioService } from "@/lib/studio/service"
+import { getStudioTrackQuery } from "@/lib/studio/queries"
 import { MarkdownEditorClient } from "./_components/markdown-editor-client"
 
 interface MarkdownEditorPageProps {
@@ -15,7 +15,7 @@ export default async function MarkdownEditorPage({
 }: MarkdownEditorPageProps) {
   const { slug, lessonSlug, sectionSlug } = await params
 
-  const result = await studioService.getTrack(slug)
+  const result = await getStudioTrackQuery(slug)
   if (!result.ok || !result.track) {
     notFound()
   }
@@ -32,6 +32,7 @@ export default async function MarkdownEditorPage({
 
   return (
     <MarkdownEditorClient
+      lessonId={lesson.id}
       trackSlug={slug}
       lessonSlug={lessonSlug}
       section={section}

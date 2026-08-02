@@ -31,8 +31,9 @@ describe("CatalogService", () => {
       const listTracks = vi.fn().mockReturnValue(
         of({
           tracks: [
-            { slug: "front-end", title: "Front-end", lessonCount: 2 },
+            { id: 1, slug: "front-end", title: "Front-end", lessonCount: 2 },
             {
+              id: 2,
               slug: "back-end",
               title: "Back-end",
               description: "APIs",
@@ -48,16 +49,20 @@ describe("CatalogService", () => {
       expect(listTracks).toHaveBeenCalledWith({ userCode: "" })
       expect(result).toEqual([
         {
+          id: 1,
           slug: "front-end",
           title: "Front-end",
           description: null,
+          category: null,
           lessonCount: 2,
           enrolled: false,
         },
         {
+          id: 2,
           slug: "back-end",
           title: "Back-end",
           description: "APIs",
+          category: null,
           lessonCount: 0,
           enrolled: true,
         },
@@ -77,11 +82,18 @@ describe("CatalogService", () => {
       const service = setup({
         getTrack: vi.fn().mockReturnValue(
           of({
+            id: 1,
             slug: "front-end",
             title: "Front-end",
             lessons: [
-              { slug: "intro-html", title: "HTML", position: 1 },
-              { slug: "intro-css", title: "CSS", position: 2, completed: true },
+              { id: 10, slug: "intro-html", title: "HTML", position: 1 },
+              {
+                id: 11,
+                slug: "intro-css",
+                title: "CSS",
+                position: 2,
+                completed: true,
+              },
             ],
             enrolled: true,
           }),
@@ -91,12 +103,26 @@ describe("CatalogService", () => {
       const result = await service.track("front-end", "user-1")
 
       expect(result).toEqual({
+        id: 1,
         slug: "front-end",
         title: "Front-end",
         description: null,
+        category: null,
         lessons: [
-          { slug: "intro-html", title: "HTML", position: 1, completed: false },
-          { slug: "intro-css", title: "CSS", position: 2, completed: true },
+          {
+            id: 10,
+            slug: "intro-html",
+            title: "HTML",
+            position: 1,
+            completed: false,
+          },
+          {
+            id: 11,
+            slug: "intro-css",
+            title: "CSS",
+            position: 2,
+            completed: true,
+          },
         ],
         enrolled: true,
       })
@@ -108,6 +134,7 @@ describe("CatalogService", () => {
       const service = setup({
         getSection: vi.fn().mockReturnValue(
           of({
+            id: 100,
             slug: "pratica",
             title: "Praticando",
             kind: "EXERCISE",
@@ -119,6 +146,7 @@ describe("CatalogService", () => {
       const result = await service.section("front-end", "intro-html", "pratica")
 
       expect(result).toEqual({
+        id: 100,
         slug: "pratica",
         title: "Praticando",
         kind: SectionKind.EXERCISE,
@@ -141,12 +169,10 @@ describe("CatalogService", () => {
       const enrollUser = vi.fn().mockReturnValue(of({ ok: true }))
       const service = setup({ enrollUser })
 
-      await expect(service.enrollInTrack("user-1", "front-end")).resolves.toBe(
-        true,
-      )
+      await expect(service.enrollInTrack("user-1", 1)).resolves.toBe(true)
       expect(enrollUser).toHaveBeenCalledWith({
         userCode: "user-1",
-        trackSlug: "front-end",
+        trackId: 1,
       })
     })
 
@@ -155,7 +181,7 @@ describe("CatalogService", () => {
         enrollUser: vi.fn().mockReturnValue(grpcError("USER_NOT_FOUND")),
       })
       try {
-        await service.enrollInTrack("ghost", "front-end")
+        await service.enrollInTrack("ghost", 1)
         expect.unreachable("deveria ter lançado")
       } catch (error) {
         expect((error as GraphQLError).extensions.code).toBe("USER_NOT_FOUND")
@@ -167,7 +193,7 @@ describe("CatalogService", () => {
         enrollUser: vi.fn().mockReturnValue(grpcError("14 UNAVAILABLE")),
       })
       try {
-        await service.enrollInTrack("user-1", "front-end")
+        await service.enrollInTrack("user-1", 1)
         expect.unreachable("deveria ter lançado")
       } catch (error) {
         expect((error as GraphQLError).extensions.code).toBe("INTERNAL_ERROR")

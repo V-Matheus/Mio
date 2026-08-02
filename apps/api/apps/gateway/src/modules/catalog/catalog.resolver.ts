@@ -1,10 +1,11 @@
 import { UseGuards } from "@nestjs/common"
-import { Args, ID, Mutation, Query, Resolver } from "@nestjs/graphql"
+import { Args, ID, Int, Mutation, Query, Resolver } from "@nestjs/graphql"
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe"
 import { CurrentUserCode, GqlAuthGuard } from "../auth/guards/gql-auth.guard"
 import { OptionalGqlAuthGuard } from "../auth/guards/optional-gql-auth.guard"
 import { CatalogService } from "./catalog.service"
 import { slugSchema } from "./dto/slug.schema"
+import { Category } from "./models/category.model"
 import { LessonDetail } from "./models/lesson-detail.model"
 import { SectionDetail } from "./models/section-detail.model"
 import { Track } from "./models/track.model"
@@ -13,6 +14,11 @@ import { TrackDetail } from "./models/track-detail.model"
 @Resolver(() => Track)
 export class CatalogResolver {
   constructor(private readonly catalog: CatalogService) {}
+
+  @Query(() => [Category])
+  categories(): Promise<Category[]> {
+    return this.catalog.categories()
+  }
 
   @Query(() => [Track])
   @UseGuards(OptionalGqlAuthGuard)
@@ -57,10 +63,10 @@ export class CatalogResolver {
   @Mutation(() => Boolean)
   @UseGuards(GqlAuthGuard)
   enrollInTrack(
-    @Args("trackSlug", { type: () => ID }, new ZodValidationPipe(slugSchema))
-    trackSlug: string,
+    @Args("trackId", { type: () => Int })
+    trackId: number,
     @CurrentUserCode() userCode: string,
   ): Promise<boolean> {
-    return this.catalog.enrollInTrack(userCode, trackSlug)
+    return this.catalog.enrollInTrack(userCode, trackId)
   }
 }

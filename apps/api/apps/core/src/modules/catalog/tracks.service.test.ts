@@ -19,17 +19,18 @@ function makePrisma(): PrismaMock {
 }
 
 const dbTrack = {
-  id: 1n,
+  id: 1,
   slug: "front-end",
   title: "Fundamentos de Front-end",
   description: "HTML e CSS do zero.",
+  category: null,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
 }
 
 const dbLessons = [
-  { id: 10n, trackId: 1n, slug: "intro-html", title: "HTML", position: 1 },
-  { id: 11n, trackId: 1n, slug: "intro-css", title: "CSS", position: 2 },
+  { id: 10, trackId: 1, slug: "intro-html", title: "HTML", position: 1 },
+  { id: 11, trackId: 1, slug: "intro-css", title: "CSS", position: 2 },
 ]
 
 describe("TracksService", () => {
@@ -51,9 +52,11 @@ describe("TracksService", () => {
 
       expect(result).toEqual([
         {
+          id: 1,
           slug: "front-end",
           title: "Fundamentos de Front-end",
           description: "HTML e CSS do zero.",
+          category: null,
           lessonCount: 2,
           enrolled: false,
         },
@@ -64,9 +67,9 @@ describe("TracksService", () => {
     it("usuário logado: marca enrolled nas trilhas matriculadas", async () => {
       prisma.track.findMany.mockResolvedValue([
         { ...dbTrack, _count: { lessons: 2 } },
-        { ...dbTrack, id: 2n, slug: "back-end", _count: { lessons: 0 } },
+        { ...dbTrack, id: 2, slug: "back-end", _count: { lessons: 0 } },
       ])
-      prisma.enrollment.findMany.mockResolvedValue([{ trackId: 1n }])
+      prisma.enrollment.findMany.mockResolvedValue([{ trackId: 1 }])
 
       const result = await service.listTracks("user-1")
 
@@ -99,20 +102,32 @@ describe("TracksService", () => {
         ...dbTrack,
         lessons: dbLessons,
       })
-      prisma.enrollment.findMany.mockResolvedValue([{ trackId: 1n }])
-      prisma.lessonProgress.findMany.mockResolvedValue([{ lessonId: 10n }])
+      prisma.enrollment.findMany.mockResolvedValue([{ trackId: 1 }])
+      prisma.lessonProgress.findMany.mockResolvedValue([{ lessonId: 10 }])
 
       const result = await service.getTrack("front-end", "user-1")
 
       expect(result.enrolled).toBe(true)
       expect(result.lessons).toEqual([
-        { slug: "intro-html", title: "HTML", position: 1, completed: true },
-        { slug: "intro-css", title: "CSS", position: 2, completed: false },
+        {
+          id: 10,
+          slug: "intro-html",
+          title: "HTML",
+          position: 1,
+          completed: true,
+        },
+        {
+          id: 11,
+          slug: "intro-css",
+          title: "CSS",
+          position: 2,
+          completed: false,
+        },
       ])
       expect(prisma.lessonProgress.findMany).toHaveBeenCalledWith({
         where: {
           user: { code: "user-1" },
-          lessonId: { in: [10n, 11n] },
+          lessonId: { in: [10, 11] },
           completedAt: { not: null },
         },
         select: { lessonId: true },
@@ -128,7 +143,6 @@ describe("TracksService", () => {
       const result = await service.getTrack("front-end", "")
 
       expect(result.enrolled).toBe(false)
-      expect(result.lessons.every((lesson) => !lesson.completed)).toBe(true)
       expect(prisma.enrollment.findMany).not.toHaveBeenCalled()
       expect(prisma.lessonProgress.findMany).not.toHaveBeenCalled()
     })

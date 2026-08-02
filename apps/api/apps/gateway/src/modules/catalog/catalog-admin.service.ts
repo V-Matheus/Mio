@@ -16,78 +16,102 @@ import type {
 } from "./models/admin-track.model"
 import { SectionKind } from "./models/section-kind.enum"
 
-export interface ProtoSection {
+interface ProtoCategory {
+  id: string
   slug: string
-  title: string
-  position: number
-  kind: string
-  contentMarkdown: string
+  name: string
+  color: string
 }
 
-export interface ProtoLesson {
-  slug: string
-  title: string
-  position: number
-  sections?: ProtoSection[]
-}
-
-export interface ProtoTrack {
+interface ProtoTrack {
+  id: number
   slug: string
   title: string
   description?: string
   creatorCode?: string
   lessonCount?: number
+  category?: ProtoCategory
 }
 
-export interface ProtoTrackDetail extends ProtoTrack {
+interface ProtoSection {
+  id: number
+  slug: string
+  title: string
+  position?: number
+  kind?: string
+  contentMarkdown?: string
+}
+
+interface ProtoLesson {
+  id: number
+  slug: string
+  title: string
+  position?: number
+  sections?: ProtoSection[]
+}
+
+interface ProtoTrackDetail {
+  id: number
+  slug: string
+  title: string
+  description?: string
+  creatorCode?: string
+  category?: ProtoCategory
   lessons?: ProtoLesson[]
 }
 
-export interface CatalogAdminServiceClient {
+interface CatalogAdminGrpcClient {
   listAdminTracks(data: {
     requestorCode: string
     requestorRole: string
   }): Observable<{ tracks?: ProtoTrack[] }>
+
   getAdminTrack(data: {
     slug: string
     requestorCode: string
     requestorRole: string
   }): Observable<ProtoTrackDetail>
+
   createTrack(data: {
     title: string
-    description?: string
+    description: string
+    categoryId?: number
     requestorCode: string
   }): Observable<ProtoTrack>
+
   updateTrack(data: {
-    currentSlug: string
+    trackId: number
     title: string
-    description?: string
+    description: string
+    categoryId?: number
     requestorCode: string
     requestorRole: string
   }): Observable<ProtoTrack>
+
   deleteTrack(data: {
-    slug: string
+    trackId: number
     requestorCode: string
     requestorRole: string
-  }): Observable<{ success?: boolean }>
+  }): Observable<{ success: boolean }>
+
   upsertLesson(data: {
-    trackSlug: string
-    slug?: string
+    trackId: number
+    lessonId?: number
     title: string
     position?: number
     requestorCode: string
     requestorRole: string
-  }): Observable<ProtoLesson>
+  }): Observable<ProtoLesson & { trackId: number }>
+
   deleteLesson(data: {
-    trackSlug: string
-    lessonSlug: string
+    lessonId: number
     requestorCode: string
     requestorRole: string
-  }): Observable<{ success?: boolean }>
+  }): Observable<{ success: boolean }>
+
   upsertSection(data: {
-    trackSlug: string
-    lessonSlug: string
-    slug?: string
+    lessonId: number
+    sectionId?: number
     title: string
     position?: number
     kind?: string
@@ -95,18 +119,17 @@ export interface CatalogAdminServiceClient {
     requestorCode: string
     requestorRole: string
   }): Observable<ProtoSection>
+
   deleteSection(data: {
-    trackSlug: string
-    lessonSlug: string
-    sectionSlug: string
+    sectionId: number
     requestorCode: string
     requestorRole: string
-  }): Observable<{ success?: boolean }>
+  }): Observable<{ success: boolean }>
 }
 
 @Injectable()
-export class CatalogAdminGatewayService implements OnModuleInit {
-  private client!: CatalogAdminServiceClient
+export class CatalogAdminService implements OnModuleInit {
+  private client!: CatalogAdminGrpcClient
 
   constructor(
     @Inject(CATALOG_ADMIN_PACKAGE_TOKEN)
@@ -114,7 +137,7 @@ export class CatalogAdminGatewayService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.client = this.grpcClient.getService<CatalogAdminServiceClient>(
+    this.client = this.grpcClient.getService<CatalogAdminGrpcClient>(
       "CatalogAdminService",
     )
   }
@@ -127,9 +150,18 @@ export class CatalogAdminGatewayService implements OnModuleInit {
       }),
     )
     return (res.tracks || []).map((t) => ({
+      id: t.id,
       slug: t.slug,
       title: t.title,
       description: t.description || undefined,
+      category: t.category
+        ? {
+            id: t.category.id,
+            slug: t.category.slug,
+            name: t.category.name,
+            color: t.category.color,
+          }
+        : undefined,
       creatorCode: t.creatorCode || "",
       lessonCount: t.lessonCount || 0,
     }))
@@ -149,15 +181,26 @@ export class CatalogAdminGatewayService implements OnModuleInit {
         }),
       )
       return {
+        id: res.id,
         slug: res.slug,
         title: res.title,
         description: res.description || undefined,
+        category: res.category
+          ? {
+              id: res.category.id,
+              slug: res.category.slug,
+              name: res.category.name,
+              color: res.category.color,
+            }
+          : undefined,
         creatorCode: res.creatorCode || "",
         lessons: (res.lessons || []).map((l: ProtoLesson) => ({
+          id: l.id,
           slug: l.slug,
           title: l.title,
           position: l.position || 0,
           sections: (l.sections || []).map((s: ProtoSection) => ({
+            id: s.id,
             slug: s.slug,
             title: s.title,
             position: s.position || 0,
@@ -168,10 +211,9 @@ export class CatalogAdminGatewayService implements OnModuleInit {
         })),
       }
     } catch (error: unknown) {
-      const err = error as { details?: string; message?: string }
-      const details = err?.details || err?.message
+      const details = (error as { details?: string })?.details
       if (
-        details === "TRACK_NOT_FOUND" ||
+        details?.includes("FORBIDDEN") ||
         details?.includes("TRACK_NOT_FOUND")
       ) {
         return null
@@ -188,55 +230,75 @@ export class CatalogAdminGatewayService implements OnModuleInit {
       this.client.createTrack({
         title: input.title,
         description: input.description ?? "",
+        categoryId: input.categoryId ? Number(input.categoryId) : undefined,
         requestorCode: userCode,
       }),
     )
     return {
+      id: res.id,
       slug: res.slug,
       title: res.title,
       description: res.description || undefined,
+      category: res.category
+        ? {
+            id: res.category.id,
+            slug: res.category.slug,
+            name: res.category.name,
+            color: res.category.color,
+          }
+        : undefined,
       creatorCode: res.creatorCode || "",
       lessonCount: res.lessonCount || 0,
     }
   }
 
   async updateTrack(
-    slug: string,
+    id: number,
     input: UpdateTrackInput,
     userCode: string,
     role: string,
   ): Promise<AdminTrack> {
     const res = await firstValueFrom(
       this.client.updateTrack({
-        currentSlug: slug,
+        trackId: id,
         title: input.title,
         description: input.description ?? "",
+        categoryId: input.categoryId ? Number(input.categoryId) : undefined,
         requestorCode: userCode,
         requestorRole: role,
       }),
     )
     return {
+      id: res.id,
       slug: res.slug,
       title: res.title,
       description: res.description || undefined,
+      category: res.category
+        ? {
+            id: res.category.id,
+            slug: res.category.slug,
+            name: res.category.name,
+            color: res.category.color,
+          }
+        : undefined,
       creatorCode: res.creatorCode || "",
       lessonCount: res.lessonCount || 0,
     }
   }
 
   async deleteTrack(
-    slug: string,
+    id: number,
     userCode: string,
     role: string,
   ): Promise<boolean> {
     const res = await firstValueFrom(
       this.client.deleteTrack({
-        slug,
+        trackId: id,
         requestorCode: userCode,
         requestorRole: role,
       }),
     )
-    return !!res.success
+    return res.success
   }
 
   async upsertLesson(
@@ -246,19 +308,21 @@ export class CatalogAdminGatewayService implements OnModuleInit {
   ): Promise<AdminLessonSummary> {
     const res = await firstValueFrom(
       this.client.upsertLesson({
-        trackSlug: input.trackSlug,
-        slug: input.slug ?? "",
+        trackId: input.trackId,
+        lessonId: input.id ?? undefined,
         title: input.title,
-        position: input.position ?? 0,
+        position: input.position ?? undefined,
         requestorCode: userCode,
         requestorRole: role,
       }),
     )
     return {
+      id: res.id,
       slug: res.slug,
       title: res.title,
       position: res.position || 0,
-      sections: (res.sections || []).map((s) => ({
+      sections: (res.sections || []).map((s: ProtoSection) => ({
+        id: s.id,
         slug: s.slug,
         title: s.title,
         position: s.position || 0,
@@ -269,20 +333,18 @@ export class CatalogAdminGatewayService implements OnModuleInit {
   }
 
   async deleteLesson(
-    trackSlug: string,
-    lessonSlug: string,
+    id: number,
     userCode: string,
     role: string,
   ): Promise<boolean> {
     const res = await firstValueFrom(
       this.client.deleteLesson({
-        trackSlug,
-        lessonSlug,
+        lessonId: id,
         requestorCode: userCode,
         requestorRole: role,
       }),
     )
-    return !!res.success
+    return res.success
   }
 
   async upsertSection(
@@ -292,18 +354,18 @@ export class CatalogAdminGatewayService implements OnModuleInit {
   ): Promise<AdminSectionSummary> {
     const res = await firstValueFrom(
       this.client.upsertSection({
-        trackSlug: input.trackSlug,
-        lessonSlug: input.lessonSlug,
-        slug: input.slug ?? "",
+        lessonId: input.lessonId,
+        sectionId: input.id ?? undefined,
         title: input.title,
-        position: input.position ?? 0,
-        kind: input.kind || "TEXT",
-        contentMarkdown: input.contentMarkdown ?? "",
+        position: input.position ?? undefined,
+        kind: input.kind ?? undefined,
+        contentMarkdown: input.contentMarkdown ?? undefined,
         requestorCode: userCode,
         requestorRole: role,
       }),
     )
     return {
+      id: res.id,
       slug: res.slug,
       title: res.title,
       position: res.position || 0,
@@ -313,21 +375,19 @@ export class CatalogAdminGatewayService implements OnModuleInit {
   }
 
   async deleteSection(
-    trackSlug: string,
-    lessonSlug: string,
-    sectionSlug: string,
+    id: number,
     userCode: string,
     role: string,
   ): Promise<boolean> {
     const res = await firstValueFrom(
       this.client.deleteSection({
-        trackSlug,
-        lessonSlug,
-        sectionSlug,
+        sectionId: id,
         requestorCode: userCode,
         requestorRole: role,
       }),
     )
-    return !!res.success
+    return res.success
   }
 }
+
+export { CatalogAdminService as CatalogAdminGatewayService }

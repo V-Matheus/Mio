@@ -1,5 +1,5 @@
 import { PrismaClient, type SectionKind } from ".prisma/core"
-import { catalogFixtures } from "./seed-fixtures"
+import { catalogFixtures, categoryFixtures } from "./seed-fixtures"
 
 /**
  * Seed do catálogo (spec 02). O conteúdo das seções mora no banco
@@ -15,6 +15,12 @@ import { catalogFixtures } from "./seed-fixtures"
  *
  * Uso: `yarn seed:content` (no container: `yarn docker:seed:content`).
  */
+
+export type CategoryEntry = {
+  slug: string
+  name: string
+  color: string
+}
 
 export type SectionEntry = {
   slug: string
@@ -35,10 +41,12 @@ export type TrackEntry = {
   slug: string
   title: string
   description: string | null
+  categorySlug?: string | null
   lessons: LessonEntry[]
 }
 
 export type SyncSummary = {
+  categories: number
   tracks: number
   lessons: number
   sections: number
@@ -85,7 +93,22 @@ export async function syncContent(
   tracks: TrackEntry[],
   adminPasswordHash: string,
 ): Promise<SyncSummary> {
-  const summary: SyncSummary = { tracks: 0, lessons: 0, sections: 0 }
+  const summary: SyncSummary = {
+    categories: 0,
+    tracks: 0,
+    lessons: 0,
+    sections: 0,
+  }
+
+  // 0. Popular categorias padrões no banco
+  for (const cat of categoryFixtures) {
+    await prisma.category.upsert({
+      where: { slug: cat.slug },
+      create: { slug: cat.slug, name: cat.name, color: cat.color },
+      update: { name: cat.name, color: cat.color },
+    })
+    summary.categories += 1
+  }
 
   // 1. Garantir que as roles padrões existam
   await prisma.role.upsert({
@@ -107,7 +130,6 @@ export async function syncContent(
   // 2. Garantir o administrador do sistema
   const defaultAdmin = await prisma.user.upsert({
     where: { code: "system-admin" },
-    // update também garante a senha em admins já criados sem passwordHash
     update: { passwordHash: adminPasswordHash },
     create: {
       code: "system-admin",
@@ -136,6 +158,10 @@ export async function syncContent(
 
   for (const track of tracks) {
     await prisma.$transaction(async (tx) => {
+      const category = track.categorySlug
+        ? await tx.category.findUnique({ where: { slug: track.categorySlug } })
+        : null
+
       const dbTrack = await tx.track.upsert({
         where: { slug: track.slug },
         create: {
@@ -143,8 +169,13 @@ export async function syncContent(
           title: track.title,
           description: track.description,
           creatorId: defaultAdmin.id,
+          categoryId: category?.id ?? null,
         },
-        update: { title: track.title, description: track.description },
+        update: {
+          title: track.title,
+          description: track.description,
+          categoryId: category?.id ?? null,
+        },
       })
       summary.tracks += 1
 
@@ -159,8 +190,6 @@ export async function syncContent(
         `lições órfãs na trilha "${track.slug}" (existem no banco, não nas fixtures)`,
       )
 
-      // Duas fases: nega as posições atuais antes de regravar, para que
-      // reordenações não violem o unique(trackId, position) no meio do loop.
       await tx.lesson.updateMany({
         where: {
           trackId: dbTrack.id,
@@ -285,7 +314,7 @@ async function main(): Promise<void> {
       adminPasswordHash,
     )
     console.log(
-      `Seed concluído: ${summary.tracks} trilha(s), ${summary.lessons} lição(ões), ${summary.sections} seção(ões).`,
+      `Seed concluído: ${summary.categories} categoria(s), ${summary.tracks} trilha(s), ${summary.lessons} lição(ões), ${summary.sections} seção(ões).`,
     )
   } finally {
     await prisma.$disconnect()

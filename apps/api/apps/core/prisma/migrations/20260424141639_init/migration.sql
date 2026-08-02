@@ -3,7 +3,7 @@ CREATE TYPE "SectionKind" AS ENUM ('TEXT', 'EXERCISE');
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "code" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "Track" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "slug" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
@@ -28,8 +28,8 @@ CREATE TABLE "Track" (
 
 -- CreateTable
 CREATE TABLE "Lesson" (
-    "id" BIGSERIAL NOT NULL,
-    "trackId" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "trackId" INTEGER NOT NULL,
     "slug" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "position" INTEGER NOT NULL,
@@ -39,8 +39,8 @@ CREATE TABLE "Lesson" (
 
 -- CreateTable
 CREATE TABLE "Section" (
-    "id" BIGSERIAL NOT NULL,
-    "lessonId" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "lessonId" INTEGER NOT NULL,
     "slug" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "position" INTEGER NOT NULL,
@@ -53,8 +53,8 @@ CREATE TABLE "Section" (
 -- CreateTable
 CREATE TABLE "Enrollment" (
     "id" BIGSERIAL NOT NULL,
-    "userId" BIGINT NOT NULL,
-    "trackId" BIGINT NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "trackId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Enrollment_pkey" PRIMARY KEY ("id")
@@ -63,9 +63,9 @@ CREATE TABLE "Enrollment" (
 -- CreateTable
 CREATE TABLE "LessonProgress" (
     "id" BIGSERIAL NOT NULL,
-    "userId" BIGINT NOT NULL,
-    "lessonId" BIGINT NOT NULL,
-    "lastSectionId" BIGINT,
+    "userId" INTEGER NOT NULL,
+    "lessonId" INTEGER NOT NULL,
+    "lastSectionId" INTEGER,
     "completedAt" TIMESTAMP(3),
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

@@ -3,14 +3,14 @@ import { PrismaService } from "../prisma/prisma.service"
 import { catalogError } from "./errors/catalog.errors"
 
 interface LessonRecord {
-  id: bigint
+  id: number
   slug: string
   title: string
   position: number
 }
 
 interface SectionRecord {
-  id: bigint
+  id: number
   slug: string
   title: string
   position: number
@@ -31,7 +31,7 @@ function slugify(text: string): string {
 export class CatalogAdminService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async getUserIdByCode(code: string): Promise<bigint> {
+  private async getUserIdByCode(code: string): Promise<number> {
     const user = await this.prisma.user.findUnique({
       where: { code },
       select: { id: true },
@@ -42,7 +42,25 @@ export class CatalogAdminService {
     return user.id
   }
 
-  private async assertTrackOwnership(
+  private async assertTrackOwnershipById(
+    trackId: number,
+    requestorCode: string,
+    requestorRole: string,
+  ) {
+    const track = await this.prisma.track.findUnique({
+      where: { id: trackId },
+      include: { creator: { select: { code: true } } },
+    })
+    if (!track) {
+      throw catalogError("TRACK_NOT_FOUND")
+    }
+    if (requestorRole !== "ADMIN" && track.creator?.code !== requestorCode) {
+      throw catalogError("FORBIDDEN")
+    }
+    return track
+  }
+
+  private async assertTrackOwnershipBySlug(
     trackSlug: string,
     requestorCode: string,
     requestorRole: string,
@@ -69,15 +87,25 @@ export class CatalogAdminService {
       orderBy: { createdAt: "desc" },
       include: {
         creator: { select: { code: true } },
+        category: true,
         _count: { select: { lessons: true } },
       },
     })
 
     return tracks.map((track) => ({
+      id: track.id,
       slug: track.slug,
       title: track.title,
       description: track.description ?? "",
       creatorCode: track.creator?.code ?? "",
+      category: track.category
+        ? {
+            id: String(track.category.id),
+            slug: track.category.slug,
+            name: track.category.name,
+            color: track.category.color,
+          }
+        : null,
       lessonCount: track._count.lessons,
     }))
   }
@@ -87,7 +115,7 @@ export class CatalogAdminService {
     requestorCode: string,
     requestorRole: string,
   ) {
-    const track = await this.assertTrackOwnership(
+    const track = await this.assertTrackOwnershipBySlug(
       slug,
       requestorCode,
       requestorRole,
@@ -96,6 +124,7 @@ export class CatalogAdminService {
       where: { id: track.id },
       include: {
         creator: { select: { code: true } },
+        category: true,
         lessons: {
           orderBy: { position: "asc" },
           include: {
@@ -107,15 +136,26 @@ export class CatalogAdminService {
     if (!fullTrack) throw catalogError("TRACK_NOT_FOUND")
 
     return {
+      id: fullTrack.id,
       slug: fullTrack.slug,
       title: fullTrack.title,
       description: fullTrack.description ?? "",
       creatorCode: fullTrack.creator?.code ?? "",
+      category: fullTrack.category
+        ? {
+            id: String(fullTrack.category.id),
+            slug: fullTrack.category.slug,
+            name: fullTrack.category.name,
+            color: fullTrack.category.color,
+          }
+        : null,
       lessons: fullTrack.lessons.map((lesson) => ({
+        id: lesson.id,
         slug: lesson.slug,
         title: lesson.title,
         position: lesson.position,
         sections: lesson.sections.map((sec) => ({
+          id: sec.id,
           slug: sec.slug,
           title: sec.title,
           position: sec.position,
@@ -126,11 +166,23 @@ export class CatalogAdminService {
     }
   }
 
-  async createTrack(title: string, description: string, requestorCode: string) {
+  async createTrack(
+    title: string,
+    description: string,
+    categoryId: string | number | undefined,
+    requestorCode: string,
+  ) {
     const creatorId = await this.getUserIdByCode(requestorCode)
     const baseSlug = slugify(title) || `track-${Date.now()}`
 
-    // Garantir slug único
+    let dbCategoryId: number | null = null
+    if (categoryId) {
+      const parsed = Number(categoryId)
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        dbCategoryId = parsed
+      }
+    }
+
     let slug = baseSlug
     let counter = 1
     while (await this.prisma.track.findUnique({ where: { slug } })) {
@@ -143,32 +195,56 @@ export class CatalogAdminService {
         description,
         slug,
         creatorId,
+        categoryId: dbCategoryId,
       },
-      include: { creator: { select: { code: true } } },
+      include: {
+        creator: { select: { code: true } },
+        category: true,
+      },
     })
 
     return {
+      id: track.id,
       slug: track.slug,
       title: track.title,
       description: track.description ?? "",
       creatorCode: track.creator?.code ?? "",
+      category: track.category
+        ? {
+            id: String(track.category.id),
+            slug: track.category.slug,
+            name: track.category.name,
+            color: track.category.color,
+          }
+        : null,
       lessonCount: 0,
     }
   }
 
   async updateTrack(
-    currentSlug: string,
+    trackId: number,
     title: string,
     description: string,
+    categoryId: string | number | undefined,
     requestorCode: string,
     requestorRole: string,
   ) {
-    const track = await this.assertTrackOwnership(
-      currentSlug,
+    const track = await this.assertTrackOwnershipById(
+      trackId,
       requestorCode,
       requestorRole,
     )
     const newSlug = slugify(title) || track.slug
+
+    let dbCategoryId = track.categoryId
+    if (categoryId !== undefined) {
+      if (categoryId) {
+        const parsed = Number(categoryId)
+        dbCategoryId = !Number.isNaN(parsed) && parsed > 0 ? parsed : null
+      } else {
+        dbCategoryId = null
+      }
+    }
 
     const updated = await this.prisma.track.update({
       where: { id: track.id },
@@ -176,29 +252,40 @@ export class CatalogAdminService {
         title,
         description,
         slug: newSlug,
+        categoryId: dbCategoryId,
       },
       include: {
         creator: { select: { code: true } },
+        category: true,
         _count: { select: { lessons: true } },
       },
     })
 
     return {
+      id: updated.id,
       slug: updated.slug,
       title: updated.title,
       description: updated.description ?? "",
       creatorCode: updated.creator?.code ?? "",
+      category: updated.category
+        ? {
+            id: String(updated.category.id),
+            slug: updated.category.slug,
+            name: updated.category.name,
+            color: updated.category.color,
+          }
+        : null,
       lessonCount: updated._count.lessons,
     }
   }
 
   async deleteTrack(
-    slug: string,
+    trackId: number,
     requestorCode: string,
     requestorRole: string,
   ) {
-    const track = await this.assertTrackOwnership(
-      slug,
+    const track = await this.assertTrackOwnershipById(
+      trackId,
       requestorCode,
       requestorRole,
     )
@@ -207,54 +294,76 @@ export class CatalogAdminService {
   }
 
   async upsertLesson(
-    trackSlug: string,
-    slug: string,
+    trackId: number,
+    lessonId: number | undefined,
     title: string,
     position: number,
     requestorCode: string,
     requestorRole: string,
   ) {
-    const track = await this.assertTrackOwnership(
-      trackSlug,
+    const track = await this.assertTrackOwnershipById(
+      trackId,
       requestorCode,
       requestorRole,
     )
-    const lessonSlug = slug || slugify(title) || `lesson-${Date.now()}`
 
-    const existing = await this.prisma.lesson.findFirst({
-      where: { trackId: track.id, slug: lessonSlug },
-      include: { sections: { orderBy: { position: "asc" } } },
+    const existingLessons = await this.prisma.lesson.findMany({
+      where: { trackId: track.id },
+      select: { id: true, slug: true, position: true },
     })
+
+    const existing = lessonId
+      ? existingLessons.find((l) => l.id === lessonId)
+      : undefined
+
+    let lessonSlug = existing?.slug || ""
+    if (!existing) {
+      const baseSlug = slugify(title) || `lesson-${Date.now()}`
+      lessonSlug = baseSlug
+      let counter = 1
+      while (existingLessons.some((l) => l.slug === lessonSlug)) {
+        lessonSlug = `${baseSlug}-${counter++}`
+      }
+    }
+
+    const lessonCount = existingLessons.length
+    let targetPosition =
+      position && position > 0
+        ? position
+        : existing
+          ? existing.position
+          : lessonCount + 1
 
     let lesson: LessonRecord & { sections?: SectionRecord[] }
     if (existing) {
       lesson = await this.prisma.lesson.update({
         where: { id: existing.id },
-        data: { title, position: position || existing.position },
+        data: { title, position: targetPosition },
         include: { sections: { orderBy: { position: "asc" } } },
       })
     } else {
-      const count = await this.prisma.lesson.count({
-        where: { trackId: track.id },
-      })
-      const pos = position || count + 1
+      if (existingLessons.some((l) => l.position === targetPosition)) {
+        targetPosition = lessonCount + 1
+      }
       lesson = await this.prisma.lesson.create({
         data: {
           trackId: track.id,
           slug: lessonSlug,
           title,
-          position: pos,
+          position: targetPosition,
         },
         include: { sections: { orderBy: { position: "asc" } } },
       })
     }
 
     return {
-      trackSlug,
+      id: lesson.id,
+      trackId: track.id,
       slug: lesson.slug,
       title: lesson.title,
       position: lesson.position,
       sections: (lesson.sections || []).map((s: SectionRecord) => ({
+        id: s.id,
         slug: s.slug,
         title: s.title,
         position: s.position,
@@ -265,29 +374,30 @@ export class CatalogAdminService {
   }
 
   async deleteLesson(
-    trackSlug: string,
-    lessonSlug: string,
+    lessonId: number,
     requestorCode: string,
     requestorRole: string,
   ) {
-    const track = await this.assertTrackOwnership(
-      trackSlug,
-      requestorCode,
-      requestorRole,
-    )
-    const lesson = await this.prisma.lesson.findFirst({
-      where: { trackId: track.id, slug: lessonSlug },
+    const lesson = await this.prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: { track: { include: { creator: { select: { code: true } } } } },
     })
-    if (lesson) {
-      await this.prisma.lesson.delete({ where: { id: lesson.id } })
+    if (!lesson) return { success: true }
+
+    if (
+      requestorRole !== "ADMIN" &&
+      lesson.track.creator?.code !== requestorCode
+    ) {
+      throw catalogError("FORBIDDEN")
     }
+
+    await this.prisma.lesson.delete({ where: { id: lessonId } })
     return { success: true }
   }
 
   async upsertSection(
-    trackSlug: string,
-    lessonSlug: string,
-    slug: string,
+    lessonId: number,
+    sectionId: number | undefined,
     title: string,
     position: number,
     kind: "TEXT" | "EXERCISE",
@@ -295,22 +405,45 @@ export class CatalogAdminService {
     requestorCode: string,
     requestorRole: string,
   ) {
-    const track = await this.assertTrackOwnership(
-      trackSlug,
-      requestorCode,
-      requestorRole,
-    )
-    const lesson = await this.prisma.lesson.findFirst({
-      where: { trackId: track.id, slug: lessonSlug },
+    const lesson = await this.prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: {
+        track: { include: { creator: { select: { code: true } } } },
+        sections: { select: { id: true, slug: true, position: true } },
+      },
     })
     if (!lesson) {
       throw catalogError("LESSON_NOT_FOUND")
     }
 
-    const sectionSlug = slug || slugify(title) || `sec-${Date.now()}`
-    const existing = await this.prisma.section.findFirst({
-      where: { lessonId: lesson.id, slug: sectionSlug },
-    })
+    if (
+      requestorRole !== "ADMIN" &&
+      lesson.track.creator?.code !== requestorCode
+    ) {
+      throw catalogError("FORBIDDEN")
+    }
+
+    const existing = sectionId
+      ? lesson.sections.find((s) => s.id === sectionId)
+      : undefined
+
+    let sectionSlug = existing?.slug || ""
+    if (!existing) {
+      const baseSlug = slugify(title) || `sec-${Date.now()}`
+      sectionSlug = baseSlug
+      let counter = 1
+      while (lesson.sections.some((s) => s.slug === sectionSlug)) {
+        sectionSlug = `${baseSlug}-${counter++}`
+      }
+    }
+
+    const sectionCount = lesson.sections.length
+    let targetPosition =
+      position && position > 0
+        ? position
+        : existing
+          ? existing.position
+          : sectionCount + 1
 
     let section: SectionRecord
     if (existing) {
@@ -318,29 +451,29 @@ export class CatalogAdminService {
         where: { id: existing.id },
         data: {
           title,
-          position: position || existing.position,
+          position: targetPosition,
           kind: kind === "EXERCISE" ? "EXERCISE" : "TEXT",
-          contentMarkdown,
+          contentMarkdown: contentMarkdown ?? "",
         },
       })
     } else {
-      const count = await this.prisma.section.count({
-        where: { lessonId: lesson.id },
-      })
-      const pos = position || count + 1
+      if (lesson.sections.some((s) => s.position === targetPosition)) {
+        targetPosition = sectionCount + 1
+      }
       section = await this.prisma.section.create({
         data: {
           lessonId: lesson.id,
           slug: sectionSlug,
           title,
-          position: pos,
+          position: targetPosition,
           kind: kind === "EXERCISE" ? "EXERCISE" : "TEXT",
-          contentMarkdown,
+          contentMarkdown: contentMarkdown ?? "",
         },
       })
     }
 
     return {
+      id: section.id,
       slug: section.slug,
       title: section.title,
       position: section.position,
@@ -350,28 +483,32 @@ export class CatalogAdminService {
   }
 
   async deleteSection(
-    trackSlug: string,
-    lessonSlug: string,
-    sectionSlug: string,
+    sectionId: number,
     requestorCode: string,
     requestorRole: string,
   ) {
-    const track = await this.assertTrackOwnership(
-      trackSlug,
-      requestorCode,
-      requestorRole,
-    )
-    const lesson = await this.prisma.lesson.findFirst({
-      where: { trackId: track.id, slug: lessonSlug },
+    const section = await this.prisma.section.findUnique({
+      where: { id: sectionId },
+      include: {
+        lesson: {
+          include: {
+            track: { include: { creator: { select: { code: true } } } },
+          },
+        },
+      },
     })
-    if (lesson) {
-      const section = await this.prisma.section.findFirst({
-        where: { lessonId: lesson.id, slug: sectionSlug },
-      })
-      if (section) {
-        await this.prisma.section.delete({ where: { id: section.id } })
-      }
+    if (!section) return { success: true }
+
+    if (
+      requestorRole !== "ADMIN" &&
+      section.lesson.track.creator?.code !== requestorCode
+    ) {
+      throw catalogError("FORBIDDEN")
     }
+
+    await this.prisma.section.delete({ where: { id: sectionId } })
     return { success: true }
   }
 }
+
+export { CatalogAdminService as CatalogAdminGatewayService }

@@ -16,7 +16,7 @@ O frontend é uma aplicação **Next.js 16 (App Router)** que atua como a "vitri
 O fluxo principal é:
 
 1. O browser acessa uma rota e recebe HTML renderizado pelo servidor Next.js.
-2. Componentes do servidor consultam o **API Gateway** via GraphQL para popular a tela.
+2. Componentes do servidor consultam o **API Gateway** via GraphQL a partir da camada de **Queries** para popular a tela.
 3. **Server Actions** lidam com mutações sensíveis (login, conclusão de aula) sem expor segredos ao cliente.
 4. Em rotas autenticadas, o cliente assina o **Messenger** (SSE) para receber eventos em tempo real.
 
@@ -37,8 +37,9 @@ A pasta `app/` é a raiz do App Router. Cada segmento vira uma rota e cada `layo
 **Convenções do App Router usadas no projeto:**
 
 - **Route Groups** `(nome)` — agrupam rotas sem afetar a URL. Ex: `app/(portal)/` isola o marketing/landing do restante.
-- **Private folders** `_nome` — pastas que começam com `_` não viram rota. Ex: `app/(portal)/_components/` guarda componentes exclusivos daquela seção sem ser alcançáveis por URL.
-- **Layouts compostos** — `RootLayout` (fontes globais, `<html>`, `<body>`) → `PortalLayout` (Header + Footer) → `page.tsx`.
+- **Private folders** `_nome` — pastas que começam com `_` não viram rota. Ex: `app/(app)/trilhas/_components/` guarda componentes exclusivos da rota de trilhas.
+- **Layouts compostos** — `RootLayout` (fontes globais, `<html>`, `<body>`) → `AppShell` (Sidebar + Header + `<main>`) → `page.tsx`.
+- **A tag `<main>` é única**: Definida exclusivamente no layout global. Arquivos de página (`page.tsx`) nunca contêm a tag `<main>`.
 
 ---
 
@@ -46,9 +47,10 @@ A pasta `app/` é a raiz do App Router. Cada segmento vira uma rota e cada `layo
 
 | | |
 |---|---|
-| **Localização** | `app/components/` |
-| **Padrão** | Compound Components (Wrapper + peças) |
+| **Localização** | `src/components/` |
+| **Padrão** | Compound Components (Wrapper + peças com `data-slot="..."`) |
 | **Styling** | Tailwind CSS v4 + tokens via `@theme` |
+| **Utilitários** | `cn` de `@/utils` |
 | **Ícones** | Iconify (`@iconify/react`) |
 
 Cada "componente" é um conjunto pequeno de peças combináveis. Isso evita props booleanas em cascata e deixa o consumidor montar a estrutura que precisa:
@@ -64,119 +66,84 @@ Cada "componente" é um conjunto pequeno de peças combináveis. Isso evita prop
   <CardDescription>Você desbloqueou uma conquista</CardDescription>
 </CardWrapper>
 
-<BadgeWrapper>
-  <BadgeIcon icon="mdi:fire" />
-  <BadgeValue>1200 XP</BadgeValue>
-</BadgeWrapper>
+<FilterGroup
+  label="Categoria"
+  items={["Todos", "Front-End", "Back-End"]}
+  selectedItem={selectedCategory}
+  onSelect={setSelectedCategory}
+/>
 ```
 
-Famílias atuais:
+Famílias atuais em `src/components/`:
 
 - `components/button/` — `ButtonWrapper`, `ButtonText`, `ButtonIcon`
 - `components/card/` — `CardWrapper`, `CardTitle`, `CardDescription`, `CardIcon`
+- `components/filter-group/` — `FilterGroupWrapper`, `FilterGroupLabel`, `FilterGroupList`, `FilterGroupItem`, `FilterGroup`
 - `components/gamification/` — `BadgeWrapper`, `BadgeIcon`, `BadgeValue`, `ProgressBar`
+- `components/input/` — `InputWrapper`, `InputField`, `InputControl`, `InputAdornment`, `InputLabel`
 
-Cada família expõe um `index.ts` como barrel — o consumidor importa de `@/components/button`, não de arquivos internos.
+Cada família expõe um `index.ts` como barrel — o consumidor importa de `@/components/filter-group`, não de arquivos internos.
 
 ---
 
-### 3. Design Tokens (Tailwind v4 + CSS Variables)
+### 3. Módulos de Domínio (`src/lib/<dominio>/`)
+
+Cada domínio de negócios da aplicação (ex.: `auth`, `catalog`, `studio`) segue uma estrutura estrita de pastas:
+
+- `lib/<dominio>/queries/` — Funções de leitura de dados para Server Components/Páginas, exportadas por `index.ts`.
+- `lib/<dominio>/actions/` — Server Actions de escrita/mutação, exportadas por `index.ts`.
+- `lib/<dominio>/graphql/` — Documentos GraphQL atômicos por operação, exportados por `index.ts`.
+- `lib/<dominio>/types/` — Tipos divididos em sub-módulos por entidade (ex.: `track.ts`, `lesson.ts`, `section.ts`), re-exportados por `index.ts`.
+- `lib/<dominio>/service.ts` — Serviço de infraestrutura que executa chamadas GraphQL no Gateway.
+
+---
+
+### 4. Regra de Consumo de Dados por Componentes
+
+- **Componentes NUNCA consomem `service.ts` diretamente.**
+- Para **Leitura (Queries)**: Componentes e Server Components (`page.tsx`) usam as funções de `queries/` (ex.: `getTracksQuery`).
+- Para **Escrita (Mutações)**: Formulários e eventos do cliente usam as Server Actions de `actions/` (ex.: `enrollInTrackAction`).
+
+---
+
+### 5. Padrão de Tratamento de Erros (Error Handling)
+
+1. **Camada de Serviço (`service.ts`)**:
+   - Concentra **todo** o tratamento de erros HTTP/GraphQL.
+   - Envolve requisições em blocos `try/catch` e utiliza `gatewayError(error, fallback)` do cliente da Gateway.
+   - Retorna um resultado fortemente tipado:
+     ```typescript
+     { ok: true; data: T } | { ok: false; error: string }
+     ```
+     ou fallbacks seguros (`null`, `[]`).
+
+2. **Camada de Actions (`actions/*.ts`)**:
+   - **Sem blocos `try/catch`**.
+   - Responsável apenas por validar inputs (schemas Zod ou regras de formulário), chamar o serviço e executar `revalidatePath(...)` caso a resposta do serviço seja bem-sucedida (`res.ok`).
+
+---
+
+### 6. Design Tokens (Tailwind v4 + CSS Variables)
 
 | | |
 |---|---|
-| **Localização** | `app/globals.css` |
+| **Localização** | `src/app/globals.css` |
 | **Mecanismo** | `@theme` do Tailwind v4 |
 
 O tema é declarado em CSS puro dentro de `@theme`. Tailwind gera as classes utilitárias (`bg-primary`, `text-foreground`, `font-display`, etc.) automaticamente a partir dessas variáveis.
-
-| Token | Propósito |
-|---|---|
-| `--color-primary` / `--color-primary-shadow` | Cor principal da marca (laranja) e sombra 3D |
-| `--color-success` / `--color-success-shadow` | Estados de sucesso |
-| `--color-background` / `--color-foreground` | Fundo e texto base |
-| `--color-disabled` / `--color-disabled-foreground` | Estados desabilitados |
-| `--font-display` (Outfit) | Títulos e CTAs |
-| `--font-body` (Plus Jakarta Sans) | Texto corrido |
-
-As fontes são carregadas via `next/font/google` no `RootLayout` e expostas como CSS variables — sem FOUT e sem requisições extras.
-
----
-
-### 4. Storybook (Documentação Visual)
-
-| | |
-|---|---|
-| **Framework** | `@storybook/nextjs-vite` |
-| **Localização das stories** | `stories/` |
-| **Addons** | `addon-a11y`, `addon-docs`, `chromatic` |
-
-Cada componente do design system tem uma story espelhada em `stories/`. O Storybook roda isolado (`yarn storybook`, porta 6006) e serve como:
-
-- **Playground visual:** inspecionar estados e variantes sem precisar de dados do backend.
-- **Documentação viva:** `addon-docs` gera páginas a partir das stories.
-- **Checagem de acessibilidade:** `addon-a11y` roda axe-core em cada story.
-
-Organização: `stories/button/`, `stories/card/`, `stories/gamification/`, `stories/foundations/` (tipografia e paleta).
-
----
-
-### 5. Comunicação com o Backend
-
-| Canal | Protocolo | Quando |
-|---|---|---|
-| Server Components → Gateway | GraphQL sobre HTTPS | Leitura no SSR/RSC |
-| Server Actions → Gateway | GraphQL sobre HTTPS | Mutações (login, concluir aula) |
-| Browser → Messenger | SSE (Server-Sent Events) | Eventos em tempo real (XP, conquistas) |
-
-**Por que toda a comunicação com o Gateway sai do servidor Next.js?**
-
-- Segredos de sessão (tokens, cookies HTTP-only) nunca chegam ao JavaScript do cliente.
-- O cliente recebe apenas HTML e os dados já filtrados — menos superfície de ataque e menos overfetching.
-- O Gateway aceita chamadas apenas do Next.js, simplificando a política de CORS e o rate limiting.
-
-O **Messenger** é a única exceção: o browser fala direto com ele por SSE em um canal unidirecional. Isso é seguro porque a conexão carrega o token de sessão, o Messenger apenas empurra eventos do usuário autenticado, e nada sensível trafega nesse canal.
-
----
-
-## Estrutura de Diretórios
-
-```
-apps/web/
-├── app/                          # App Router (Next.js 16)
-│   ├── layout.tsx                # RootLayout: fontes, <html>, <body>
-│   ├── globals.css               # Tokens (@theme) e estilos base
-│   ├── components/               # Design System
-│   │   ├── button/
-│   │   ├── card/
-│   │   └── gamification/
-│   └── (portal)/                 # Route Group: landing/marketing
-│       ├── layout.tsx            # Header + Footer
-│       ├── page.tsx              # Home
-│       └── _components/          # Componentes privados da rota
-├── stories/                      # Storybook (espelha app/components)
-│   ├── button/
-│   ├── card/
-│   ├── foundations/
-│   └── gamification/
-├── tests/
-│   ├── unit/                     # Vitest + Testing Library
-│   ├── integration/
-│   └── e2e/
-└── public/                       # Assets estáticos (logo, mascote)
-```
 
 ---
 
 ## Fluxo de Dados
 
-### Leitura (ex: carregar a home autenticada)
+### Leitura (ex: carregar o catálogo de trilhas)
 
 ```
 ┌──────────┐   HTTPS         ┌──────────────┐   GraphQL   ┌──────────────┐
 │  Browser │ ──────────────► │ Next.js (SSR) │ ──────────► │ API Gateway  │
 └──────────┘                 └──────┬───────┘             └──────┬───────┘
-                                    │                            │ gRPC
-                                    │                            ▼
+                                    │ (chama              │ gRPC
+                                    │  getTracksQuery)    ▼
                                     │                    ┌──────────────┐
                                     │                    │ Microserviços │
                                     │                    └──────────────┘
@@ -187,52 +154,29 @@ apps/web/
                              └──────────────┘
 ```
 
-### Mutação com feedback em tempo real (ex: concluir uma aula)
+### Mutação (ex: matricular-se em uma trilha)
 
 ```
-Browser                Next.js Server        API Gateway        RabbitMQ        Messenger
-   │                         │                    │                │                │
-   │  submit (Server Action) │                    │                │                │
-   │────────────────────────►│                    │                │                │
-   │                         │  GraphQL mutation  │                │                │
-   │                         │───────────────────►│                │                │
-   │                         │                    │ gRPC → Core    │                │
-   │                         │                    │───────────────►│                │
-   │                         │ 200 OK             │ PUB            │ SUB            │
-   │                         │◄───────────────────│  lesson.completed               │
-   │ revalidate + redirect   │                    │                │                │
-   │◄────────────────────────│                    │                │                │
-   │                         │                    │                │                │
-   │─────────── SSE (já aberto) ──────────────────────────────────────────────────► │
-   │◄── event: xp.rewarded ─────────────────────────────────────────────────────────│
-   │◄── event: achievement.unlocked ───────────────────────────────────────────────│
+Browser                 Next.js Server (Action)             API Gateway
+   │                             │                               │
+   │  submit (Action sem try/catch)                              │
+   │────────────────────────────►│                               │
+   │                             │  Service (com try/catch)      │
+   │                             │──────────────────────────────►│
+   │                             │  GraphQL mutation             │
+   │                             │◄──────────────────────────────│
+   │                             │  { ok: true } / { ok: false } │
+   │ revalidatePath + Result     │                               │
+   │◄────────────────────────────│                               │
 ```
-
-A UI atualiza por dois caminhos complementares:
-
-- **Revalidação** (`revalidatePath` / redirect) no retorno da Server Action — garante que o próximo RSC veja o estado consistente.
-- **SSE** do Messenger — empurra o XP e as conquistas sem precisar recarregar.
 
 ---
 
-## Testes
+## Resumo das Principais Regras
 
-| Camada | Ferramenta | Onde |
-|---|---|---|
-| Unit | Vitest + Testing Library | `tests/unit/` |
-| Integração | Vitest | `tests/integration/` (placeholder) |
-| E2E | Vitest | `tests/e2e/` |
-| Visual/A11y | Storybook + `addon-a11y` | `stories/` |
-
-Configs separadas (`vitest.unit.config.ts`, `vitest.e2e.config.ts`) permitem rodar cada camada isoladamente no CI.
-
----
-
-## Por que essa estrutura é poderosa?
-
-- **RSC por padrão:** bundle JS pequeno, SEO melhor e menos trabalho no dispositivo do usuário.
-- **Server Actions isolam segredos:** credenciais e tokens nunca cruzam para o cliente.
-- **Compound components:** fácil de compor, fácil de tipar, sem explosão de props.
-- **Storybook + tokens:** design system evolui sem quebrar a aplicação — variantes são validadas em isolamento antes de chegarem às telas.
-- **Stateless:** qualquer instância Next.js serve qualquer requisição — escalar é só adicionar réplicas atrás do load balancer.
-- **SSE + revalidação:** o usuário vê feedback instantâneo (XP subindo) sem que isso dependa do ciclo de request/response tradicional.
+- **RSC por padrão:** bundle JS pequeno, SEO melhor.
+- **Componentes chamam apenas `queries/` (para leitura) e `actions/` (para escrita):** Nunca importar `service.ts` direto nos componentes.
+- **Tratamento de erro na raiz do serviço:** `try/catch` fica exclusivamente em `service.ts`. Actions são limpas e focadas em validações de formulário.
+- **Compound components com `data-slot`:** simples de compor e inspecionar.
+- **Componentes privados na rota (`_components`):** tudo que é específico de uma página fica co-localizado em `_components` na pasta da rota.
+- **Tag `<main>` única:** pertencente apenas ao layout global.

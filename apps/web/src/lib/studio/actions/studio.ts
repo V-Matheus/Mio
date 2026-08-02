@@ -1,48 +1,75 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { studioService } from "./service"
-import type { AdminLessonSummary, AdminSectionSummary } from "./types"
+import { studioService } from "@/lib/studio/service"
+import type {
+  AdminLessonSummary,
+  AdminSectionSummary,
+} from "@/lib/studio/types"
 
 export async function createTrackAction(formData: FormData) {
   const title = formData.get("title") as string
   const description = (formData.get("description") as string) || undefined
+  const categoryId = (formData.get("categoryId") as string) || undefined
 
   if (!title?.trim()) {
     return { ok: false, error: "Título é obrigatório" }
   }
 
-  const res = await studioService.createTrack(title.trim(), description?.trim())
-
-  if (res.ok) {
-    revalidatePath("/studio")
-  }
-  return res
-}
-
-export async function updateTrackAction(slug: string, formData: FormData) {
-  const title = formData.get("title") as string
-  const description = (formData.get("description") as string) || undefined
-
-  if (!title?.trim()) {
-    return { ok: false, error: "Título é obrigatório" }
+  if (!categoryId?.trim()) {
+    return { ok: false, error: "Categoria é obrigatória" }
   }
 
-  const res = await studioService.updateTrack(
-    slug,
+  const res = await studioService.createTrack(
     title.trim(),
     description?.trim(),
+    categoryId.trim(),
   )
 
   if (res.ok) {
     revalidatePath("/studio")
-    revalidatePath(`/studio/${slug}`)
   }
   return res
 }
 
-export async function deleteTrackAction(slug: string) {
-  const res = await studioService.deleteTrack(slug)
+export async function updateTrackAction(
+  id: number,
+  formData: FormData,
+  trackSlug?: string,
+) {
+  const title = formData.get("title") as string
+  const description = (formData.get("description") as string) || undefined
+  const categoryId = (formData.get("categoryId") as string) || undefined
+
+  if (!title?.trim()) {
+    return { ok: false, error: "Título é obrigatório" }
+  }
+
+  if (!categoryId?.trim()) {
+    return { ok: false, error: "Categoria é obrigatória" }
+  }
+
+  const res = await studioService.updateTrack(
+    id,
+    title.trim(),
+    description?.trim(),
+    categoryId.trim(),
+  )
+
+  if (res.ok) {
+    revalidatePath("/studio")
+    if (trackSlug) {
+      revalidatePath(`/studio/${trackSlug}`)
+    }
+    if (res.track?.slug && res.track.slug !== trackSlug) {
+      revalidatePath(`/studio/${res.track.slug}`)
+    }
+  }
+  return res
+}
+
+export async function deleteTrackAction(id: number) {
+  const res = await studioService.deleteTrack(id)
   if (res.ok) {
     revalidatePath("/studio")
   }
@@ -50,10 +77,11 @@ export async function deleteTrackAction(slug: string) {
 }
 
 export async function upsertLessonAction(
-  trackSlug: string,
-  lessonSlug: string | undefined,
+  trackId: number,
   title: string,
+  lessonId?: number,
   position?: number,
+  trackSlug?: string,
 ): Promise<
   { ok: true; lesson: AdminLessonSummary } | { ok: false; error: string }
 > {
@@ -62,38 +90,37 @@ export async function upsertLessonAction(
   }
 
   const res = await studioService.upsertLesson(
-    trackSlug,
+    trackId,
     title.trim(),
-    lessonSlug,
+    lessonId,
     position,
   )
 
-  if (res.ok) {
+  if (res.ok && trackSlug) {
     revalidatePath(`/studio/${trackSlug}`)
   }
   return res
 }
 
-export async function deleteLessonAction(
-  trackSlug: string,
-  lessonSlug: string,
-) {
-  const res = await studioService.deleteLesson(trackSlug, lessonSlug)
+export async function deleteLessonAction(id: number, trackSlug?: string) {
+  const res = await studioService.deleteLesson(id)
 
-  if (res.ok) {
+  if (res.ok && trackSlug) {
     revalidatePath(`/studio/${trackSlug}`)
   }
   return res
 }
 
 export async function upsertSectionAction(
-  trackSlug: string,
-  lessonSlug: string,
-  sectionSlug: string | undefined,
+  lessonId: number,
   title: string,
+  sectionId?: number,
   kind?: "TEXT" | "EXERCISE",
   contentMarkdown?: string,
   position?: number,
+  trackSlug?: string,
+  lessonSlug?: string,
+  sectionSlug?: string,
 ): Promise<
   { ok: true; section: AdminSectionSummary } | { ok: false; error: string }
 > {
@@ -102,38 +129,31 @@ export async function upsertSectionAction(
   }
 
   const res = await studioService.upsertSection(
-    trackSlug,
-    lessonSlug,
+    lessonId,
     title.trim(),
-    sectionSlug,
+    sectionId,
     position,
     kind,
     contentMarkdown,
   )
 
   if (res.ok) {
-    revalidatePath(`/studio/${trackSlug}`)
-    if (sectionSlug) {
-      revalidatePath(
-        `/studio/${trackSlug}/lessons/${lessonSlug}/sections/${sectionSlug}/edit`,
-      )
+    if (trackSlug) {
+      revalidatePath(`/studio/${trackSlug}`)
+      if (lessonSlug && sectionSlug) {
+        revalidatePath(
+          `/studio/${trackSlug}/lessons/${lessonSlug}/sections/${sectionSlug}/edit`,
+        )
+      }
     }
   }
   return res
 }
 
-export async function deleteSectionAction(
-  trackSlug: string,
-  lessonSlug: string,
-  sectionSlug: string,
-) {
-  const res = await studioService.deleteSection(
-    trackSlug,
-    lessonSlug,
-    sectionSlug,
-  )
+export async function deleteSectionAction(id: number, trackSlug?: string) {
+  const res = await studioService.deleteSection(id)
 
-  if (res.ok) {
+  if (res.ok && trackSlug) {
     revalidatePath(`/studio/${trackSlug}`)
   }
   return res

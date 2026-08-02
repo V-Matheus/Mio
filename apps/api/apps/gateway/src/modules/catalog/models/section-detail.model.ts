@@ -1,8 +1,11 @@
-import { Field, ID, ObjectType } from "@nestjs/graphql"
+import { Field, ID, Int, ObjectType } from "@nestjs/graphql"
 import { SectionKind } from "./section-kind.enum"
 
 @ObjectType()
 export class SectionDetail {
+  @Field(() => Int)
+  id!: number
+
   @Field(() => ID)
   slug!: string
 

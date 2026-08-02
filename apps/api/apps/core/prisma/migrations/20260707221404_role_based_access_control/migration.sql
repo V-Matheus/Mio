@@ -5,11 +5,11 @@
 
 */
 -- AlterTable
-ALTER TABLE "Track" ADD COLUMN     "creatorId" BIGINT NOT NULL;
+ALTER TABLE "Track" ADD COLUMN     "creatorId" INTEGER NOT NULL;
 
 -- CreateTable
 CREATE TABLE "Role" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -18,8 +18,8 @@ CREATE TABLE "Role" (
 
 -- CreateTable
 CREATE TABLE "UserRole" (
-    "userId" BIGINT NOT NULL,
-    "roleId" BIGINT NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "roleId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "UserRole_pkey" PRIMARY KEY ("userId","roleId")

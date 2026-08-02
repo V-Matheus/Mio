@@ -9,8 +9,8 @@ type PrismaMock = {
 
 const dbSections = [
   {
-    id: 100n,
-    lessonId: 10n,
+    id: 100,
+    lessonId: 10,
     slug: "o-que-e-html",
     title: "O que é HTML",
     position: 1,
@@ -18,8 +18,8 @@ const dbSections = [
     contentMarkdown: "# O que é HTML\n\nConteúdo.",
   },
   {
-    id: 101n,
-    lessonId: 10n,
+    id: 101,
+    lessonId: 10,
     slug: "praticando-html",
     title: "Praticando",
     position: 2,
@@ -47,7 +47,7 @@ describe("LessonsService", () => {
 
     it("mapeia seções com kind e completed=false (progresso é spec 03)", async () => {
       prisma.lesson.findFirst.mockResolvedValue({
-        id: 10n,
+        id: 10,
         slug: "intro-html",
         title: "Introdução ao HTML",
         sections: dbSections,
@@ -60,11 +60,13 @@ describe("LessonsService", () => {
         include: { sections: { orderBy: { position: "asc" } } },
       })
       expect(result).toEqual({
+        id: 10,
         trackSlug: "front-end",
         lessonSlug: "intro-html",
         title: "Introdução ao HTML",
         sections: [
           {
+            id: 100,
             slug: "o-que-e-html",
             title: "O que é HTML",
             position: 1,
@@ -72,6 +74,7 @@ describe("LessonsService", () => {
             completed: false,
           },
           {
+            id: 101,
             slug: "praticando-html",
             title: "Praticando",
             position: 2,
@@ -101,6 +104,7 @@ describe("LessonsService", () => {
       )
 
       expect(result).toEqual({
+        id: 100,
         slug: "o-que-e-html",
         title: "O que é HTML",
         kind: "TEXT",

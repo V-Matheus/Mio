@@ -48,7 +48,7 @@ Para suportar múltiplos perfis de forma escalável e segura, utilizaremos tabel
 
 ```prisma
 model User {
-  id            BigInt     @id @default(autoincrement())
+  id            Int        @id @default(autoincrement())
   // ... campos existentes ...
   roles         UserRole[]
 
@@ -57,16 +57,16 @@ model User {
 }
 
 model Role {
-  id        BigInt     @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   name      String     @unique // "STUDENT", "TEACHER", "ADMIN"
   createdAt DateTime   @default(now())
-  
+
   users     UserRole[]
 }
 
 model UserRole {
-  userId    BigInt
-  roleId    BigInt
+  userId    Int
+  roleId    Int
   createdAt DateTime   @default(now())
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -77,20 +77,34 @@ model UserRole {
   @@index([roleId])
 }
 
+model Category {
+  id        Int        @id @default(autoincrement())
+  slug      String     @unique
+  name      String
+  color     String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  tracks    Track[]
+}
+
 model Track {
-  id          BigInt   @id @default(autoincrement())
-  slug        String   @unique
+  id          Int        @id @default(autoincrement())
+  slug        String     @unique
   title       String
   description String?
-  creatorId   BigInt
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  creatorId   Int
+  categoryId  Int?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
-  creator     User     @relation("TrackCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  creator     User       @relation("TrackCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  category    Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   lessons     Lesson[]
   enrollments Enrollment[]
 
   @@index([creatorId])
+  @@index([categoryId])
 }
 ```
 
@@ -301,14 +315,14 @@ extend type Query {
 extend type Mutation {
   # Apenas Professor e Admin
   createTrack(input: CreateTrackInput!): AdminTrack! @auth(roles: [TEACHER, ADMIN])
-  updateTrack(slug: ID!, input: UpdateTrackInput!): AdminTrack! @auth(roles: [TEACHER, ADMIN])
-  deleteTrack(slug: ID!): Boolean! @auth(roles: [TEACHER, ADMIN])
+  updateTrack(id: Int!, input: UpdateTrackInput!): AdminTrack! @auth(roles: [TEACHER, ADMIN])
+  deleteTrack(id: Int!): Boolean! @auth(roles: [TEACHER, ADMIN])
 
   upsertLesson(input: UpsertLessonInput!): AdminLessonDetail! @auth(roles: [TEACHER, ADMIN])
-  deleteLesson(trackSlug: ID!, lessonSlug: ID!): Boolean! @auth(roles: [TEACHER, ADMIN])
+  deleteLesson(id: Int!): Boolean! @auth(roles: [TEACHER, ADMIN])
 
   upsertSection(input: UpsertSectionInput!): AdminSectionDetail! @auth(roles: [TEACHER, ADMIN])
-  deleteSection(trackSlug: ID!, lessonSlug: ID!, sectionSlug: ID!): Boolean! @auth(roles: [TEACHER, ADMIN])
+  deleteSection(id: Int!): Boolean! @auth(roles: [TEACHER, ADMIN])
 
   # Apenas Admin
   transferTrackOwnership(trackSlug: ID!, targetUserCode: ID!): AdminTrack! @auth(roles: [ADMIN])
@@ -356,10 +370,10 @@ Toda a área de administração deve ficar sob `/admin` e utilizar um layout esp
 - [x] Implementar a lógica de propagação das `roles` na query GraphQL `me`.
 
 ### Fase 2: gRPC & Core Business Logic
-- [ ] Criar o arquivo de contrato [catalog-admin.proto](../../packages/grpc-contracts/src/catalog/catalog-admin.proto).
-- [ ] Gerar as tipagens de gRPC para o novo contrato e registrar o client.
-- [ ] Implementar o `CatalogAdminController` e `CatalogAdminService` no Core.
-- [ ] Escrever validações de propriedade: verificar se `creatorId` da trilha é igual ao do requisitante antes de qualquer operação de escrita ou leitura administrativa se o requisitante for `TEACHER`.
+- [x] Criar o arquivo de contrato [catalog-admin.proto](../../packages/grpc-contracts/src/mio/catalog/admin/v1/catalog-admin.proto).
+- [x] Gerar as tipagens de gRPC para o novo contrato e registrar o client.
+- [x] Implementar o `CatalogAdminController` e `CatalogAdminService` no Core.
+- [x] Escrever validações de propriedade: verificar se `creatorId` da trilha é igual ao do requisitante antes de qualquer operação de escrita ou leitura administrativa se o requisitante for `TEACHER`.
 - [x] Implementar endpoint gRPC no `UsersService` para permitir que o ADMIN altere o papel de um usuário e liste/busque usuários.
 
 ### Fase 3: Gateway & GraphQL
@@ -368,11 +382,11 @@ Toda a área de administração deve ficar sob `/admin` e utilizar um layout esp
 - [x] Vincular as chamadas do Gateway ao cliente gRPC `UsersService` do Core.
 
 ### Fase 4: Frontend & UI
-- [ ] Criar Middleware do NextJS para bloquear acessos a `/admin` de usuários que não sejam `TEACHER` ou `ADMIN`.
+- [x] Criar verificação de autenticação e proteção de rotas no Next.js (`proxy.ts`).
 - [x] Construir layout administrativo e barra de navegação (sidebar dinâmica baseada em perfil).
-- [x] Implementar tela `/admin` (Painel Geral) para gerenciamento de permissões (Apenas para `ADMIN`).
-- [ ] Implementar listagem de trilhas e telas de edição.
-- [ ] Implementar o editor de markdown com split screen (Preview).
+- [x] Implementar tela `/painel` (Painel Geral) para gerenciamento de permissões (Apenas para `ADMIN`).
+- [x] Implementar listagem de trilhas e telas de edição no Estúdio (`/studio`, `/studio/[slug]`).
+- [x] Implementar o editor de markdown com split screen (Preview).
 
 ---
 

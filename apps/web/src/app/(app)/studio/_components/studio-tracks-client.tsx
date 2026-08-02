@@ -11,6 +11,7 @@ import {
   InputLabel,
   InputWrapper,
 } from "@/components/input"
+import type { Category } from "@/lib/catalog/types"
 import {
   createTrackAction,
   deleteTrackAction,
@@ -20,11 +21,13 @@ import type { AdminTrack } from "@/lib/studio/types"
 
 interface StudioTracksClientProps {
   initialTracks: AdminTrack[]
+  categories?: Category[]
   userRoles: string[]
 }
 
 export function StudioTracksClient({
   initialTracks,
+  categories = [],
   userRoles,
 }: StudioTracksClientProps) {
   const [tracks, setTracks] = useState<AdminTrack[]>(initialTracks)
@@ -37,7 +40,7 @@ export function StudioTracksClient({
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const isAdmin = userRoles.includes("ADMIN")
+  const availableCategories = categories
 
   const filteredTracks = useMemo(() => {
     return tracks.filter((track) => {
@@ -78,262 +81,281 @@ export function StudioTracksClient({
     const formData = new FormData(e.currentTarget)
 
     startTransition(async () => {
-      const res = await updateTrackAction(editingTrack.slug, formData)
+      const res = await updateTrackAction(
+        editingTrack.id,
+        formData,
+        editingTrack.slug,
+      )
       if (!res.ok) {
         setError(res.error || "Erro ao atualizar trilha.")
         return
       }
 
-      const updatedTitle = formData.get("title") as string
-      const updatedDesc = (formData.get("description") as string) || null
-
-      setTracks((prev) =>
-        prev.map((t) =>
-          t.slug === editingTrack.slug
-            ? { ...t, title: updatedTitle, description: updatedDesc }
-            : t,
-        ),
-      )
+      if (res.ok && "track" in res && res.track) {
+        const updatedTrack = res.track
+        setTracks((prev) =>
+          prev.map((t) => (t.id === editingTrack.id ? updatedTrack : t)),
+        )
+      }
       setEditingTrack(null)
     })
   }
 
-  const handleConfirmDeleteTrack = () => {
-    if (!confirmDeleteTrack) return
-    const slug = confirmDeleteTrack.slug
-    setDeletingSlug(slug)
-    setError(null)
-
+  const handleDeleteTrack = (track: AdminTrack) => {
+    setDeletingSlug(track.slug)
     startTransition(async () => {
-      const res = await deleteTrackAction(slug)
+      const res = await deleteTrackAction(track.id)
+      if (!res.ok) {
+        setError(res.error || "Erro ao remover trilha.")
+      } else {
+        setTracks((prev) => prev.filter((t) => t.id !== track.id))
+      }
       setDeletingSlug(null)
       setConfirmDeleteTrack(null)
-      if (!res.ok) {
-        setError(res.error || "Erro ao excluir trilha.")
-        return
-      }
-      setTracks((prev) => prev.filter((t) => t.slug !== slug))
     })
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center justify-center p-2.5 bg-primary/10 text-primary rounded-2xl border border-primary/20">
-              <Icon icon="lucide:feather" className="size-6" />
-            </span>
-            <h1 className="text-3xl font-display font-bold tracking-tight text-foreground">
-              Estúdio de Conteúdo
-            </h1>
+    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto pb-16">
+      {/* Dynamic Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold text-primary tracking-wider uppercase mb-1">
+            <Icon icon="lucide:layout-dashboard" className="size-4" />
+            <span>Studio do Instrutor</span>
           </div>
-          <p className="text-foreground/60 text-sm font-medium">
-            Crie, organize e gerencie as trilhas, lições e seções de aulas da
-            plataforma.
+          <h1 className="font-display text-3xl font-extrabold text-foreground md:text-4xl">
+            Gerenciador de Conteúdo
+          </h1>
+          <p className="mt-1 text-base text-foreground/70">
+            Crie, edite e organize suas trilhas e aulas em tempo real.
           </p>
         </div>
 
-        {/* Botão Primário: Criar/Nova Trilha */}
         <ButtonWrapper
           variant="primary"
-          type="button"
           onClick={() => {
             setError(null)
             setIsCreateOpen(true)
           }}
-          className="px-6! py-3! text-sm! gap-2"
+          className="self-start sm:self-auto px-5 py-3 rounded-2xl shadow-md hover:shadow-lg transition-all"
         >
-          <Icon icon="lucide:plus" className="size-4.5 text-white" />
-          <ButtonText className="text-sm! font-bold">Nova Trilha</ButtonText>
+          <Icon icon="lucide:plus" className="size-5" />
+          <ButtonText className="font-bold text-sm">Nova Trilha</ButtonText>
         </ButtonWrapper>
       </div>
 
-      {error && (
-        <div className="flex items-center gap-2.5 rounded-2xl bg-red-50 border border-red-100 p-4 text-sm text-red-600">
-          <Icon icon="lucide:alert-circle" className="size-5 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Cards de Métricas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <CardWrapper className="p-5 flex items-center gap-4">
-          <div className="flex items-center justify-center size-12 rounded-2xl bg-primary/10 text-primary">
-            <Icon icon="lucide:book-open" className="size-6" />
-          </div>
-          <div>
-            <div className="text-2xl font-display font-bold text-foreground">
-              {tracks.length}
-            </div>
-            <div className="text-xs font-semibold text-foreground/40 uppercase tracking-wider">
-              {isAdmin ? "Total de Trilhas" : "Suas Trilhas"}
-            </div>
-          </div>
-        </CardWrapper>
-
-        <CardWrapper className="p-5 flex items-center gap-4">
-          <div className="flex items-center justify-center size-12 rounded-2xl bg-success/10 text-success">
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="flex items-center gap-4 rounded-2xl border border-foreground/10 bg-white p-5 shadow-xs">
+          <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Icon icon="lucide:layers" className="size-6" />
           </div>
           <div>
-            <div className="text-2xl font-display font-bold text-foreground">
-              {totalLessons}
-            </div>
-            <div className="text-xs font-semibold text-foreground/40 uppercase tracking-wider">
-              Total de Aulas Cadastradas
-            </div>
+            <span className="text-xs font-semibold text-foreground/60 uppercase">
+              Total de Trilhas
+            </span>
+            <p className="text-2xl font-black font-display text-foreground">
+              {tracks.length}
+            </p>
           </div>
-        </CardWrapper>
+        </div>
+
+        <div className="flex items-center gap-4 rounded-2xl border border-foreground/10 bg-white p-5 shadow-xs">
+          <div className="flex size-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+            <Icon icon="lucide:book-open" className="size-6" />
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-foreground/60 uppercase">
+              Total de Aulas
+            </span>
+            <p className="text-2xl font-black font-display text-foreground">
+              {totalLessons}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 rounded-2xl border border-foreground/10 bg-white p-5 shadow-xs">
+          <div className="flex size-12 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600">
+            <Icon icon="lucide:shield-check" className="size-6" />
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-foreground/60 uppercase">
+              Permissão
+            </span>
+            <p className="text-sm font-bold font-display text-foreground capitalize">
+              {userRoles.join(", ").toLowerCase()}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Barra de Filtro e Pesquisa */}
-      <CardWrapper className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="w-full sm:max-w-md">
+      {/* Global Error Alert */}
+      {error && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="flex items-center gap-2">
+            <Icon icon="lucide:alert-circle" className="size-5 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="text-red-500 hover:text-red-700 font-bold"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-foreground/10 bg-white p-4 shadow-xs">
+        <InputWrapper className="w-full sm:max-w-md">
           <InputField>
-            <Icon
-              icon="lucide:search"
-              className="size-4 text-foreground/40 shrink-0"
-            />
             <InputControl
-              type="text"
               placeholder="Buscar por título ou descrição..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </InputField>
-        </div>
+        </InputWrapper>
 
-        <div className="text-xs font-semibold text-foreground/40">
-          Exibindo {filteredTracks.length} de {tracks.length} trilhas
-        </div>
-      </CardWrapper>
+        <span className="text-xs font-bold text-foreground/60 self-end sm:self-center">
+          {filteredTracks.length}{" "}
+          {filteredTracks.length === 1
+            ? "trilha encontrada"
+            : "trilhas encontradas"}
+        </span>
+      </div>
 
-      {/* Lista de Trilhas (Grid / Cards) */}
+      {/* Tracks Grid */}
       {filteredTracks.length === 0 ? (
-        <CardWrapper className="p-12 text-center flex flex-col items-center gap-3">
-          <div className="p-3 bg-foreground/5 rounded-2xl text-foreground/40">
-            <Icon icon="lucide:folder-open" className="size-8" />
-          </div>
-          <p className="text-foreground/60 font-medium text-sm">
-            Nenhuma trilha encontrada. Crie sua primeira trilha para começar!
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-foreground/20 p-12 text-center bg-white">
+          <Icon
+            icon="lucide:folder-open"
+            className="size-12 text-foreground/30 mb-3"
+          />
+          <p className="text-base font-bold text-foreground">
+            Nenhuma trilha cadastrada
           </p>
-        </CardWrapper>
+          <p className="text-sm text-foreground/60 mt-1 max-w-sm">
+            Clique no botão "Nova Trilha" acima para começar a estruturar o
+            conteúdo do seu curso.
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredTracks.map((track) => {
-            const isDeleting = deletingSlug === track.slug
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTracks.map((track) => (
+            <CardWrapper
+              key={track.slug}
+              className="flex flex-col justify-between p-6 rounded-2xl border border-foreground/10 bg-white hover:border-primary/40 hover:shadow-md transition-all group"
+            >
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {track.category && (
+                      <span
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold text-white shadow-xs"
+                        style={{ backgroundColor: track.category.color }}
+                      >
+                        {track.category.name}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground/60 bg-foreground/5 px-2.5 py-1 rounded-full">
+                      <Icon icon="lucide:book-open" className="size-3.5" />
+                      {track.lessonCount}{" "}
+                      {track.lessonCount === 1 ? "aula" : "aulas"}
+                    </span>
+                  </div>
 
-            return (
-              <CardWrapper
-                key={track.slug}
-                className="p-6 hover:shadow-md transition-all flex flex-col gap-4 group"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary border border-primary/20">
-                    <Icon icon="lucide:book-open" className="size-3.5" />
-                    {track.lessonCount}{" "}
-                    {track.lessonCount === 1 ? "aula" : "aulas"}
-                  </span>
-
-                  <div className="flex items-center gap-1.5">
-                    <ButtonWrapper
-                      variant="secondary"
-                      border={false}
+                  {/* Actions Dropdown / Buttons */}
+                  <div className="flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                    <button
                       type="button"
                       onClick={() => {
                         setError(null)
                         setEditingTrack(track)
                       }}
-                      className="px-3! py-1.5! text-xs! hover:bg-foreground/5"
-                      title="Editar Trilha"
+                      className="p-1.5 rounded-lg text-foreground/50 hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                      title="Editar detalhes"
                     >
-                      <Icon
-                        icon="lucide:pencil"
-                        className="size-3.5 text-foreground"
-                      />
-                    </ButtonWrapper>
-
-                    <ButtonWrapper
-                      variant="secondary"
-                      border={false}
+                      <Icon icon="lucide:pencil" className="size-4" />
+                    </button>
+                    <button
                       type="button"
-                      disabled={isDeleting || isPending}
-                      onClick={() => setConfirmDeleteTrack(track)}
-                      className="px-3! py-1.5! text-xs! hover:bg-red-50"
-                      title="Excluir Trilha"
+                      onClick={() => {
+                        setError(null)
+                        setConfirmDeleteTrack(track)
+                      }}
+                      className="p-1.5 rounded-lg text-foreground/50 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      title="Excluir trilha"
                     >
-                      {isDeleting ? (
-                        <Icon
-                          icon="mdi:update"
-                          className="size-3.5 animate-spin text-red-600"
-                        />
-                      ) : (
-                        <Icon
-                          icon="lucide:trash-2"
-                          className="size-3.5 text-red-600"
-                        />
-                      )}
-                    </ButtonWrapper>
+                      <Icon icon="lucide:trash-2" className="size-4" />
+                    </button>
                   </div>
                 </div>
 
-                <Link
-                  href={`/studio/${track.slug}`}
-                  className="flex flex-col gap-1 cursor-pointer pt-1"
-                >
-                  <h3 className="text-lg font-display font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                <div>
+                  <h3 className="text-lg font-display font-extrabold text-foreground group-hover:text-primary transition-colors leading-snug break-words">
                     {track.title}
                   </h3>
-                  <p className="text-xs text-foreground/60 font-medium line-clamp-2 min-h-[32px]">
-                    {track.description || "Sem descrição informada."}
+                  <p className="text-xs text-foreground/60 mt-2 line-clamp-2">
+                    {track.description || "Sem descrição cadastrada."}
                   </p>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-4 border-t border-foreground/5 flex items-center justify-between gap-4">
+                <span className="text-[11px] font-mono text-foreground/40 truncate">
+                  slug: {track.slug}
+                </span>
+
+                <Link
+                  href={`/studio/${track.slug}`}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline cursor-pointer shrink-0 whitespace-nowrap"
+                >
+                  <span>Gerenciar Aulas</span>
+                  <Icon icon="lucide:chevron-right" className="size-4" />
                 </Link>
-              </CardWrapper>
-            )
-          })}
+              </div>
+            </CardWrapper>
+          ))}
         </div>
       )}
 
-      {/* Modal de Confirmação de Exclusão de Trilha */}
+      {/* Modal de Exclusão de Trilha */}
       {confirmDeleteTrack && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-foreground/10 flex flex-col gap-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="p-2 bg-red-50 text-red-600 rounded-xl">
-                  <Icon icon="lucide:trash-2" className="size-5" />
-                </span>
-                <h2 className="text-lg font-display font-bold text-foreground">
-                  Excluir Trilha
-                </h2>
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-foreground/10 flex flex-col gap-4">
+            <div className="flex items-center gap-3 text-red-600">
+              <span className="p-2.5 bg-red-50 rounded-xl">
+                <Icon icon="lucide:alert-triangle" className="size-6" />
+              </span>
+              <div>
+                <h3 className="text-lg font-display font-bold text-foreground">
+                  Confirmar Exclusão
+                </h3>
+                <p className="text-xs text-foreground/60">
+                  Esta ação não poderá ser desfeita.
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setConfirmDeleteTrack(null)}
-                className="text-foreground/40 hover:text-foreground transition-colors cursor-pointer"
-              >
-                <Icon icon="lucide:x" className="size-5" />
-              </button>
             </div>
 
-            <p className="text-sm text-foreground/70 font-medium leading-relaxed">
+            <p className="text-sm text-foreground/80">
               Tem certeza que deseja excluir a trilha{" "}
-              <strong className="text-foreground font-bold">
-                {confirmDeleteTrack.title}
+              <strong className="text-foreground">
+                "{confirmDeleteTrack.title}"
               </strong>
-              ? Esta ação não pode ser desfeita e removerá todas as aulas
-              associadas.
+              ? Todas as aulas e seções associadas serão permanentemente
+              removidas.
             </p>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-foreground/10">
               <ButtonWrapper
                 variant="secondary"
                 border={false}
                 type="button"
                 onClick={() => setConfirmDeleteTrack(null)}
-                className="px-5! py-2! text-xs!"
+                className="px-4 py-2 text-xs!"
               >
                 <ButtonText className="text-xs! font-bold">Cancelar</ButtonText>
               </ButtonWrapper>
@@ -343,10 +365,10 @@ export function StudioTracksClient({
                 border={false}
                 type="button"
                 disabled={isPending}
-                onClick={handleConfirmDeleteTrack}
-                className="px-5! py-2! text-xs! hover:bg-red-50 text-red-600"
+                onClick={() => handleDeleteTrack(confirmDeleteTrack)}
+                className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs!"
               >
-                {isPending && (
+                {deletingSlug === confirmDeleteTrack.slug && (
                   <Icon
                     icon="mdi:update"
                     className="size-3.5 animate-spin text-red-600"
@@ -400,6 +422,26 @@ export function StudioTracksClient({
               </InputWrapper>
 
               <InputWrapper>
+                <InputLabel htmlFor="create-category">Categoria *</InputLabel>
+                <select
+                  id="create-category"
+                  name="categoryId"
+                  required
+                  defaultValue=""
+                  className="w-full rounded-2xl border-2 border-foreground/10 bg-white px-4 py-3 text-sm text-foreground outline-none focus:border-primary transition-all cursor-pointer"
+                >
+                  <option value="" disabled>
+                    Selecione uma categoria...
+                  </option>
+                  {availableCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </InputWrapper>
+
+              <InputWrapper>
                 <InputLabel htmlFor="create-description">
                   Descrição (Opcional)
                 </InputLabel>
@@ -429,13 +471,10 @@ export function StudioTracksClient({
                   variant="primary"
                   type="submit"
                   disabled={isPending}
-                  className="px-6! py-2.5! text-xs! gap-1.5"
+                  className="px-6! py-2.5! text-xs!"
                 >
                   {isPending && (
-                    <Icon
-                      icon="mdi:update"
-                      className="size-3.5 animate-spin text-white"
-                    />
+                    <Icon icon="mdi:update" className="size-4 animate-spin" />
                   )}
                   <ButtonText className="text-xs! font-bold">
                     Criar Trilha
@@ -484,6 +523,26 @@ export function StudioTracksClient({
               </InputWrapper>
 
               <InputWrapper>
+                <InputLabel htmlFor="edit-category">Categoria *</InputLabel>
+                <select
+                  id="edit-category"
+                  name="categoryId"
+                  required
+                  defaultValue={editingTrack.category?.id ?? ""}
+                  className="w-full rounded-2xl border-2 border-foreground/10 bg-white px-4 py-3 text-sm text-foreground outline-none focus:border-primary transition-all cursor-pointer"
+                >
+                  <option value="" disabled>
+                    Selecione uma categoria...
+                  </option>
+                  {availableCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </InputWrapper>
+
+              <InputWrapper>
                 <InputLabel htmlFor="edit-description">
                   Descrição (Opcional)
                 </InputLabel>
@@ -510,17 +569,13 @@ export function StudioTracksClient({
                 </ButtonWrapper>
 
                 <ButtonWrapper
-                  variant="secondary"
-                  border={false}
+                  variant="primary"
                   type="submit"
                   disabled={isPending}
-                  className="px-6! py-2.5! text-xs! gap-1.5"
+                  className="px-6! py-2.5! text-xs!"
                 >
                   {isPending && (
-                    <Icon
-                      icon="mdi:update"
-                      className="size-3.5 animate-spin text-foreground"
-                    />
+                    <Icon icon="mdi:update" className="size-4 animate-spin" />
                   )}
                   <ButtonText className="text-xs! font-bold">
                     Salvar Alterações

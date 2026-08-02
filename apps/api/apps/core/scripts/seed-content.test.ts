@@ -90,11 +90,11 @@ describe("syncContent", () => {
 
   function makePrisma() {
     const tx = {
-      track: { upsert: vi.fn().mockResolvedValue({ id: 1n }) },
+      track: { upsert: vi.fn().mockResolvedValue({ id: 1 }) },
       lesson: {
         findMany: vi.fn().mockResolvedValue([]),
         updateMany: vi.fn(),
-        upsert: vi.fn().mockResolvedValue({ id: 10n }),
+        upsert: vi.fn().mockResolvedValue({ id: 10 }),
       },
       section: {
         findMany: vi.fn().mockResolvedValue([]),
@@ -103,9 +103,10 @@ describe("syncContent", () => {
       },
     }
     const prisma = {
+      category: { upsert: vi.fn().mockResolvedValue({}) },
       track: { findMany: vi.fn().mockResolvedValue([]) },
-      role: { upsert: vi.fn().mockResolvedValue({ id: 100n }) },
-      user: { upsert: vi.fn().mockResolvedValue({ id: 1000n }) },
+      role: { upsert: vi.fn().mockResolvedValue({ id: 100 }) },
+      user: { upsert: vi.fn().mockResolvedValue({ id: 1000 }) },
       userRole: { upsert: vi.fn().mockResolvedValue({}) },
       $transaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
         callback(tx),
@@ -129,14 +130,19 @@ describe("syncContent", () => {
         slug: "front-end",
         title: "Front-end",
         description: "HTML e CSS",
-        creatorId: 1000n,
+        creatorId: 1000,
+        categoryId: null,
       },
-      update: { title: "Front-end", description: "HTML e CSS" },
+      update: {
+        title: "Front-end",
+        description: "HTML e CSS",
+        categoryId: null,
+      },
     })
     expect(tx.lesson.upsert).toHaveBeenCalledWith({
-      where: { trackId_slug: { trackId: 1n, slug: "intro-html" } },
+      where: { trackId_slug: { trackId: 1, slug: "intro-html" } },
       create: {
-        trackId: 1n,
+        trackId: 1,
         slug: "intro-html",
         title: "Introdução ao HTML",
         position: 1,
@@ -144,9 +150,9 @@ describe("syncContent", () => {
       update: { title: "Introdução ao HTML", position: 1 },
     })
     expect(tx.section.upsert).toHaveBeenCalledWith({
-      where: { lessonId_slug: { lessonId: 10n, slug: "o-que-e" } },
+      where: { lessonId_slug: { lessonId: 10, slug: "o-que-e" } },
       create: {
-        lessonId: 10n,
+        lessonId: 10,
         slug: "o-que-e",
         title: "O que é HTML",
         position: 1,
@@ -160,7 +166,12 @@ describe("syncContent", () => {
         contentMarkdown: "# O que é HTML\n\nConteúdo.",
       },
     })
-    expect(summary).toEqual({ tracks: 1, lessons: 1, sections: 1 })
+    expect(summary).toEqual({
+      categories: 6,
+      tracks: 1,
+      lessons: 1,
+      sections: 1,
+    })
   })
 
   it("grava o hash de senha recebido no admin do sistema", async () => {
@@ -183,7 +194,7 @@ describe("syncContent", () => {
     await syncContent(prisma as never, makeTree(), adminPasswordHash)
 
     expect(tx.lesson.updateMany).toHaveBeenCalledWith({
-      where: { trackId: 1n, slug: { in: ["intro-html"] } },
+      where: { trackId: 1, slug: { in: ["intro-html"] } },
       data: { position: { multiply: -1 } },
     })
     expect(

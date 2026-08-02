@@ -21,7 +21,9 @@ export class OptionalGqlAuthGuard implements CanActivate {
     const header: string | undefined = req?.headers?.authorization
     if (header?.startsWith("Bearer ")) {
       try {
-        const payload = this.jwt.verify<{ sub: string; roles: string[] }>(header.slice(7))
+        const payload = this.jwt.verify<{ sub: string; roles: string[] }>(
+          header.slice(7),
+        )
         req.userCode = payload.sub
         req.userRoles = payload.roles || []
       } catch {

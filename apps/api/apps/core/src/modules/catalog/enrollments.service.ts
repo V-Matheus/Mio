@@ -7,7 +7,7 @@ export class EnrollmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /** Idempotente: matricular-se duas vezes é no-op (`@@unique(userId, trackId)`). */
-  async enroll(userCode: string, trackSlug: string): Promise<void> {
+  async enroll(userCode: string, trackId: number): Promise<void> {
     const user = await this.prisma.user.findUnique({
       where: { code: userCode },
     })
@@ -16,7 +16,7 @@ export class EnrollmentsService {
     }
 
     const track = await this.prisma.track.findUnique({
-      where: { slug: trackSlug },
+      where: { id: trackId },
     })
     if (!track) {
       throw catalogError("TRACK_NOT_FOUND")

@@ -3,6 +3,7 @@ import type { ClientGrpc } from "@nestjs/microservices"
 import { GraphQLError } from "graphql"
 import { firstValueFrom, type Observable } from "rxjs"
 import { CATALOG_PACKAGE_TOKEN } from "../../grpc/registry"
+import { Category } from "./models/category.model"
 import { LessonDetail } from "./models/lesson-detail.model"
 import { LessonSummary } from "./models/lesson-summary.model"
 import { SectionDetail } from "./models/section-detail.model"
@@ -12,6 +13,7 @@ import { Track } from "./models/track.model"
 import { TrackDetail } from "./models/track-detail.model"
 import type {
   CatalogServiceClient,
+  GrpcCategory,
   GrpcLessonDetail,
   GrpcLessonSummary,
   GrpcSectionDetail,
@@ -45,6 +47,15 @@ export class CatalogService implements OnModuleInit {
   onModuleInit(): void {
     this.catalogService =
       this.client.getService<CatalogServiceClient>("CatalogService")
+  }
+
+  async categories(): Promise<Category[]> {
+    try {
+      const response = await this.call(this.catalogService.listCategories({}))
+      return (response.categories ?? []).map(toCategory)
+    } catch {
+      return []
+    }
   }
 
   async tracks(userCode?: string): Promise<Track[]> {
@@ -87,8 +98,8 @@ export class CatalogService implements OnModuleInit {
     )
   }
 
-  async enrollInTrack(userCode: string, trackSlug: string): Promise<boolean> {
-    await this.call(this.catalogService.enrollUser({ userCode, trackSlug }))
+  async enrollInTrack(userCode: string, trackId: number): Promise<boolean> {
+    await this.call(this.catalogService.enrollUser({ userCode, trackId }))
     return true
   }
 
@@ -116,11 +127,22 @@ export class CatalogService implements OnModuleInit {
   }
 }
 
+function toCategory(category: GrpcCategory): Category {
+  return {
+    id: category.id,
+    slug: category.slug,
+    name: category.name,
+    color: category.color,
+  }
+}
+
 function toTrack(track: GrpcTrack): Track {
   return {
+    id: track.id,
     slug: track.slug,
     title: track.title,
     description: track.description || null,
+    category: track.category ? toCategory(track.category) : null,
     lessonCount: track.lessonCount ?? 0,
     enrolled: track.enrolled ?? false,
   }
@@ -128,9 +150,11 @@ function toTrack(track: GrpcTrack): Track {
 
 function toTrackDetail(track: GrpcTrackDetail): TrackDetail {
   return {
+    id: track.id,
     slug: track.slug,
     title: track.title,
     description: track.description || null,
+    category: track.category ? toCategory(track.category) : null,
     lessons: (track.lessons ?? []).map(toLessonSummary),
     enrolled: track.enrolled ?? false,
   }
@@ -138,6 +162,7 @@ function toTrackDetail(track: GrpcTrackDetail): TrackDetail {
 
 function toLessonSummary(lesson: GrpcLessonSummary): LessonSummary {
   return {
+    id: lesson.id,
     slug: lesson.slug,
     title: lesson.title,
     position: lesson.position ?? 0,
@@ -147,6 +172,7 @@ function toLessonSummary(lesson: GrpcLessonSummary): LessonSummary {
 
 function toLessonDetail(lesson: GrpcLessonDetail): LessonDetail {
   return {
+    id: lesson.id,
     trackSlug: lesson.trackSlug,
     lessonSlug: lesson.lessonSlug,
     title: lesson.title,
@@ -156,6 +182,7 @@ function toLessonDetail(lesson: GrpcLessonDetail): LessonDetail {
 
 function toSectionSummary(section: GrpcSectionSummary): SectionSummary {
   return {
+    id: section.id,
     slug: section.slug,
     title: section.title,
     position: section.position ?? 0,
@@ -166,6 +193,7 @@ function toSectionSummary(section: GrpcSectionSummary): SectionSummary {
 
 function toSectionDetail(section: GrpcSectionDetail): SectionDetail {
   return {
+    id: section.id,
     slug: section.slug,
     title: section.title,
     kind: toSectionKind(section.kind),

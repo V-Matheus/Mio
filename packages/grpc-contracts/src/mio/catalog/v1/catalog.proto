@@ -3,6 +3,7 @@ syntax = "proto3";
 package mio.catalog.v1;
 
 service CatalogService {
+  rpc ListCategories(ListCategoriesRequest) returns (CategoriesResponse);
   rpc ListTracks(ListTracksRequest) returns (TracksResponse);
   rpc GetTrack(GetTrackRequest) returns (TrackDetailResponse);
   rpc GetLesson(GetLessonRequest) returns (LessonDetailResponse);
@@ -10,16 +11,31 @@ service CatalogService {
   rpc EnrollUser(EnrollUserRequest) returns (EnrollmentResponse);
 }
 
+message ListCategoriesRequest {}
+
+message Category {
+  string id = 1;
+  string slug = 2;
+  string name = 3;
+  string color = 4;
+}
+
+message CategoriesResponse {
+  repeated Category categories = 1;
+}
+
 message ListTracksRequest {
   string user_code = 1; // opcional: marca `enrolled` por usuário
 }
 
 message Track {
-  string slug = 1;
-  string title = 2;
-  string description = 3;
-  int32 lesson_count = 4;
-  bool enrolled = 5;
+  int32 id = 1;
+  string slug = 2;
+  string title = 3;
+  string description = 4;
+  int32 lesson_count = 5;
+  bool enrolled = 6;
+  Category category = 7;
 }
 
 message TracksResponse {
@@ -32,18 +48,21 @@ message GetTrackRequest {
 }
 
 message LessonSummary {
-  string slug = 1;
-  string title = 2;
-  int32 position = 3;
-  bool completed = 4;
+  int32 id = 1;
+  string slug = 2;
+  string title = 3;
+  int32 position = 4;
+  bool completed = 5;
 }
 
 message TrackDetailResponse {
-  string slug = 1;
-  string title = 2;
-  string description = 3;
-  repeated LessonSummary lessons = 4;
-  bool enrolled = 5;
+  int32 id = 1;
+  string slug = 2;
+  string title = 3;
+  string description = 4;
+  repeated LessonSummary lessons = 5;
+  bool enrolled = 6;
+  Category category = 7;
 }
 
 message GetLessonRequest {
@@ -53,18 +72,20 @@ message GetLessonRequest {
 }
 
 message SectionSummary {
-  string slug = 1;
-  string title = 2;
-  int32 position = 3;
-  string kind = 4; // "TEXT" | "EXERCISE"
-  bool completed = 5;
+  int32 id = 1;
+  string slug = 2;
+  string title = 3;
+  int32 position = 4;
+  string kind = 5; // "TEXT" | "EXERCISE"
+  bool completed = 6;
 }
 
 message LessonDetailResponse {
-  string track_slug = 1;
-  string lesson_slug = 2;
-  string title = 3;
-  repeated SectionSummary sections = 4;
+  int32 id = 1;
+  string track_slug = 2;
+  string lesson_slug = 3;
+  string title = 4;
+  repeated SectionSummary sections = 5;
 }
 
 message GetSectionRequest {
@@ -74,15 +95,16 @@ message GetSectionRequest {
 }
 
 message SectionDetailResponse {
-  string slug = 1;
-  string title = 2;
-  string kind = 3; // "TEXT" | "EXERCISE"
-  string content_markdown = 4;
+  int32 id = 1;
+  string slug = 2;
+  string title = 3;
+  string kind = 4; // "TEXT" | "EXERCISE"
+  string content_markdown = 5;
 }
 
 message EnrollUserRequest {
   string user_code = 1;
-  string track_slug = 2;
+  int32 track_id = 2;
 }
 
 message EnrollmentResponse {

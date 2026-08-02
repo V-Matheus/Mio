@@ -3,6 +3,9 @@ import { SectionKind } from "./section-kind.enum"
 
 @ObjectType()
 export class SectionSummary {
+  @Field(() => Int)
+  id!: number
+
   @Field(() => ID)
   slug!: string
 

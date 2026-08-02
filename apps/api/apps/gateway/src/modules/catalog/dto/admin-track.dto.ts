@@ -1,4 +1,4 @@
-import { Field, ID, InputType, Int } from "@nestjs/graphql"
+import { Field, InputType, Int } from "@nestjs/graphql"
 import { SectionKind } from "../models/section-kind.enum"
 
 @InputType()
@@ -6,8 +6,11 @@ export class CreateTrackInput {
   @Field()
   title!: string
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   description?: string
+
+  @Field(() => String, { nullable: true })
+  categoryId?: string
 }
 
 @InputType()
@@ -15,17 +18,20 @@ export class UpdateTrackInput {
   @Field()
   title!: string
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   description?: string
+
+  @Field(() => String, { nullable: true })
+  categoryId?: string
 }
 
 @InputType()
 export class UpsertLessonInput {
-  @Field(() => ID)
-  trackSlug!: string
+  @Field(() => Int)
+  trackId!: number
 
-  @Field(() => ID, { nullable: true })
-  slug?: string
+  @Field(() => Int, { nullable: true })
+  id?: number
 
   @Field()
   title!: string
@@ -36,14 +42,11 @@ export class UpsertLessonInput {
 
 @InputType()
 export class UpsertSectionInput {
-  @Field(() => ID)
-  trackSlug!: string
+  @Field(() => Int)
+  lessonId!: number
 
-  @Field(() => ID)
-  lessonSlug!: string
-
-  @Field(() => ID, { nullable: true })
-  slug?: string
+  @Field(() => Int, { nullable: true })
+  id?: number
 
   @Field()
   title!: string
@@ -54,6 +57,6 @@ export class UpsertSectionInput {
   @Field(() => SectionKind, { nullable: true })
   kind?: SectionKind
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   contentMarkdown?: string
 }

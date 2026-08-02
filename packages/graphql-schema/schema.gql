@@ -3,6 +3,7 @@
 # ------------------------------------------------------
 
 type AdminLessonSummary {
+  id: Int!
   position: Int!
   sections: [AdminSectionSummary!]!
   slug: ID!
@@ -11,6 +12,7 @@ type AdminLessonSummary {
 
 type AdminSectionSummary {
   contentMarkdown: String!
+  id: Int!
   kind: SectionKind!
   position: Int!
   slug: ID!
@@ -18,16 +20,20 @@ type AdminSectionSummary {
 }
 
 type AdminTrack {
+  category: Category
   creatorCode: String!
   description: String
+  id: Int!
   lessonCount: Int!
   slug: ID!
   title: String!
 }
 
 type AdminTrackDetail {
+  category: Category
   creatorCode: String!
   description: String
+  id: Int!
   lessons: [AdminLessonSummary!]!
   slug: ID!
   title: String!
@@ -38,12 +44,21 @@ type AuthPayload {
   user: User!
 }
 
+type Category {
+  color: String!
+  id: ID!
+  name: String!
+  slug: ID!
+}
+
 input CreateTrackInput {
+  categoryId: String
   description: String
   title: String!
 }
 
 type LessonDetail {
+  id: Int!
   lessonSlug: ID!
   sections: [SectionSummary!]!
   title: String!
@@ -52,6 +67,7 @@ type LessonDetail {
 
 type LessonSummary {
   completed: Boolean!
+  id: Int!
   position: Int!
   slug: ID!
   title: String!
@@ -64,15 +80,15 @@ input LoginInput {
 
 type Mutation {
   createTrack(input: CreateTrackInput!): AdminTrack!
-  deleteLesson(lessonSlug: ID!, trackSlug: ID!): Boolean!
-  deleteSection(lessonSlug: ID!, sectionSlug: ID!, trackSlug: ID!): Boolean!
-  deleteTrack(slug: ID!): Boolean!
-  enrollInTrack(trackSlug: ID!): Boolean!
+  deleteLesson(id: Int!): Boolean!
+  deleteSection(id: Int!): Boolean!
+  deleteTrack(id: Int!): Boolean!
+  enrollInTrack(trackId: Int!): Boolean!
   login(input: LoginInput!): AuthPayload!
   register(input: RegisterInput!): AuthPayload!
   requestPasswordReset(email: String!): Boolean!
   resetPassword(newPassword: String!, token: String!): Boolean!
-  updateTrack(input: UpdateTrackInput!, slug: ID!): AdminTrack!
+  updateTrack(id: Int!, input: UpdateTrackInput!): AdminTrack!
   updateUserRole(role: UserRole!, userCode: ID!): User!
   upsertLesson(input: UpsertLessonInput!): AdminLessonSummary!
   upsertOAuthUser(input: UpsertOAuthInput!): AuthPayload!
@@ -82,6 +98,7 @@ type Mutation {
 type Query {
   adminTrack(slug: ID!): AdminTrackDetail
   adminTracks: [AdminTrack!]!
+  categories: [Category!]!
   lesson(lessonSlug: ID!, trackSlug: ID!): LessonDetail
   listUsers(search: String): [User!]!
   me: User!
@@ -98,12 +115,15 @@ input RegisterInput {
 
 type SectionDetail {
   contentMarkdown: String!
+  id: Int!
   kind: SectionKind!
   slug: ID!
   title: String!
 }
 
-"""Tipo de seção de uma lição"""
+"""
+Tipo de seção de uma lição
+"""
 enum SectionKind {
   EXERCISE
   TEXT
@@ -111,6 +131,7 @@ enum SectionKind {
 
 type SectionSummary {
   completed: Boolean!
+  id: Int!
   kind: SectionKind!
   position: Int!
   slug: ID!
@@ -118,31 +139,36 @@ type SectionSummary {
 }
 
 type Track {
+  category: Category
   description: String
   enrolled: Boolean!
+  id: Int!
   lessonCount: Int!
   slug: ID!
   title: String!
 }
 
 type TrackDetail {
+  category: Category
   description: String
   enrolled: Boolean!
+  id: Int!
   lessons: [LessonSummary!]!
   slug: ID!
   title: String!
 }
 
 input UpdateTrackInput {
+  categoryId: String
   description: String
   title: String!
 }
 
 input UpsertLessonInput {
+  id: Int
   position: Int
-  slug: ID
   title: String!
-  trackSlug: ID!
+  trackId: Int!
 }
 
 input UpsertOAuthInput {
@@ -155,12 +181,11 @@ input UpsertOAuthInput {
 
 input UpsertSectionInput {
   contentMarkdown: String
+  id: Int
   kind: SectionKind
-  lessonSlug: ID!
+  lessonId: Int!
   position: Int
-  slug: ID
   title: String!
-  trackSlug: ID!
 }
 
 type User {
@@ -171,7 +196,9 @@ type User {
   roles: [String!]!
 }
 
-"""Perfil de acesso do usuário"""
+"""
+Perfil de acesso do usuário
+"""
 enum UserRole {
   ADMIN
   STUDENT

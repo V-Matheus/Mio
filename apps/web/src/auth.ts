@@ -2,7 +2,9 @@ import NextAuth, { type NextAuthResult } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GitHub from "next-auth/providers/github"
 import Google from "next-auth/providers/google"
-import { authService } from "@/lib/auth/service"
+
+import { loginCredentialsAction, upsertOAuthAction } from "@/lib/auth/actions"
+import { meQuery } from "@/lib/auth/queries"
 
 const nextAuth = NextAuth({
   providers: [
@@ -18,12 +20,12 @@ const nextAuth = NextAuth({
           return null
         }
 
-        const loginResult = await authService.login({ email, password })
+        const loginResult = await loginCredentialsAction({ email, password })
         if (!loginResult.ok) {
           return null
         }
 
-        const meResult = await authService.me(loginResult.accessToken)
+        const meResult = await meQuery(loginResult.accessToken)
         if (!meResult.ok) {
           return null
         }
@@ -56,7 +58,7 @@ const nextAuth = NextAuth({
         return false
       }
 
-      const upsertResult = await authService.upsertOAuthUser({
+      const upsertResult = await upsertOAuthAction({
         provider: account.provider,
         providerAccountId: account.providerAccountId,
         email: user.email,
@@ -68,7 +70,7 @@ const nextAuth = NextAuth({
         return false
       }
 
-      const meResult = await authService.me(upsertResult.accessToken)
+      const meResult = await meQuery(upsertResult.accessToken)
       if (!meResult.ok) {
         return false
       }
@@ -94,7 +96,7 @@ const nextAuth = NextAuth({
       }
 
       if (trigger === "update" && token.accessToken) {
-        const meResult = await authService.me(token.accessToken as string)
+        const meResult = await meQuery(token.accessToken as string)
         if (meResult.ok) {
           token.id = meResult.user.code
           token.name = meResult.user.name
