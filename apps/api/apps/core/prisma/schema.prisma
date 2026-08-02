@@ -193,9 +193,11 @@ model OutboxEvent {
   routingKey  String
   payload     Json
   headers     Json?
+  retryCount  Int       @default(0)
+  lastError   String?
   createdAt   DateTime  @default(now())
   publishedAt DateTime?
 
   @@index([publishedAt])
+  @@index([publishedAt, retryCount])
 }
-

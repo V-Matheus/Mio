@@ -19,7 +19,7 @@ describe("UserEventsPublisher", () => {
     )
   })
 
-  it("publica evento user.registered delegando ao EventPublisherService", async () => {
+  it("publica evento user.registered delegando ao EventPublisherService usando this.prisma como padrao", async () => {
     const payload = {
       userCode: "c1",
       email: "a@b.com",
@@ -35,6 +35,26 @@ describe("UserEventsPublisher", () => {
         payload,
       }),
       { client: prismaMock },
+    )
+  })
+
+  it("reutiliza o cliente transacional passado nas opcoes quando fornecido", async () => {
+    const payload = {
+      userCode: "c1",
+      email: "a@b.com",
+      name: "Victor",
+      registeredAt: "2026-01-01T00:00:00.000Z",
+    }
+    const txMock = { outboxEvent: { create: vi.fn() } }
+
+    await publisher.userRegistered(payload, { client: txMock as never })
+
+    expect(eventPublisherMock.publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        routingKey: "user.registered",
+        payload,
+      }),
+      { client: txMock },
     )
   })
 

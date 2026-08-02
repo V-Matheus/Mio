@@ -1,5 +1,6 @@
 import {
   EventPublisherService,
+  type OutboxClient,
   UserPasswordResetRequestedEvent,
   UserRegisteredEvent,
 } from "@mio/events"
@@ -21,19 +22,23 @@ export class UserEventsPublisher {
     private readonly prisma: PrismaService,
   ) {}
 
-  async userRegistered(payload: UserRegisteredPayload): Promise<void> {
+  async userRegistered(
+    payload: UserRegisteredPayload,
+    options?: { client: OutboxClient },
+  ): Promise<void> {
     await this.eventPublisher.publish(new UserRegisteredEvent(payload), {
-      client: this.prisma,
+      client: options?.client ?? this.prisma,
     })
   }
 
   async userPasswordResetRequested(
     payload: UserPasswordResetRequestedPayload,
+    options?: { client: OutboxClient },
   ): Promise<void> {
     await this.eventPublisher.publish(
       new UserPasswordResetRequestedEvent(payload),
       {
-        client: this.prisma,
+        client: options?.client ?? this.prisma,
       },
     )
   }
