@@ -1,3 +1,4 @@
+import { EventsModule } from "@mio/events"
 import { Module } from "@nestjs/common"
 import { CatalogModule } from "./modules/catalog/catalog.module"
 import { HealthModule } from "./modules/health/health.module"
@@ -7,6 +8,7 @@ import { UsersModule } from "./modules/users/users.module"
 
 @Module({
   imports: [
+    EventsModule,
     PrismaModule,
     HealthModule,
     UsersModule,

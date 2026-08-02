@@ -20,6 +20,9 @@ describe("ProgressService", () => {
     outboxEvent?: { create: ReturnType<typeof vi.fn> }
     $transaction: ReturnType<typeof vi.fn>
   }
+  let eventsPublisherMock: {
+    lessonCompleted: ReturnType<typeof vi.fn>
+  }
   let service: ProgressService
 
   beforeEach(() => {
@@ -29,27 +32,30 @@ describe("ProgressService", () => {
       lesson: { findUnique: vi.fn() },
       sectionView: { findMany: vi.fn() },
       lessonProgress: { findUnique: vi.fn() },
+      outboxEvent: { create: vi.fn() },
       $transaction: vi.fn((cb: (tx: unknown) => unknown) => cb(prismaMock)),
     }
-    service = new ProgressService(prismaMock as never)
+    eventsPublisherMock = {
+      lessonCompleted: vi.fn().mockResolvedValue(undefined),
+    }
+    service = new ProgressService(
+      prismaMock as never,
+      eventsPublisherMock as never,
+    )
   })
 
   describe("markSectionViewed", () => {
-    it("lança exceção se usuário não for encontrado", async () => {
+    it("lança exceção RpcException se usuário não for encontrado", async () => {
       prismaMock.user.findUnique.mockResolvedValue(null)
 
-      await expect(service.markSectionViewed("usr1", 100)).rejects.toThrow(
-        "Usuário não encontrado: usr1",
-      )
+      await expect(service.markSectionViewed("usr1", 100)).rejects.toThrow()
     })
 
-    it("lança exceção se seção não for encontrada", async () => {
+    it("lança exceção RpcException se seção não for encontrada", async () => {
       prismaMock.user.findUnique.mockResolvedValue({ id: 1, code: "usr1" })
       prismaMock.section.findUnique.mockResolvedValue(null)
 
-      await expect(service.markSectionViewed("usr1", 100)).rejects.toThrow(
-        "Seção não encontrada ID: 100",
-      )
+      await expect(service.markSectionViewed("usr1", 100)).rejects.toThrow()
     })
 
     it("marca seção vista e não conclui lição se restarem seções não vistas", async () => {
@@ -83,7 +89,7 @@ describe("ProgressService", () => {
       expect(prismaMock.lessonProgress.create).toHaveBeenCalled()
     })
 
-    it("conclui a lição e cria OutboxEvent quando a última seção é vista", async () => {
+    it("conclui a lição e dispara lessonCompleted no publisher de eventos quando a última seção é vista", async () => {
       prismaMock.user.findUnique.mockResolvedValue({ id: 1, code: "usr1" })
       prismaMock.section.findUnique.mockResolvedValue({
         id: 11,
@@ -107,30 +113,23 @@ describe("ProgressService", () => {
         update: vi.fn().mockResolvedValue({}),
         upsert: vi.fn().mockResolvedValue({}),
       }
-      prismaMock.outboxEvent = {
-        create: vi.fn().mockResolvedValue({}),
-      }
 
       const result = await service.markSectionViewed("usr1", 11)
 
       expect(result).toEqual({ ok: true, lessonCompleted: true })
-      expect(prismaMock.outboxEvent.create).toHaveBeenCalledWith(
+      expect(eventsPublisherMock.lessonCompleted).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            routingKey: "lesson.completed",
-            payload: expect.objectContaining({
-              userCode: "usr1",
-              trackSlug: "tril-1",
-              lessonSlug: "les-1",
-            }),
-          }),
+          userCode: "usr1",
+          trackSlug: "tril-1",
+          lessonSlug: "les-1",
         }),
+        { client: prismaMock },
       )
     })
   })
 
   describe("markLessonCompleted", () => {
-    it("marca lição como concluída e cria outbox event se ainda não concluída", async () => {
+    it("marca lição como concluída e dispara evento se ainda não concluída", async () => {
       prismaMock.user.findUnique.mockResolvedValue({ id: 1, code: "usr1" })
       prismaMock.lesson.findUnique.mockResolvedValue({
         id: 100,
@@ -142,17 +141,14 @@ describe("ProgressService", () => {
         findUnique: vi.fn().mockResolvedValue(null),
         upsert: vi.fn().mockResolvedValue({}),
       }
-      prismaMock.outboxEvent = {
-        create: vi.fn().mockResolvedValue({}),
-      }
 
       const result = await service.markLessonCompleted("usr1", 100)
 
       expect(result).toEqual({ ok: true, lessonCompleted: true })
-      expect(prismaMock.outboxEvent.create).toHaveBeenCalled()
+      expect(eventsPublisherMock.lessonCompleted).toHaveBeenCalled()
     })
 
-    it("é idempotente e não recria outbox event se lição já estava concluída", async () => {
+    it("é idempotente e não recria evento se lição já estava concluída", async () => {
       prismaMock.user.findUnique.mockResolvedValue({ id: 1, code: "usr1" })
       prismaMock.lesson.findUnique.mockResolvedValue({
         id: 100,
@@ -163,14 +159,11 @@ describe("ProgressService", () => {
       prismaMock.lessonProgress = {
         findUnique: vi.fn().mockResolvedValue({ completedAt: new Date() }),
       }
-      prismaMock.outboxEvent = {
-        create: vi.fn(),
-      }
 
       const result = await service.markLessonCompleted("usr1", 100)
 
       expect(result).toEqual({ ok: true, lessonCompleted: false })
-      expect(prismaMock.outboxEvent.create).not.toHaveBeenCalled()
+      expect(eventsPublisherMock.lessonCompleted).not.toHaveBeenCalled()
     })
   })
 

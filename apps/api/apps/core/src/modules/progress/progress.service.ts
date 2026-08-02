@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException } from "@nestjs/common"
+import { Injectable } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
+import { progressError } from "./errors/progress.errors"
+import { ProgressEventsPublisher } from "./events/progress-events.publisher"
 
 export type ProgressResult = {
   ok: boolean
@@ -14,7 +16,10 @@ export type LessonProgressDetail = {
 
 @Injectable()
 export class ProgressService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: ProgressEventsPublisher,
+  ) {}
 
   async markSectionViewed(
     userCode: string,
@@ -24,7 +29,7 @@ export class ProgressService {
       where: { code: userCode },
     })
     if (!user) {
-      throw new NotFoundException(`Usuário não encontrado: ${userCode}`)
+      throw progressError("USER_NOT_FOUND")
     }
 
     const section = await this.prisma.section.findUnique({
@@ -39,7 +44,7 @@ export class ProgressService {
       },
     })
     if (!section) {
-      throw new NotFoundException(`Seção não encontrada ID: ${sectionId}`)
+      throw progressError("SECTION_NOT_FOUND")
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -114,23 +119,17 @@ export class ProgressService {
           },
         })
 
-        await tx.outboxEvent.create({
-          data: {
-            routingKey: "lesson.completed",
-            payload: {
-              userCode: user.code,
-              trackSlug: section.lesson.track.slug,
-              lessonSlug: section.lesson.slug,
-              lessonId: String(section.lessonId),
-              trackId: String(section.lesson.trackId),
-              completedAt: completedAt.toISOString(),
-            },
-            headers: {
-              "x-event-version": 1,
-              "content-type": "application/json",
-            },
+        await this.events.lessonCompleted(
+          {
+            userCode: user.code,
+            trackSlug: section.lesson.track.slug,
+            lessonSlug: section.lesson.slug,
+            lessonId: String(section.lessonId),
+            trackId: String(section.lesson.trackId),
+            completedAt: completedAt.toISOString(),
           },
-        })
+          { client: tx },
+        )
 
         newlyCompleted = true
       }
@@ -150,7 +149,7 @@ export class ProgressService {
       where: { code: userCode },
     })
     if (!user) {
-      throw new NotFoundException(`Usuário não encontrado: ${userCode}`)
+      throw progressError("USER_NOT_FOUND")
     }
 
     const lesson = await this.prisma.lesson.findUnique({
@@ -158,7 +157,7 @@ export class ProgressService {
       include: { track: true },
     })
     if (!lesson) {
-      throw new NotFoundException(`Lição não encontrada ID: ${lessonId}`)
+      throw progressError("LESSON_NOT_FOUND")
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -192,23 +191,17 @@ export class ProgressService {
         },
       })
 
-      await tx.outboxEvent.create({
-        data: {
-          routingKey: "lesson.completed",
-          payload: {
-            userCode: user.code,
-            trackSlug: lesson.track.slug,
-            lessonSlug: lesson.slug,
-            lessonId: String(lesson.id),
-            trackId: String(lesson.trackId),
-            completedAt: completedAt.toISOString(),
-          },
-          headers: {
-            "x-event-version": 1,
-            "content-type": "application/json",
-          },
+      await this.events.lessonCompleted(
+        {
+          userCode: user.code,
+          trackSlug: lesson.track.slug,
+          lessonSlug: lesson.slug,
+          lessonId: String(lesson.id),
+          trackId: String(lesson.trackId),
+          completedAt: completedAt.toISOString(),
         },
-      })
+        { client: tx },
+      )
 
       return { ok: true, lessonCompleted: true }
     })
