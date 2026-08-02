@@ -2,15 +2,25 @@ import { Injectable } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
 import { catalogError } from "./errors/catalog.errors"
 
+export type Category = {
+  id: string
+  slug: string
+  name: string
+  color: string
+}
+
 export type TrackSummary = {
+  id: number
   slug: string
   title: string
   description: string
+  category?: Category | null
   lessonCount: number
   enrolled: boolean
 }
 
 export type LessonSummary = {
+  id: number
   slug: string
   title: string
   position: number
@@ -18,9 +28,11 @@ export type LessonSummary = {
 }
 
 export type TrackDetail = {
+  id: number
   slug: string
   title: string
   description: string
+  category?: Category | null
   lessons: LessonSummary[]
   enrolled: boolean
 }
@@ -29,18 +41,42 @@ export type TrackDetail = {
 export class TracksService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async listCategories(): Promise<Category[]> {
+    const categories = await this.prisma.category.findMany({
+      orderBy: { name: "asc" },
+    })
+    return categories.map((c) => ({
+      id: String(c.id),
+      slug: c.slug,
+      name: c.name,
+      color: c.color,
+    }))
+  }
+
   /** `userCode` vazio = visitante anônimo: `enrolled` sai sempre false. */
   async listTracks(userCode: string): Promise<TrackSummary[]> {
     const tracks = await this.prisma.track.findMany({
       orderBy: { createdAt: "asc" },
-      include: { _count: { select: { lessons: true } } },
+      include: {
+        category: true,
+        _count: { select: { lessons: true } },
+      },
     })
     const enrolledTrackIds = await this.enrolledTrackIds(userCode)
 
     return tracks.map((track) => ({
+      id: track.id,
       slug: track.slug,
       title: track.title,
       description: track.description ?? "",
+      category: track.category
+        ? {
+            id: String(track.category.id),
+            slug: track.category.slug,
+            name: track.category.name,
+            color: track.category.color,
+          }
+        : null,
       lessonCount: track._count.lessons,
       enrolled: enrolledTrackIds.has(track.id),
     }))
@@ -49,7 +85,10 @@ export class TracksService {
   async getTrack(slug: string, userCode: string): Promise<TrackDetail> {
     const track = await this.prisma.track.findUnique({
       where: { slug },
-      include: { lessons: { orderBy: { position: "asc" } } },
+      include: {
+        category: true,
+        lessons: { orderBy: { position: "asc" } },
+      },
     })
     if (!track) {
       throw catalogError("TRACK_NOT_FOUND")
@@ -62,10 +101,20 @@ export class TracksService {
     )
 
     return {
+      id: track.id,
       slug: track.slug,
       title: track.title,
       description: track.description ?? "",
+      category: track.category
+        ? {
+            id: String(track.category.id),
+            slug: track.category.slug,
+            name: track.category.name,
+            color: track.category.color,
+          }
+        : null,
       lessons: track.lessons.map((lesson) => ({
+        id: lesson.id,
         slug: lesson.slug,
         title: lesson.title,
         position: lesson.position,
@@ -75,7 +124,7 @@ export class TracksService {
     }
   }
 
-  private async enrolledTrackIds(userCode: string): Promise<Set<bigint>> {
+  private async enrolledTrackIds(userCode: string): Promise<Set<number>> {
     if (!userCode) {
       return new Set()
     }
@@ -88,8 +137,8 @@ export class TracksService {
 
   private async completedLessonIds(
     userCode: string,
-    lessonIds: bigint[],
-  ): Promise<Set<bigint>> {
+    lessonIds: number[],
+  ): Promise<Set<number>> {
     if (!userCode || lessonIds.length === 0) {
       return new Set()
     }

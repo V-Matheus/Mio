@@ -11,13 +11,15 @@ describe("CatalogAdminService", () => {
         findUnique: vi.fn(),
       },
       lesson: {
-        findFirst: vi.fn(),
+        findUnique: vi.fn(),
+        findMany: vi.fn().mockResolvedValue([]),
         update: vi.fn(),
         create: vi.fn(),
         count: vi.fn(),
       },
       section: {
-        findFirst: vi.fn(),
+        findUnique: vi.fn(),
+        findMany: vi.fn().mockResolvedValue([]),
         update: vi.fn(),
         create: vi.fn(),
         count: vi.fn(),
@@ -29,27 +31,29 @@ describe("CatalogAdminService", () => {
   describe("upsertLesson", () => {
     it("preserva a posição existente quando position é 0 ao atualizar lição", async () => {
       prismaMock.track.findUnique.mockResolvedValue({
-        id: 1n,
+        id: 1,
         slug: "trilha-test",
         creator: { code: "user123" },
       })
-      prismaMock.lesson.findFirst.mockResolvedValue({
-        id: 10n,
-        trackId: 1n,
-        slug: "licao-1",
-        title: "Título Antigo",
-        position: 5,
-      })
+      prismaMock.lesson.findMany.mockResolvedValue([
+        {
+          id: 10,
+          trackId: 1,
+          slug: "licao-1",
+          title: "Título Antigo",
+          position: 5,
+        },
+      ])
       prismaMock.lesson.update.mockImplementation(({ data }: any) => ({
-        id: 10n,
+        id: 10,
         slug: "licao-1",
         title: data.title,
         position: data.position,
       }))
 
       const result = await service.upsertLesson(
-        "trilha-test",
-        "licao-1",
+        1,
+        10,
         "Novo Título",
         0,
         "user123",
@@ -57,7 +61,7 @@ describe("CatalogAdminService", () => {
       )
 
       expect(prismaMock.lesson.update).toHaveBeenCalledWith({
-        where: { id: 10n },
+        where: { id: 10 },
         data: {
           title: "Novo Título",
           position: 5,
@@ -69,27 +73,29 @@ describe("CatalogAdminService", () => {
 
     it("atualiza a posição quando uma nova posição válida é fornecida", async () => {
       prismaMock.track.findUnique.mockResolvedValue({
-        id: 1n,
+        id: 1,
         slug: "trilha-test",
         creator: { code: "user123" },
       })
-      prismaMock.lesson.findFirst.mockResolvedValue({
-        id: 10n,
-        trackId: 1n,
-        slug: "licao-1",
-        title: "Título Antigo",
-        position: 5,
-      })
+      prismaMock.lesson.findMany.mockResolvedValue([
+        {
+          id: 10,
+          trackId: 1,
+          slug: "licao-1",
+          title: "Título Antigo",
+          position: 5,
+        },
+      ])
       prismaMock.lesson.update.mockImplementation(({ data }: any) => ({
-        id: 10n,
+        id: 10,
         slug: "licao-1",
         title: data.title,
         position: data.position,
       }))
 
       const result = await service.upsertLesson(
-        "trilha-test",
-        "licao-1",
+        1,
+        10,
         "Novo Título",
         2,
         "user123",
@@ -97,7 +103,7 @@ describe("CatalogAdminService", () => {
       )
 
       expect(prismaMock.lesson.update).toHaveBeenCalledWith({
-        where: { id: 10n },
+        where: { id: 10 },
         data: {
           title: "Novo Título",
           position: 2,
@@ -109,33 +115,27 @@ describe("CatalogAdminService", () => {
 
     it("retorna as seções existentes ao atualizar uma lição que já possui seções", async () => {
       prismaMock.track.findUnique.mockResolvedValue({
-        id: 1n,
+        id: 1,
         slug: "trilha-test",
         creator: { code: "user123" },
       })
-      prismaMock.lesson.findFirst.mockResolvedValue({
-        id: 10n,
-        trackId: 1n,
-        slug: "licao-1",
-        title: "Título Antigo",
-        position: 1,
-        sections: [
-          {
-            slug: "sec-1",
-            title: "Seção 1",
-            position: 1,
-            kind: "TEXT",
-            contentMarkdown: "md",
-          },
-        ],
-      })
+      prismaMock.lesson.findMany.mockResolvedValue([
+        {
+          id: 10,
+          trackId: 1,
+          slug: "licao-1",
+          title: "Título Antigo",
+          position: 1,
+        },
+      ])
       prismaMock.lesson.update.mockImplementation(({ data }: any) => ({
-        id: 10n,
+        id: 10,
         slug: "licao-1",
         title: data.title,
         position: data.position,
         sections: [
           {
+            id: 100,
             slug: "sec-1",
             title: "Seção 1",
             position: 1,
@@ -146,8 +146,8 @@ describe("CatalogAdminService", () => {
       }))
 
       const result = await service.upsertLesson(
-        "trilha-test",
-        "licao-1",
+        1,
+        10,
         "Título Atualizado",
         0,
         "user123",
@@ -156,6 +156,7 @@ describe("CatalogAdminService", () => {
 
       expect(result.sections).toHaveLength(1)
       expect(result.sections[0]).toEqual({
+        id: 100,
         slug: "sec-1",
         title: "Seção 1",
         position: 1,
@@ -167,27 +168,25 @@ describe("CatalogAdminService", () => {
 
   describe("upsertSection", () => {
     it("preserva a posição existente quando position é 0 ao atualizar seção", async () => {
-      prismaMock.track.findUnique.mockResolvedValue({
-        id: 1n,
-        slug: "trilha-test",
-        creator: { code: "user123" },
-      })
-      prismaMock.lesson.findFirst.mockResolvedValue({
-        id: 10n,
-        trackId: 1n,
+      prismaMock.lesson.findUnique.mockResolvedValue({
+        id: 10,
+        trackId: 1,
         slug: "licao-1",
-      })
-      prismaMock.section.findFirst.mockResolvedValue({
-        id: 100n,
-        lessonId: 10n,
-        slug: "secao-1",
-        title: "Título Antigo",
-        position: 3,
-        kind: "TEXT",
-        contentMarkdown: "Conteúdo antigo",
+        track: { id: 1, slug: "trilha-test", creator: { code: "user123" } },
+        sections: [
+          {
+            id: 100,
+            lessonId: 10,
+            slug: "secao-1",
+            title: "Título Antigo",
+            position: 3,
+            kind: "TEXT",
+            contentMarkdown: "Conteúdo antigo",
+          },
+        ],
       })
       prismaMock.section.update.mockImplementation(({ data }: any) => ({
-        id: 100n,
+        id: 100,
         slug: "secao-1",
         title: data.title,
         position: data.position,
@@ -196,9 +195,8 @@ describe("CatalogAdminService", () => {
       }))
 
       const result = await service.upsertSection(
-        "trilha-test",
-        "licao-1",
-        "secao-1",
+        10,
+        100,
         "Novo Título Seção",
         0,
         "TEXT",
@@ -208,7 +206,7 @@ describe("CatalogAdminService", () => {
       )
 
       expect(prismaMock.section.update).toHaveBeenCalledWith({
-        where: { id: 100n },
+        where: { id: 100 },
         data: {
           title: "Novo Título Seção",
           position: 3,

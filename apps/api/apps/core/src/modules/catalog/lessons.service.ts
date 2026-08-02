@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service"
 import { catalogError } from "./errors/catalog.errors"
 
 export type SectionSummary = {
+  id: number
   slug: string
   title: string
   position: number
@@ -11,6 +12,7 @@ export type SectionSummary = {
 }
 
 export type LessonDetail = {
+  id: number
   trackSlug: string
   lessonSlug: string
   title: string
@@ -18,6 +20,7 @@ export type LessonDetail = {
 }
 
 export type SectionDetail = {
+  id: number
   slug: string
   title: string
   kind: string
@@ -41,15 +44,16 @@ export class LessonsService {
     }
 
     return {
+      id: lesson.id,
       trackSlug,
       lessonSlug: lesson.slug,
       title: lesson.title,
       sections: lesson.sections.map((section) => ({
+        id: section.id,
         slug: section.slug,
         title: section.title,
         position: section.position,
         kind: section.kind,
-        // Conclusão por seção depende de viewedSections (spec 03-progress).
         completed: false,
       })),
     }
@@ -71,6 +75,7 @@ export class LessonsService {
     }
 
     return {
+      id: section.id,
       slug: section.slug,
       title: section.title,
       kind: section.kind,

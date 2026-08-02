@@ -11,6 +11,7 @@ vi.mock("@/lib/studio/actions", () => ({
 
 const mockTracks: AdminTrack[] = [
   {
+    id: 1,
     slug: "trilha-nest",
     title: "Trilha NestJS",
     description: "Aprenda NestJS do zero ao avançado",
@@ -18,6 +19,7 @@ const mockTracks: AdminTrack[] = [
     lessonCount: 5,
   },
   {
+    id: 2,
     slug: "trilha-react",
     title: "Trilha React 19",
     description: "Dominando React 19 e Next.js",
@@ -36,7 +38,7 @@ describe("StudioTracksClient", () => {
       <StudioTracksClient initialTracks={mockTracks} userRoles={["TEACHER"]} />,
     )
 
-    expect(screen.getByText("Estúdio de Conteúdo")).toBeInTheDocument()
+    expect(screen.getByText("Gerenciador de Conteúdo")).toBeInTheDocument()
     expect(screen.getByText("Trilha NestJS")).toBeInTheDocument()
     expect(screen.getByText("Trilha React 19")).toBeInTheDocument()
     expect(screen.getByText("5 aulas")).toBeInTheDocument()
@@ -62,14 +64,14 @@ describe("StudioTracksClient", () => {
       <StudioTracksClient initialTracks={mockTracks} userRoles={["TEACHER"]} />,
     )
 
-    const deleteButtons = screen.getAllByTitle("Excluir Trilha")
+    const deleteButtons = screen.getAllByTitle("Excluir trilha")
     const targetBtn = deleteButtons[0]
     if (targetBtn) {
       fireEvent.click(targetBtn)
     }
 
     expect(
-      screen.getByRole("heading", { name: "Excluir Trilha" }),
+      screen.getByRole("heading", { name: "Confirmar Exclusão" }),
     ).toBeInTheDocument()
     expect(
       screen.getByText(/Tem certeza que deseja excluir a trilha/),

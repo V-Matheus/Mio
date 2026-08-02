@@ -22,30 +22,28 @@ describe("EnrollmentsService", () => {
 
   it("rejeita userCode desconhecido com USER_NOT_FOUND", async () => {
     prisma.user.findUnique.mockResolvedValue(null)
-    await expect(service.enroll("ghost", "front-end")).rejects.toThrow(
-      "USER_NOT_FOUND",
-    )
+    await expect(service.enroll("ghost", 1)).rejects.toThrow("USER_NOT_FOUND")
     expect(prisma.enrollment.upsert).not.toHaveBeenCalled()
   })
 
   it("rejeita trilha desconhecida com TRACK_NOT_FOUND", async () => {
-    prisma.user.findUnique.mockResolvedValue({ id: 1n, code: "user-1" })
+    prisma.user.findUnique.mockResolvedValue({ id: 1, code: "user-1" })
     prisma.track.findUnique.mockResolvedValue(null)
-    await expect(service.enroll("user-1", "ghost")).rejects.toThrow(
+    await expect(service.enroll("user-1", 999)).rejects.toThrow(
       "TRACK_NOT_FOUND",
     )
     expect(prisma.enrollment.upsert).not.toHaveBeenCalled()
   })
 
   it("matricula via upsert idempotente (re-matrícula é no-op)", async () => {
-    prisma.user.findUnique.mockResolvedValue({ id: 1n, code: "user-1" })
-    prisma.track.findUnique.mockResolvedValue({ id: 7n, slug: "front-end" })
+    prisma.user.findUnique.mockResolvedValue({ id: 1, code: "user-1" })
+    prisma.track.findUnique.mockResolvedValue({ id: 7, slug: "front-end" })
 
-    await service.enroll("user-1", "front-end")
+    await service.enroll("user-1", 7)
 
     expect(prisma.enrollment.upsert).toHaveBeenCalledWith({
-      where: { userId_trackId: { userId: 1n, trackId: 7n } },
-      create: { userId: 1n, trackId: 7n },
+      where: { userId_trackId: { userId: 1, trackId: 7 } },
+      create: { userId: 1, trackId: 7 },
       update: {},
     })
   })

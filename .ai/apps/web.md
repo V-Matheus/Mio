@@ -12,6 +12,7 @@ Frontend da plataforma gamificada de ensino de programação. Next.js 16 (App Ro
 - **UI:** React 19
 - **Linguagem:** TypeScript 5.9 (strict mode)
 - **Styling:** Tailwind CSS v4 (tokens via `@theme` em `globals.css`)
+- **Utilitários:** Utilitário centralizado `cn` em `src/utils/` (`@/utils`)
 - **Ícones:** Iconify (`@iconify/react`)
 - **Fontes:** `next/font/google` — Outfit (display) + Plus Jakarta Sans (body)
 - **Storybook:** `@storybook/nextjs-vite` com addons `a11y`, `docs`, `chromatic`
@@ -57,22 +58,37 @@ Código da aplicação vive em `src/`; a raiz de `apps/web/` guarda apenas arqui
     - `layout.tsx` — RootLayout (fontes, `<html>`, `<body>`)
     - `globals.css` — tokens de design via `@theme` do Tailwind v4
     - `(portal)/` — route group da landing; `_components/` são privados da rota
-  - `components/` — design system compartilhado (button, card, avatar, icon, layout...). Importar via `@/components/<x>`
+  - `components/` — design system compartilhado (button, card, avatar, filter-group, icon, layout...). Importar via `@/components/<x>`
   - `lib/` — lógica de domínio por módulo (`lib/<dominio>/`)
+  - `utils/` — utilitários globais (`cn`, etc.). Importar via `@/utils`
   - `auth.ts` — NextAuth (handlers/signIn/signOut/auth); `proxy.ts` — middleware do Next 16
   - `@types/` — augmentations de módulo (ex.: `next-auth.d.ts`)
 - `stories/` — Storybook espelhando `src/components/`
 - `tests/unit`, `tests/integration`, `tests/e2e` — Vitest
 - Alias `@/*` resolve para `src/*` (tsconfig + vitest configs).
 
-## Convenções
+## Convenções Arquiteturais e Padrões de Código
 
 - **Server Components por padrão.** Use Client Components (`"use client"`) somente quando precisar de estado/efeitos/eventos do browser.
-- **Compound components** para o design system: `Wrapper` + peças (`Text`, `Icon`, `Title`, etc.), exportados via barrel `index.ts`.
-- **Route groups** `(nome)` para organizar sem afetar URL; **private folders** `_nome` para esconder arquivos que não devem virar rota.
-- **Imports: alias `@/` quando cruza pasta/módulo** (ex.: `@/components/icon`, `@/lib/auth/service`); caminho relativo **só com `./`** para arquivos co-locados na mesma pasta (barrels `index.ts`, compound components, `_components` de uma rota). Nunca `../` em `src/` — é robusto a mover arquivos e evita cadeias `../../`. **Imposto pelo Biome** (`noRestrictedImports` no override de `apps/web/{src,tests,stories}` em `biome.json`); arquivos de config fora de `src/` (ex.: `.storybook/`) podem usar `../`.
-- **Mutações sensíveis** devem passar por Server Actions — nunca chamar o Gateway direto do browser.
-- **Server Actions vivem por domínio em `lib/<dominio>/actions/`** (ex.: `lib/auth/actions/`), não em `_actions/` dentro de route groups. Motivo: route groups como `(app)` abrangem o app inteiro e viram "dumping ground". Cada domínio agrupa `actions/` + `service.ts` + `schemas/` + `types/` + `graphql/`. Componentes importam via barrel `@/lib/<dominio>/actions`. Ações ficam finas (parse FormData -> Zod schema -> service -> FormState/redirect); lógica de domínio fica no `service.ts`. Testes espelham em `tests/unit/lib/<dominio>/actions/`.
+- **Regra Rígida de Consumo por Componentes:** Componentes/Páginas NUNCA chamam arquivos de serviço (`service.ts`) diretamente.
+  - Para **Leitura / Data Fetching (Queries)**: Componentes e Server Components (`page.tsx`) chamam exclusivamente as funções expostas em `lib/<dominio>/queries/`.
+  - Para **Escrita / Mutações (Actions)**: Formulários e eventos do cliente chamam exclusivamente as funções expostas em `lib/<dominio>/actions/`.
+- **Estrutura das pastas em `src/lib/<dominio>/`**:
+  - Cada domínio (ex.: `auth`, `catalog`, `studio`) organiza seus arquivos em:
+    - `queries/`: Funções de leitura de dados exportadas via `index.ts` (ex.: `getTracksQuery`, `getTrackQuery`).
+    - `actions/`: Server Actions de escrita exportadas via `index.ts` (ex.: `enrollInTrackAction`, `createTrackAction`).
+    - `graphql/`: Documentos GraphQL atômicos por operação exportados via `index.ts`.
+    - `types/`: Tipos divididos em arquivos por entidade (ex.: `track.ts`, `lesson.ts`, `section.ts`) exportados via `index.ts`.
+    - `service.ts`: Camada de serviço responsável pelas chamadas HTTP ao Gateway (detalhe de infraestrutura).
+- **Padrão de Tratamento de Erros (Error Handling Strategy)**:
+  - **Na camada de Service (`service.ts`)**: Trata **toda** a comunicação HTTP/GraphQL com a API/Gateway usando blocos `try/catch` e a função `gatewayError(error, fallback)`. Retorna objetos de resultado fortemente tipados (`{ ok: true; data } | { ok: false; error: string }`) ou fallbacks seguros (`null`, `[]`).
+  - **Na camada de Actions (`actions/*.ts`)**: **Sem blocos `try/catch`**. As ações concentram-se apenas em validar dados de entrada (schemas Zod ou verificações de formulário), invocar a função do service e revalidar caminhos (`revalidatePath`).
+- **Semântica de Layout HTML:** A tag `<main>` é única na aplicação e fica declarada estritamente no layout global (`AppShell`). Nunca inclua a tag `<main>` em arquivos de rota ou sub-páginas.
+- **Componentes do Design System vs. Componentes de Página:**
+  - Componentes reutilizáveis globais ficam em `src/components/<nome>/` usando o padrão **Compound Components** (`Wrapper` + peças atômicas com `data-slot="..."`) exportados por barrel `index.ts`.
+  - Componentes específicos de uma página/funcionalidade devem ser co-localizados dentro da pasta privada `_components/` da rota (ex.: `app/(app)/trilhas/_components/`).
+- **Combinação de Classes CSS:** Utilizar o utilitário centralizado `cn` importado de `@/utils` (`import { cn } from "@/utils"`).
+- **Imports: alias `@/` quando cruza pasta/módulo** (ex.: `@/components/icon`, `@/lib/auth/queries`, `@/utils`); caminho relativo **só com `./`** para arquivos co-locados na mesma pasta. Nunca `../` em `src/`.
 - **Tokens de design** vivem em `globals.css` sob `@theme`; não hardcode cores/fontes nos componentes.
 - Commits seguem **Conventional Commits** (feat, fix, docs, refactor, test, chore, etc.), subject em lowercase.
 - Pre-commit hooks via Husky: lint-staged roda biome check, type check e testes unitários.
@@ -81,17 +97,3 @@ Código da aplicação vive em `src/`; a raiz de `apps/web/` guarda apenas arqui
 ## Arquitetura
 
 Documentação completa em `docs/ARCHITECTURE.md`.
-
-Resumo dos protocolos:
-
-- Browser <-> Next.js Server: HTTPS
-- Next.js Server <-> API Gateway: GraphQL sobre HTTPS
-- Messenger -> Browser: SSE (Server-Sent Events)
-
-O cliente nunca fala com microserviços internos diretamente — toda leitura/mutação passa pelo Next.js Server (RSC ou Server Action), que encaminha ao API Gateway.
-
-## CI/CD
-
-- GitHub Actions em `.github/workflows/ci-web.yml`
-- Trigger: push para main ou PRs que alterem `apps/web/**`, `packages/**`
-- Pipeline: install -> lint -> type check -> tests

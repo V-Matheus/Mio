@@ -3,13 +3,15 @@
 import { redirect } from "next/navigation"
 import { AuthError, type Session } from "next-auth"
 import { z } from "zod"
-import { auth, signIn } from "@/auth"
+import { auth, signIn, signOut } from "@/auth"
 import {
   forgotPasswordSchema,
+  type LoginInput,
   loginSchema,
   registerSchema,
 } from "@/lib/auth/schemas"
 import { authService } from "@/lib/auth/service"
+import type { UpsertOAuthInput } from "@/lib/auth/types"
 
 type FormState = {
   ok: boolean
@@ -17,8 +19,21 @@ type FormState = {
   fieldErrors?: Record<string, string[] | undefined>
   values?: Record<string, string>
 }
+
 interface LoginActionResponse extends FormState {
   section: Session | null
+}
+
+export async function loginCredentialsAction(input: LoginInput) {
+  return authService.login(input)
+}
+
+export async function upsertOAuthAction(input: UpsertOAuthInput) {
+  return authService.upsertOAuthUser(input)
+}
+
+export async function signOutAction() {
+  await signOut({ redirectTo: "/login" })
 }
 
 export async function signInWithProvider(formData: FormData) {
@@ -105,9 +120,6 @@ export async function registerAction(
     return { ok: false, message: result.error, values }
   }
 
-  // Cadastro criou o usuário; agora autentica com as mesmas credenciais para
-  // estabelecer a sessão NextAuth antes de ir para /home (senão o proxy vê
-  // "anônimo" e devolve para /login).
   try {
     await signIn("credentials", {
       email: parsed.data.email,

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { studioService } from "@/lib/studio/service"
+import { getStudioTrackQuery } from "@/lib/studio/queries"
 import { TrackDetailClient } from "./_components/track-detail-client"
 
 interface TrackDetailPageProps {
@@ -13,7 +13,7 @@ export default async function TrackDetailPage({
 }: TrackDetailPageProps) {
   const { slug } = await params
 
-  const result = await studioService.getTrack(slug)
+  const result = await getStudioTrackQuery(slug)
   if (!result.ok || !result.track) {
     notFound()
   }

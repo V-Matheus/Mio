@@ -38,27 +38,31 @@ export class CatalogAdminController {
   async createTrack(data: {
     title: string
     description: string
+    categoryId?: number
     requestorCode: string
   }) {
     return this.catalogAdmin.createTrack(
       data.title,
       data.description,
+      data.categoryId,
       data.requestorCode,
     )
   }
 
   @GrpcMethod(SERVICE_NAME, "UpdateTrack")
   async updateTrack(data: {
-    currentSlug: string
+    trackId: number
     title: string
     description: string
+    categoryId?: number
     requestorCode: string
     requestorRole: string
   }) {
     return this.catalogAdmin.updateTrack(
-      data.currentSlug,
+      data.trackId,
       data.title,
       data.description,
+      data.categoryId,
       data.requestorCode,
       data.requestorRole,
     )
@@ -66,12 +70,12 @@ export class CatalogAdminController {
 
   @GrpcMethod(SERVICE_NAME, "DeleteTrack")
   async deleteTrack(data: {
-    slug: string
+    trackId: number
     requestorCode: string
     requestorRole: string
   }) {
     return this.catalogAdmin.deleteTrack(
-      data.slug,
+      data.trackId,
       data.requestorCode,
       data.requestorRole,
     )
@@ -79,16 +83,16 @@ export class CatalogAdminController {
 
   @GrpcMethod(SERVICE_NAME, "UpsertLesson")
   async upsertLesson(data: {
-    trackSlug: string
-    slug: string
+    trackId: number
+    lessonId?: number
     title: string
     position: number
     requestorCode: string
     requestorRole: string
   }) {
     return this.catalogAdmin.upsertLesson(
-      data.trackSlug,
-      data.slug,
+      data.trackId,
+      data.lessonId,
       data.title,
       data.position,
       data.requestorCode,
@@ -98,14 +102,12 @@ export class CatalogAdminController {
 
   @GrpcMethod(SERVICE_NAME, "DeleteLesson")
   async deleteLesson(data: {
-    trackSlug: string
-    lessonSlug: string
+    lessonId: number
     requestorCode: string
     requestorRole: string
   }) {
     return this.catalogAdmin.deleteLesson(
-      data.trackSlug,
-      data.lessonSlug,
+      data.lessonId,
       data.requestorCode,
       data.requestorRole,
     )
@@ -113,9 +115,8 @@ export class CatalogAdminController {
 
   @GrpcMethod(SERVICE_NAME, "UpsertSection")
   async upsertSection(data: {
-    trackSlug: string
-    lessonSlug: string
-    slug: string
+    lessonId: number
+    sectionId?: number
     title: string
     position: number
     kind: "TEXT" | "EXERCISE"
@@ -124,9 +125,8 @@ export class CatalogAdminController {
     requestorRole: string
   }) {
     return this.catalogAdmin.upsertSection(
-      data.trackSlug,
-      data.lessonSlug,
-      data.slug,
+      data.lessonId,
+      data.sectionId,
       data.title,
       data.position,
       data.kind,
@@ -138,16 +138,12 @@ export class CatalogAdminController {
 
   @GrpcMethod(SERVICE_NAME, "DeleteSection")
   async deleteSection(data: {
-    trackSlug: string
-    lessonSlug: string
-    sectionSlug: string
+    sectionId: number
     requestorCode: string
     requestorRole: string
   }) {
     return this.catalogAdmin.deleteSection(
-      data.trackSlug,
-      data.lessonSlug,
-      data.sectionSlug,
+      data.sectionId,
       data.requestorCode,
       data.requestorRole,
     )

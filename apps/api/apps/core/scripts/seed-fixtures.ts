@@ -1,5 +1,14 @@
 import { SectionKind } from ".prisma/core"
-import type { TrackEntry } from "./seed-content"
+import type { CategoryEntry, TrackEntry } from "./seed-content"
+
+export const categoryFixtures: CategoryEntry[] = [
+  { slug: "front-end", name: "Front-End", color: "#E34F26" },
+  { slug: "back-end", name: "Back-End", color: "#68A063" },
+  { slug: "full-stack", name: "Full-Stack", color: "#61DAFB" },
+  { slug: "mobile", name: "Mobile", color: "#339933" },
+  { slug: "banco-de-dados", name: "Banco de Dados", color: "#4169E1" },
+  { slug: "devops", name: "DevOps", color: "#FF9900" },
+]
 
 /**
  * Fixtures de desenvolvimento/demonstração do catálogo. São dados, não arquivos:
@@ -10,6 +19,7 @@ export const catalogFixtures: TrackEntry[] = [
   {
     slug: "front-end",
     title: "Fundamentos de Front-end",
+    categorySlug: "front-end",
     description:
       "HTML e CSS do zero: a base para construir qualquer interface web.",
     lessons: [

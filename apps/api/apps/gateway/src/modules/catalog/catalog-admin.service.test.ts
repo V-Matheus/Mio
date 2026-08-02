@@ -32,14 +32,17 @@ describe("CatalogAdminGatewayService", () => {
       expect(result).toBeNull()
     })
 
-    it("relança o erro quando o Core responde FORBIDDEN", async () => {
+    it("devolve null quando o Core responde FORBIDDEN", async () => {
       const service = setup({
         getAdminTrack: vi.fn().mockReturnValue(grpcError("FORBIDDEN")),
       })
 
-      await expect(
-        service.adminTrack("trilha-privada", "user1", "TEACHER"),
-      ).rejects.toEqual({ details: "FORBIDDEN" })
+      const result = await service.adminTrack(
+        "trilha-privada",
+        "user1",
+        "TEACHER",
+      )
+      expect(result).toBeNull()
     })
 
     it("relança erros genéricos / transporte", async () => {
@@ -58,6 +61,7 @@ describe("CatalogAdminGatewayService", () => {
       const service = setup({
         getAdminTrack: vi.fn().mockReturnValue(
           of({
+            id: 1,
             slug: "trilha-1",
             title: "Trilha 1",
             description: "Descrição",
@@ -69,6 +73,7 @@ describe("CatalogAdminGatewayService", () => {
 
       const result = await service.adminTrack("trilha-1", "user1", "ADMIN")
       expect(result).toEqual({
+        id: 1,
         slug: "trilha-1",
         title: "Trilha 1",
         description: "Descrição",
@@ -83,11 +88,13 @@ describe("CatalogAdminGatewayService", () => {
       const service = setup({
         upsertLesson: vi.fn().mockReturnValue(
           of({
+            id: 10,
             slug: "licao-1",
             title: "Lição 1",
             position: 1,
             sections: [
               {
+                id: 100,
                 slug: "sec-1",
                 title: "Seção 1",
                 position: 1,
@@ -100,17 +107,19 @@ describe("CatalogAdminGatewayService", () => {
       })
 
       const result = await service.upsertLesson(
-        { trackSlug: "trilha-1", title: "Lição 1" },
+        { trackId: 1, title: "Lição 1" },
         "user1",
         "ADMIN",
       )
 
       expect(result).toEqual({
+        id: 10,
         slug: "licao-1",
         title: "Lição 1",
         position: 1,
         sections: [
           {
+            id: 100,
             slug: "sec-1",
             title: "Seção 1",
             position: 1,

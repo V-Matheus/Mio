@@ -2,61 +2,57 @@ import { catalogContract } from "@mio/grpc-contracts"
 import { Controller } from "@nestjs/common"
 import { GrpcMethod } from "@nestjs/microservices"
 import { EnrollmentsService } from "./enrollments.service"
-import type { LessonDetail, SectionDetail } from "./lessons.service"
 import { LessonsService } from "./lessons.service"
-import type { TrackDetail, TrackSummary } from "./tracks.service"
 import { TracksService } from "./tracks.service"
 
-const CATALOG_SERVICE = catalogContract.service
+const SERVICE_NAME = catalogContract.service
 
 @Controller()
 export class CatalogController {
   constructor(
-    private readonly tracks: TracksService,
-    private readonly lessons: LessonsService,
-    private readonly enrollments: EnrollmentsService,
+    private readonly tracksService: TracksService,
+    private readonly lessonsService: LessonsService,
+    private readonly enrollmentsService: EnrollmentsService,
   ) {}
 
-  @GrpcMethod(CATALOG_SERVICE, "ListTracks")
-  async listTracks(data: {
-    userCode: string
-  }): Promise<{ tracks: TrackSummary[] }> {
-    return { tracks: await this.tracks.listTracks(data.userCode) }
+  @GrpcMethod(SERVICE_NAME, "ListCategories")
+  async listCategories() {
+    const categories = await this.tracksService.listCategories()
+    return { categories }
   }
 
-  @GrpcMethod(CATALOG_SERVICE, "GetTrack")
-  getTrack(data: { slug: string; userCode: string }): Promise<TrackDetail> {
-    return this.tracks.getTrack(data.slug, data.userCode)
+  @GrpcMethod(SERVICE_NAME, "ListTracks")
+  async listTracks(data: { userCode: string }) {
+    const tracks = await this.tracksService.listTracks(data.userCode)
+    return { tracks }
   }
 
-  @GrpcMethod(CATALOG_SERVICE, "GetLesson")
-  getLesson(data: {
-    trackSlug: string
-    lessonSlug: string
-    userCode: string
-  }): Promise<LessonDetail> {
-    return this.lessons.getLesson(data.trackSlug, data.lessonSlug)
+  @GrpcMethod(SERVICE_NAME, "GetTrack")
+  async getTrack(data: { slug: string; userCode: string }) {
+    return this.tracksService.getTrack(data.slug, data.userCode)
   }
 
-  @GrpcMethod(CATALOG_SERVICE, "GetSection")
-  getSection(data: {
+  @GrpcMethod(SERVICE_NAME, "GetLesson")
+  async getLesson(data: { trackSlug: string; lessonSlug: string }) {
+    return this.lessonsService.getLesson(data.trackSlug, data.lessonSlug)
+  }
+
+  @GrpcMethod(SERVICE_NAME, "GetSection")
+  async getSection(data: {
     trackSlug: string
     lessonSlug: string
     sectionSlug: string
-  }): Promise<SectionDetail> {
-    return this.lessons.getSection(
+  }) {
+    return this.lessonsService.getSection(
       data.trackSlug,
       data.lessonSlug,
       data.sectionSlug,
     )
   }
 
-  @GrpcMethod(CATALOG_SERVICE, "EnrollUser")
-  async enrollUser(data: {
-    userCode: string
-    trackSlug: string
-  }): Promise<{ ok: boolean }> {
-    await this.enrollments.enroll(data.userCode, data.trackSlug)
+  @GrpcMethod(SERVICE_NAME, "EnrollUser")
+  async enrollUser(data: { userCode: string; trackId: number }) {
+    await this.enrollmentsService.enroll(data.userCode, data.trackId)
     return { ok: true }
   }
 }

@@ -6,8 +6,8 @@ ALTER TABLE "User" ADD COLUMN     "passwordHash" TEXT;
 
 -- CreateTable
 CREATE TABLE "UserIdentity" (
-    "id" BIGSERIAL NOT NULL,
-    "userId" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "provider" "AuthProvider" NOT NULL,
     "providerAccountId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -17,8 +17,8 @@ CREATE TABLE "UserIdentity" (
 
 -- CreateTable
 CREATE TABLE "PasswordReset" (
-    "id" BIGSERIAL NOT NULL,
-    "userId" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "tokenHash" TEXT NOT NULL,
     "expiresAt" TIMESTAMP(3) NOT NULL,
     "usedAt" TIMESTAMP(3),
@@ -44,4 +44,3 @@ ALTER TABLE "UserIdentity" ADD CONSTRAINT "UserIdentity_userId_fkey" FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE "PasswordReset" ADD CONSTRAINT "PasswordReset_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-

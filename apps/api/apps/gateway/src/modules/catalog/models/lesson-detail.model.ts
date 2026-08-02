@@ -1,8 +1,11 @@
-import { Field, ID, ObjectType } from "@nestjs/graphql"
+import { Field, ID, Int, ObjectType } from "@nestjs/graphql"
 import { SectionSummary } from "./section-summary.model"
 
 @ObjectType()
 export class LessonDetail {
+  @Field(() => Int)
+  id!: number
+
   @Field(() => ID)
   trackSlug!: string
 

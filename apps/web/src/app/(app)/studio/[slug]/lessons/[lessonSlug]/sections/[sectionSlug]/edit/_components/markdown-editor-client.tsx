@@ -17,6 +17,7 @@ import { upsertSectionAction } from "@/lib/studio/actions"
 import type { AdminSectionSummary } from "@/lib/studio/types"
 
 interface MarkdownEditorClientProps {
+  lessonId: number
   trackSlug: string
   lessonSlug: string
   section: AdminSectionSummary
@@ -187,14 +188,16 @@ function highlightCode(code: string): React.ReactNode {
 }
 
 export function MarkdownEditorClient({
+  lessonId,
   trackSlug,
   lessonSlug,
   section,
 }: MarkdownEditorClientProps) {
   const [contentMarkdown, setContentMarkdown] = useState(
-    section.contentMarkdown,
+    section.contentMarkdown || "",
   )
   const [sectionTitle, setSectionTitle] = useState(section.title)
+  const [_isEditingTitle, _setIsEditingTitle] = useState(false)
   const [viewMode, setViewMode] = useState<"split" | "editor" | "preview">(
     "split",
   )
@@ -213,13 +216,15 @@ export function MarkdownEditorClient({
 
     startTransition(async () => {
       const res = await upsertSectionAction(
-        trackSlug,
-        lessonSlug,
-        section.slug,
+        lessonId,
         sectionTitle,
+        section.id,
         section.kind,
         contentMarkdown,
         section.position,
+        trackSlug,
+        lessonSlug,
+        section.slug,
       )
 
       if (!res.ok) {
@@ -238,6 +243,8 @@ export function MarkdownEditorClient({
     section.position,
     sectionTitle,
     contentMarkdown,
+    section.id,
+    lessonId,
   ])
 
   useEffect(() => {

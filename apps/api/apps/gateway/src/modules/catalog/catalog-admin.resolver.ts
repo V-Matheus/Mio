@@ -1,5 +1,5 @@
 import { UseGuards } from "@nestjs/common"
-import { Args, ID, Mutation, Query, Resolver } from "@nestjs/graphql"
+import { Args, ID, Int, Mutation, Query, Resolver } from "@nestjs/graphql"
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe"
 import { Roles } from "../auth/decorators/roles.decorator"
 import { CurrentUserCode } from "../auth/guards/gql-auth.guard"
@@ -56,23 +56,23 @@ export class CatalogAdminResolver {
 
   @Mutation(() => AdminTrack)
   updateTrack(
-    @Args("slug", { type: () => ID }, new ZodValidationPipe(slugSchema))
-    slug: string,
+    @Args("id", { type: () => Int })
+    id: number,
     @Args("input") input: UpdateTrackInput,
     @CurrentUserCode() userCode: string,
     @CurrentUserPrimaryRole() role: string,
   ): Promise<AdminTrack> {
-    return this.catalogAdmin.updateTrack(slug, input, userCode, role)
+    return this.catalogAdmin.updateTrack(id, input, userCode, role)
   }
 
   @Mutation(() => Boolean)
   deleteTrack(
-    @Args("slug", { type: () => ID }, new ZodValidationPipe(slugSchema))
-    slug: string,
+    @Args("id", { type: () => Int })
+    id: number,
     @CurrentUserCode() userCode: string,
     @CurrentUserPrimaryRole() role: string,
   ): Promise<boolean> {
-    return this.catalogAdmin.deleteTrack(slug, userCode, role)
+    return this.catalogAdmin.deleteTrack(id, userCode, role)
   }
 
   @Mutation(() => AdminLessonSummary)
@@ -86,14 +86,12 @@ export class CatalogAdminResolver {
 
   @Mutation(() => Boolean)
   deleteLesson(
-    @Args("trackSlug", { type: () => ID }, new ZodValidationPipe(slugSchema))
-    trackSlug: string,
-    @Args("lessonSlug", { type: () => ID }, new ZodValidationPipe(slugSchema))
-    lessonSlug: string,
+    @Args("id", { type: () => Int })
+    id: number,
     @CurrentUserCode() userCode: string,
     @CurrentUserPrimaryRole() role: string,
   ): Promise<boolean> {
-    return this.catalogAdmin.deleteLesson(trackSlug, lessonSlug, userCode, role)
+    return this.catalogAdmin.deleteLesson(id, userCode, role)
   }
 
   @Mutation(() => AdminSectionSummary)
@@ -107,21 +105,11 @@ export class CatalogAdminResolver {
 
   @Mutation(() => Boolean)
   deleteSection(
-    @Args("trackSlug", { type: () => ID }, new ZodValidationPipe(slugSchema))
-    trackSlug: string,
-    @Args("lessonSlug", { type: () => ID }, new ZodValidationPipe(slugSchema))
-    lessonSlug: string,
-    @Args("sectionSlug", { type: () => ID }, new ZodValidationPipe(slugSchema))
-    sectionSlug: string,
+    @Args("id", { type: () => Int })
+    id: number,
     @CurrentUserCode() userCode: string,
     @CurrentUserPrimaryRole() role: string,
   ): Promise<boolean> {
-    return this.catalogAdmin.deleteSection(
-      trackSlug,
-      lessonSlug,
-      sectionSlug,
-      userCode,
-      role,
-    )
+    return this.catalogAdmin.deleteSection(id, userCode, role)
   }
 }

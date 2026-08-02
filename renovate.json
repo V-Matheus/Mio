@@ -1,29 +1,19 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
-  "labels": [
-    "dependencies"
-  ],
-  "schedule": [
-    "every weekend"
-  ],
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
+  "schedule": ["every weekend"],
   "timezone": "America/Sao_Paulo",
   "packageRules": [
     {
       "description": "Auto-merge patch updates when CI passes",
-      "matchUpdateTypes": [
-        "patch"
-      ],
+      "matchUpdateTypes": ["patch"],
       "automerge": true
     },
     {
       "description": "Group NestJS packages together",
       "groupName": "nestjs",
-      "matchPackageNames": [
-        "/^@nestjs//"
-      ]
+      "matchPackageNames": ["/^@nestjs//"]
     },
     {
       "description": "Group testing packages together",
@@ -38,10 +28,7 @@
     {
       "description": "Group React packages together",
       "groupName": "react",
-      "matchPackageNames": [
-        "/^react/",
-        "/^@types/react/"
-      ]
+      "matchPackageNames": ["/^react/", "/^@types/react/"]
     },
     {
       "description": "Group Tailwind and PostCSS together",
@@ -55,17 +42,12 @@
     {
       "description": "Group Biome packages together",
       "groupName": "biome",
-      "matchPackageNames": [
-        "/^@biomejs//"
-      ]
+      "matchPackageNames": ["/^@biomejs//"]
     },
     {
       "description": "Group TypeScript and type definitions together",
       "groupName": "typescript",
-      "matchPackageNames": [
-        "/^typescript$/",
-        "/^@types/node$/"
-      ]
+      "matchPackageNames": ["/^typescript$/", "/^@types/node$/"]
     }
   ]
 }
