@@ -64,10 +64,11 @@ export function TrilhasClient({
       {/* Header */}
       <div>
         <h1 className="font-display text-3xl font-extrabold text-foreground md:text-4xl">
-          Todos os Cursos
+          Todas as Trilhas
         </h1>
         <p className="mt-1 text-base text-foreground/70">
-          Explore nossa biblioteca completa de cursos e expanda suas habilidades
+          Explore nossa biblioteca completa de trilhas e expanda suas
+          habilidades
         </p>
       </div>
 
@@ -76,7 +77,7 @@ export function TrilhasClient({
         {/* Search Input using Design System InputField / InputControl / InputAdornment */}
         <InputWrapper>
           <InputField>
-            <InputAdornment aria-label="Buscar cursos">
+            <InputAdornment aria-label="Buscar trilhas">
               <Icon
                 icon="lucide:search"
                 width={20}
@@ -85,7 +86,7 @@ export function TrilhasClient({
               />
             </InputAdornment>
             <InputControl
-              placeholder="Buscar cursos..."
+              placeholder="Buscar trilhas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -106,7 +107,7 @@ export function TrilhasClient({
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold text-foreground/70">
           Mostrando {filteredTracks.length}{" "}
-          {filteredTracks.length === 1 ? "curso" : "cursos"}
+          {filteredTracks.length === 1 ? "trilha" : "trilhas"}
         </span>
       </div>
 

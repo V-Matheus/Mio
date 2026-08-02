@@ -112,9 +112,9 @@ type MarkSectionResult {
 
 ```prisma
 model SectionView {
-  id        BigInt   @id @default(autoincrement())
-  userId    BigInt
-  sectionId BigInt
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  sectionId Int
   viewedAt  DateTime @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)

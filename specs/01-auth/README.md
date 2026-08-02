@@ -59,24 +59,24 @@ enum AuthProvider {
 }
 
 model User {
-  id        BigInt   @id @default(autoincrement())
-  code      String   @unique          // identificador público estável (nanoid)
-  email     String   @unique
-  name      String
-  avatarUrl String?
-  passwordHash String?                // null para usuários OAuth puros
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           Int              @id @default(autoincrement())
+  code         String           @unique // identificador público estável (nanoid)
+  email        String           @unique
+  name         String
+  avatarUrl    String?
+  passwordHash String? // null para usuários OAuth puros
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
-  identities       UserIdentity[]
-  passwordResets   PasswordReset[]
-  enrollments      Enrollment[]
-  progress         LessonProgress[]
+  identities     UserIdentity[]
+  passwordResets PasswordReset[]
+  enrollments    Enrollment[]
+  progress       LessonProgress[]
 }
 
 model UserIdentity {
-  id                BigInt       @id @default(autoincrement())
-  userId            BigInt
+  id                Int          @id @default(autoincrement())
+  userId            Int
   provider          AuthProvider
   providerAccountId String
   createdAt         DateTime     @default(now())
@@ -88,9 +88,9 @@ model UserIdentity {
 }
 
 model PasswordReset {
-  id        BigInt    @id @default(autoincrement())
-  userId    BigInt
-  tokenHash String    @unique  // hash do token enviado por email
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  tokenHash String    @unique // hash do token enviado por email
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
