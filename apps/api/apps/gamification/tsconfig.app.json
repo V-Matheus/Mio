@@ -1,5 +1,5 @@
 {
-  "extends": "@mio/typescript-config/nestjs.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/apps/gamification"
   },

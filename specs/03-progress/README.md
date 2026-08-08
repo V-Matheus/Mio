@@ -5,25 +5,36 @@ Registrar avanço do aluno: última seção vista, seção concluída, lição c
 ## Status atual
 
 ### Backend (`apps/api/apps/core`)
-- ✅ Schema Prisma já modela `LessonProgress(userId, lessonId, lastSectionId, completedAt)` (`apps/api/apps/core/prisma/schema.prisma`).
-- ❌ Nenhum módulo `progress`.
-- ❌ Nenhum publisher do evento `lesson.completed`.
+- ✅ Schema Prisma modela `LessonProgress`, `SectionView` e `OutboxEvent` (`apps/api/apps/core/prisma/schema.prisma`).
+- ✅ Módulo `progress` implementado (`apps/api/apps/core/src/modules/progress/`): `ProgressService`, `ProgressController` (gRPC) e erros de domínio tipados.
+- ✅ Transação Prisma atômica para `markSectionViewed`: registra `SectionView`, atualiza `lastSectionId` e auto-conclui a lição quando todas as seções são vistas.
+- ✅ Publicação do evento `lesson.completed` via outbox atômica (`OutboxEvent`) com o worker `OutboxPublisherService` (`libs/events/src/outbox-publisher.service.ts`).
+- ✅ Testes unitários e de integração cobrindo serviço, controller, erros, outbox e publisher de eventos (`apps/api/apps/core/src/modules/progress/`).
+
+### Gateway (`apps/api/apps/gateway`)
+- ✅ Módulo `progress` implementado (`apps/api/apps/gateway/src/modules/progress/`): `ProgressGatewayService`, `ProgressResolver` e DTOs GraphQL.
+- ✅ Contrato gRPC `progressContract` (`@mio/grpc-contracts`) integrado via cliente tipado `ProgressServiceClient`.
+- ✅ Resolvers `markSectionViewed`, `markLessonCompleted` e query `lessonProgress` protegidos com `GqlAuthGuard`.
+- ✅ Testes unitários do gateway (`apps/api/apps/gateway/src/modules/progress/progress.service.test.ts`).
 
 ### Frontend (`apps/web`)
-- ❌ Nenhuma Server Action `markSectionDoneAction` / `markLessonDoneAction`.
-- ❌ Nenhum botão "Concluir seção" no `LessonPlayer`.
+- ✅ Server Actions `markSectionViewedAction` e `markLessonCompletedAction` em `apps/web/src/lib/progress/actions/progress.ts`.
+- ✅ Cliente e queries GraphQL de progresso em `apps/web/src/lib/progress/service.ts` e `apps/web/src/lib/progress/graphql/`.
+- ✅ `LessonPlayer` (`apps/web/src/app/(app)/trilhas/_components/lesson-player.tsx`) integrado com marcação de seções, barra de progresso dinâmica, botões de ação e navegação contextual.
+- ✅ Modal de conclusão de aula ("Aula Concluída! 🎉") disparado quando `lessonCompleted === true`.
+- ✅ `revalidatePath` em `/trilhas/[slug]` e `/trilhas/[slug]/aula/[lessonSlug]` para sincronização de cache.
 
 ## Escopo
 
 1. Mutation **idempotente** para marcar seção como vista (`markSectionViewed`).
 2. Mutation **idempotente** para marcar lição como concluída (`markLessonCompleted`).
 3. Regra de auto-conclusão: marcar a última seção como vista **conclui a lição automaticamente** (atomicamente, na mesma transação).
-4. Publicar evento `lesson.completed` no RabbitMQ **na mesma transação** (outbox pattern simplificado).
-5. UI atualiza `LessonPlayer` para mostrar quais seções já estão verdes e oferece o botão "Próxima" que avança e marca como vista.
+4. Publicar evento `lesson.completed` no RabbitMQ **na mesma transação** (outbox pattern com worker).
+5. UI atualiza `LessonPlayer` para mostrar quais seções já estão concluídas e oferece navegação com botão de avanço e auto-conclusão.
 
 ## Contratos
 
-### gRPC (extensão de `catalog.proto` ou novo `progress.proto`)
+### gRPC (`packages/grpc-contracts/src/mio/progress/v1/progress.proto`)
 
 ```proto
 syntax = "proto3";
@@ -37,21 +48,17 @@ service ProgressService {
 
 message MarkSectionViewedRequest {
   string user_code = 1;
-  string track_slug = 2;
-  string lesson_slug = 3;
-  string section_slug = 4;
+  int32 section_id = 2;
 }
 
 message MarkLessonCompletedRequest {
   string user_code = 1;
-  string track_slug = 2;
-  string lesson_slug = 3;
+  int32 lesson_id = 2;
 }
 
 message GetLessonProgressRequest {
   string user_code = 1;
-  string track_slug = 2;
-  string lesson_slug = 3;
+  int32 lesson_id = 2;
 }
 
 message ProgressResponse {
@@ -60,28 +67,28 @@ message ProgressResponse {
 }
 
 message LessonProgressResponse {
-  string last_section_slug = 1;
-  string completed_at = 2;       // ISO-8601, vazio se não concluída
-  repeated string viewed_section_slugs = 3;
+  int32 last_section_id = 1;
+  string completed_at = 2;     // ISO-8601, vazio se não concluída
+  repeated int32 viewed_section_ids = 3;
 }
 ```
 
-### GraphQL
+### GraphQL (`packages/graphql-schema/schema.gql`)
 
 ```graphql
 type LessonProgress {
-  lastSectionSlug: ID
+  lastSectionId: Int
   completedAt: String
-  viewedSectionSlugs: [ID!]!
+  viewedSectionIds: [Int!]!
 }
 
 extend type Query {
-  lessonProgress(trackSlug: ID!, lessonSlug: ID!): LessonProgress!
+  lessonProgress(lessonId: Int!): LessonProgress!
 }
 
 extend type Mutation {
-  markSectionViewed(trackSlug: ID!, lessonSlug: ID!, sectionSlug: ID!): MarkSectionResult!
-  markLessonCompleted(trackSlug: ID!, lessonSlug: ID!): Boolean!
+  markSectionViewed(sectionId: Int!): MarkSectionResult!
+  markLessonCompleted(lessonId: Int!): MarkSectionResult!
 }
 
 type MarkSectionResult {
@@ -108,9 +115,22 @@ type MarkSectionResult {
 
 ### Modelo de dados
 
-`LessonProgress` já existe. Vamos adicionar **viewedSections** porque precisamos saber quais seções já foram vistas (não só a última):
-
 ```prisma
+model LessonProgress {
+  id            BigInt    @id @default(autoincrement())
+  userId        Int
+  lessonId      Int
+  lastSectionId Int?
+  completedAt   DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lastSection Section? @relation(fields: [lastSectionId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, lessonId])
+}
+
 model SectionView {
   id        Int      @id @default(autoincrement())
   userId    Int
@@ -121,64 +141,64 @@ model SectionView {
   section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
   @@unique([userId, sectionId])
+  @@index([userId])
+  @@index([sectionId])
 }
-```
 
-Outbox simples para publicação atômica:
-
-```prisma
 model OutboxEvent {
   id          BigInt    @id @default(autoincrement())
   routingKey  String
   payload     Json
   headers     Json?
+  retryCount  Int       @default(0)
+  lastError   String?
   createdAt   DateTime  @default(now())
   publishedAt DateTime?
 
   @@index([publishedAt])
+  @@index([publishedAt, retryCount])
 }
 ```
-
-Worker em background lê `OutboxEvent where publishedAt is null` e publica → marca `publishedAt`.
 
 ## Tarefas
 
 ### Core
-- [ ] Migration adicionando `SectionView` e `OutboxEvent`.
-- [ ] Atualizar schema de `User` e `Section` com as relações inversas.
-- [ ] `modules/progress/progress.module.ts`, `progress.service.ts`, `progress.controller.ts` (gRPC).
-- [ ] Transação Prisma atômica para `markSectionViewed`:
+- [x] Migration adicionando `SectionView` e `OutboxEvent`.
+- [x] Atualizar schema de `User` e `Section` com as relações inversas.
+- [x] `modules/progress/progress.module.ts`, `progress.service.ts`, `progress.controller.ts` (gRPC).
+- [x] Transação Prisma atômica para `markSectionViewed`:
   1. `upsert` `SectionView`.
   2. `upsert` `LessonProgress.lastSectionId`.
-  3. Se for última seção: setar `completedAt`, criar `OutboxEvent('lesson.completed', payload)`.
-- [ ] Idempotência: re-execuções com o mesmo `sectionSlug` não duplicam eventos (cheque `LessonProgress.completedAt` antes de criar outbox).
-- [ ] Worker `OutboxPublisher` (`@Interval(2000)`) que envia eventos pendentes via `EventBus`.
-- [ ] Testes unitários e e2e (com worker desligado e disparando manualmente).
+  3. Se todas as seções forem vistas: setar `completedAt`, criar `OutboxEvent('lesson.completed', payload)`.
+- [x] Idempotência: re-execuções não duplicam eventos (`completedAt` checado antes de registrar outbox).
+- [x] Worker `OutboxPublisherService` (reativo via `trigger()` com fallback periódico por timer e retries) que envia eventos pendentes via RabbitMQ.
+- [x] Testes unitários e de integração (`progress.service.test.ts`, `progress.errors.test.ts`, `progress-events.publisher.test.ts`, `outbox-publisher.service.test.ts`).
 
 ### Gateway
-- [ ] `modules/progress/progress.module.ts` com `ClientGrpc`.
-- [ ] Resolvers `markSectionViewed`, `markLessonCompleted`, `lessonProgress`.
-- [ ] Guard de auth em todos.
+- [x] `modules/progress/progress.module.ts` com `ClientGrpc`.
+- [x] Resolvers `markSectionViewed`, `markLessonCompleted`, `lessonProgress`.
+- [x] Guard de auth em todos (`GqlAuthGuard`).
+- [x] Testes unitários (`progress.service.test.ts`).
 
 ### Web
-- [ ] Server Actions `markSectionViewedAction` e `markLessonCompletedAction` em `app/(app)/_actions/progress.ts`.
-- [ ] No `LessonPlayer` (spec 02), botão "Próxima seção" chama `markSectionViewedAction` e navega.
-- [ ] Quando `lessonCompleted === true`, exibir tela/modal de "Aula concluída! XP a caminho..." (UI temporária, virá real-time depois — ver spec 06).
-- [ ] `revalidatePath` para `/trilhas/[slug]` para que a próxima leitura mostre o progresso atualizado.
+- [x] Server Actions `markSectionViewedAction` e `markLessonCompletedAction` em `app/(app)/_actions/` / `lib/progress/actions/progress.ts`.
+- [x] No `LessonPlayer` (`apps/web/src/app/(app)/trilhas/_components/lesson-player.tsx`), botão "Próxima seção" / "Concluir aula" chama `markSectionViewedAction` e navega.
+- [x] Quando `lessonCompleted === true`, exibir modal "Aula Concluída! 🎉" com confirmação de conclusão e feedback de XP a caminho.
+- [x] `revalidatePath` para `/trilhas/[slug]` e `/trilhas/[slug]/aula/[lessonSlug]` para que as páginas reflitam o progresso atualizado.
 
 ## Critérios de aceite
 
-- Clicar "Próxima" na última seção:
-  1. Cria `SectionView` da última seção.
+- Clicar "Concluir aula" / "Marcar como vista" na última seção:
+  1. Cria `SectionView` da seção.
   2. Seta `LessonProgress.completedAt`.
   3. Insere `OutboxEvent`.
-  4. Worker publica `lesson.completed` no RabbitMQ em ≤ 5s.
+  4. Worker publica `lesson.completed` no RabbitMQ exchange `mio.events`.
 - Repetir a ação **não publica** novo evento (`completedAt` já preenchido).
 - `query { lessonProgress(...) }` reflete o estado correto entre acessos.
-- RabbitMQ Management mostra a mensagem chegando na fila do consumidor `gamification` e `achievements`.
+- RabbitMQ recebe a mensagem na fila dos consumidores subsequentes (`gamification` e `achievements`).
 
-## Riscos & decisões em aberto
+## Decisões arquiteturais
 
-- **Outbox + worker** vs **publish dentro da transação**: outbox elimina o problema de "salvou no banco mas evento falhou". Custo: latência de 1-2s. Aceitável.
-- **Concluir lição sem ver todas as seções**: regra inicial é **bloqueada** (lição só conclui se todas as seções foram vistas). Adicionar override do admin futuramente.
-- **Idempotência distribuída**: se dois requests concorrentes marcarem a mesma seção, o `@@unique([userId, sectionId])` resolve. Atenção ao bloqueio de transação na hora de checar "é a última seção".
+- **Outbox pattern + worker reativo**: a gravação do evento ocorre atomicamente na mesma transação do banco de dados relacional. O worker drena os eventos de forma reativa (`trigger`) e com fallback periódico, garantindo entrega confiável sem lock na resposta síncrona.
+- **Auto-conclusão garantida**: a lição é concluída quando todas as suas seções constam em `SectionView`, disparando o evento `lesson.completed` de forma única e idempotente.
+- **Idempotência no banco**: a chave única `@@unique([userId, sectionId])` e checagem de `completedAt` evitam contagem duplicada e múltiplos disparos para a mesma aula.

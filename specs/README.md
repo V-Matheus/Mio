@@ -26,7 +26,7 @@ A organização é **por feature**, não por sprint — a ordem de execução es
 | [00](./00-foundations/) | Foundations | Monorepo, Docker, CI, observabilidade, GraphQL no gateway, contratos gRPC, RabbitMQ wiring | ⏳ |
 | [01](./01-auth/) | Auth & Users | Cadastro, login, recuperação de senha, sessão NextAuth, módulo `users` no Core | ⏳ |
 | [02](./02-tracks-lessons/) | Trilhas & Aulas | Catálogo de trilhas, lições e seções (Core) + telas no Web | ✅ |
-| [03](./03-progress/) | Progresso | Marcar seção/aula como concluída, publicar `lesson.completed` | ❌ |
+| [03](./03-progress/) | Progresso | Marcar seção/aula como concluída, publicar `lesson.completed` | ✅ |
 | [04](./04-gamification/) | Gamificação (XP & Ranking) | Consumir `lesson.completed`, calcular XP, manter Sorted Set no Redis, leaderboard | ❌ |
 | [05](./05-achievements/) | Conquistas | Consumir eventos, validar regras, publicar `achievement.unlocked` | ❌ |
 | [06](./06-messenger-sse/) | Messenger (Real-time) | Túnel SSE para o browser, Redis Pub/Sub inter-instâncias | ❌ |
