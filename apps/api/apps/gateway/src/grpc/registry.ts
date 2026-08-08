@@ -2,6 +2,7 @@ import {
   catalogAdminContract,
   catalogContract,
   type GrpcContract,
+  gamificationContract,
   progressContract,
   usersContract,
 } from "@mio/grpc-contracts"
@@ -26,6 +27,11 @@ const targets: GrpcTarget[] = [
     host: "api-core",
     portEnv: "CORE_GRPC_PORT",
   },
+  {
+    contract: gamificationContract,
+    host: "api-gamification",
+    portEnv: "GAMIFICATION_GRPC_PORT",
+  },
 ]
 
 function requireClientToken(contract: GrpcContract): string {
@@ -40,6 +46,8 @@ export const CATALOG_PACKAGE_TOKEN = requireClientToken(catalogContract)
 export const CATALOG_ADMIN_PACKAGE_TOKEN =
   requireClientToken(catalogAdminContract)
 export const PROGRESS_PACKAGE_TOKEN = requireClientToken(progressContract)
+export const GAMIFICATION_PACKAGE_TOKEN =
+  requireClientToken(gamificationContract)
 
 export const gatewayGrpcClients: ClientProviderOptions[] = targets.map(
   ({ contract, host, portEnv }) => ({

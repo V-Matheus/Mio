@@ -80,6 +80,12 @@ describe("XpRulesService", () => {
         },
       })
     })
+
+    it("lança INVALID_XP_RULE se amount for negativo", async () => {
+      await expect(
+        service.setAmount(XpRuleKey.LESSON_COMPLETED, -10),
+      ).rejects.toThrow()
+    })
   })
 
   describe("listRules", () => {

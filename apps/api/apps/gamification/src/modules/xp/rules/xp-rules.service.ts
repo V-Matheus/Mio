@@ -1,5 +1,6 @@
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common"
 import { PrismaService } from "../../prisma/prisma.service"
+import { gamificationError } from "../errors/gamification.errors"
 
 export const XpRuleKey = {
   LESSON_COMPLETED: "LESSON_COMPLETED",
@@ -97,6 +98,10 @@ export class XpRulesService implements OnModuleInit {
     amount: number,
     description?: string,
   ): Promise<XpRuleDto> {
+    if (amount < 0) {
+      throw gamificationError("INVALID_XP_RULE")
+    }
+
     const defaultDesc =
       DEFAULT_XP_RULES[key as XpRuleKey]?.description ??
       `Regra de XP para ${key}`

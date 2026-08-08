@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { LeaderboardService } from "../leaderboard/leaderboard.service"
 import { PrismaService } from "../prisma/prisma.service"
+import { gamificationError } from "./errors/gamification.errors"
 import { XpEventsPublisher } from "./events/xp-events.publisher"
 import { levelFor } from "./level"
 import { XpRuleKey, XpRulesService } from "./rules/xp-rules.service"
@@ -29,6 +30,10 @@ export class XpService {
     userCode: string,
     lessonId: string | number,
   ): Promise<{ total: number; newlyAwarded: boolean }> {
+    if (!userCode?.trim()) {
+      throw gamificationError("USER_NOT_FOUND")
+    }
+
     const sourceId = `lesson:${lessonId}`
     const rewardAmount = await this.rules.getAmount(XpRuleKey.LESSON_COMPLETED)
 
@@ -100,6 +105,10 @@ export class XpService {
    * Consulta o XP total, nível computado e posição no ranking de um usuário.
    */
   async getUserXp(userCode: string): Promise<UserXpDetail> {
+    if (!userCode?.trim()) {
+      throw gamificationError("USER_NOT_FOUND")
+    }
+
     const user = await this.prisma.userXp.findUnique({
       where: { userCode },
     })

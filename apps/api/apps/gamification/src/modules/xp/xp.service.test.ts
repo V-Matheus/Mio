@@ -147,5 +147,9 @@ describe("XpService", () => {
         rank: 0,
       })
     })
+
+    it("lança USER_NOT_FOUND se o userCode for vazio", async () => {
+      await expect(service.getUserXp("")).rejects.toThrow()
+    })
   })
 })
