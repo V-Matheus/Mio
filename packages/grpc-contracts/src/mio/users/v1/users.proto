@@ -12,6 +12,15 @@ service UsersService {
   rpc ConsumePasswordReset(ConsumePasswordResetRequest) returns (UserResponse);
   rpc UpdateUserRole(UpdateUserRoleRequest) returns (UserResponse);
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  rpc BatchGetUsers(BatchGetUsersRequest) returns (BatchGetUsersResponse);
+}
+
+message BatchGetUsersRequest {
+  repeated string codes = 1;
+}
+
+message BatchGetUsersResponse {
+  repeated UserResponse users = 1;
 }
 
 message ListUsersRequest {

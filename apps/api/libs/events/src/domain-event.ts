@@ -74,3 +74,31 @@ export class UserPasswordResetRequestedEvent
     },
   ) {}
 }
+
+export class XpRewardedEvent
+  implements
+    DomainEvent<{
+      userCode: string
+      amount: number
+      reason: string
+      sourceId?: string
+      totalAfter: number
+      level: string
+      awardedAt: string
+    }>
+{
+  readonly routingKey = "xp.rewarded"
+  readonly version = 1
+
+  constructor(
+    readonly payload: {
+      userCode: string
+      amount: number
+      reason: string
+      sourceId?: string
+      totalAfter: number
+      level: string
+      awardedAt: string
+    },
+  ) {}
+}

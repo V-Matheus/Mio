@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package mio.gamification.v1;
+
+service GamificationService {
+  rpc GetUserXp(GetUserXpRequest) returns (UserXpResponse);
+  rpc GetLeaderboard(GetLeaderboardRequest) returns (LeaderboardResponse);
+}
+
+message GetUserXpRequest {
+  string user_code = 1;
+}
+
+message UserXpResponse {
+  int32 total = 1;
+  string level = 2;
+  int32 progress_to_next = 3;     // 0..100
+  int32 xp_to_next_level = 4;
+  int32 rank = 5;                 // posição global (1-based)
+}
+
+message GetLeaderboardRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message LeaderboardEntry {
+  string user_code = 1;
+  string name = 2;
+  string avatar_url = 3;
+  int32 total = 4;
+  int32 rank = 5;
+  string level = 6;
+}
+
+message LeaderboardResponse {
+  repeated LeaderboardEntry entries = 1;
+  int32 total_users = 2;
+}
