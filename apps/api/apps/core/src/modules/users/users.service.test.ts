@@ -334,4 +334,32 @@ describe("UsersService", () => {
       expect(result[1]?.name).toBe("Lucas Troll")
     })
   })
+
+  describe("batchGetUsers", () => {
+    it("retorna array vazio quando codes está vazio", async () => {
+      const result = await service.batchGetUsers([])
+      expect(result).toEqual([])
+      expect(prisma.user.findMany).not.toHaveBeenCalled()
+    })
+
+    it("busca e mapeia múltiplos usuários pelos codes", async () => {
+      prisma.user.findMany.mockResolvedValue([
+        { ...baseUser, code: "code1", name: "User 1" },
+        { ...baseUser, code: "code2", name: "User 2" },
+      ])
+
+      const result = await service.batchGetUsers(["code1", "code2"])
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            code: { in: ["code1", "code2"] },
+          },
+        }),
+      )
+      expect(result).toHaveLength(2)
+      expect(result[0]?.code).toBe("code1")
+      expect(result[1]?.code).toBe("code2")
+    })
+  })
 })
