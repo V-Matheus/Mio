@@ -6,7 +6,9 @@
     "types": ["vitest/globals"],
     "paths": {
       "@mio/events": ["libs/events/src"],
-      "@mio/events/*": ["libs/events/src/*"]
+      "@mio/events/*": ["libs/events/src/*"],
+      "@mio/redis": ["libs/redis/src"],
+      "@mio/redis/*": ["libs/redis/src/*"]
     }
   },
   "include": ["apps/**/*", "libs/**/*", "tests/**/*"],

@@ -14,6 +14,8 @@ CREATE TABLE "OutboxEvent" (
     "routingKey" TEXT NOT NULL,
     "payload" JSONB NOT NULL,
     "headers" JSONB,
+    "retryCount" INTEGER NOT NULL DEFAULT 0,
+    "lastError" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "publishedAt" TIMESTAMP(3),
 
@@ -31,6 +33,9 @@ CREATE UNIQUE INDEX "SectionView_userId_sectionId_key" ON "SectionView"("userId"
 
 -- CreateIndex
 CREATE INDEX "OutboxEvent_publishedAt_idx" ON "OutboxEvent"("publishedAt");
+
+-- CreateIndex
+CREATE INDEX "OutboxEvent_publishedAt_retryCount_idx" ON "OutboxEvent"("publishedAt", "retryCount");
 
 -- AddForeignKey
 ALTER TABLE "SectionView" ADD CONSTRAINT "SectionView_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
