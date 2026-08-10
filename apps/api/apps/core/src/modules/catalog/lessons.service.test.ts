@@ -7,6 +7,7 @@ type PrismaMock = {
   section: { findFirst: ReturnType<typeof vi.fn> }
   enrollment: { findFirst: ReturnType<typeof vi.fn> }
   sectionView: { findMany: ReturnType<typeof vi.fn> }
+  user: { findUnique: ReturnType<typeof vi.fn> }
 }
 
 const dbSections = [
@@ -40,6 +41,7 @@ describe("LessonsService", () => {
       section: { findFirst: vi.fn() },
       enrollment: { findFirst: vi.fn() },
       sectionView: { findMany: vi.fn().mockResolvedValue([]) },
+      user: { findUnique: vi.fn().mockResolvedValue(null) },
     }
     service = new LessonsService(prisma as never)
   })

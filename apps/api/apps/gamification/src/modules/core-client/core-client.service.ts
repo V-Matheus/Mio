@@ -7,7 +7,7 @@ export interface UserResponseDto {
   code: string
   email: string
   name: string
-  avatar_url?: string
+  avatarUrl: string
   roles: string[]
 }
 

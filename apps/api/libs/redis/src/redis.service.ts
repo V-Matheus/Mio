@@ -108,7 +108,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       if (member && scoreStr !== undefined) {
         entries.push({
           member,
-          score: Number.parseInt(scoreStr, 10) || 0,
+          score: Number.parseFloat(scoreStr) || 0,
         })
       }
     }

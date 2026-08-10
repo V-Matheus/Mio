@@ -32,8 +32,8 @@ describe("GamificationGatewayService", () => {
         of({
           total: 550,
           level: "JUNIOR",
-          progress_to_next: 10,
-          xp_to_next_level: 950,
+          progressToNext: 10,
+          xpToNextLevel: 950,
           rank: 3,
         }),
       )
@@ -41,7 +41,7 @@ describe("GamificationGatewayService", () => {
       const result = await service.getUserXp("usr123")
 
       expect(grpcServiceMock.getUserXp).toHaveBeenCalledWith({
-        user_code: "usr123",
+        userCode: "usr123",
       })
       expect(result).toEqual({
         total: 550,
@@ -81,23 +81,23 @@ describe("GamificationGatewayService", () => {
         of({
           entries: [
             {
-              user_code: "usr1",
+              userCode: "usr1",
               name: "Alice",
-              avatar_url: "https://avatar.png",
+              avatarUrl: "https://avatar.png",
               total: 1000,
               rank: 1,
               level: "JUNIOR",
             },
             {
-              user_code: "usr2",
+              userCode: "usr2",
               name: "Bob",
-              avatar_url: "",
+              avatarUrl: "",
               total: 500,
               rank: 2,
               level: "JUNIOR",
             },
           ],
-          total_users: 2,
+          totalUsers: 2,
         }),
       )
 

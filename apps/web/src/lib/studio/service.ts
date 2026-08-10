@@ -46,6 +46,7 @@ export const studioService = {
     try {
       const client = await getGatewayClient(accessToken)
       const data = await client.request(ADMIN_TRACK_QUERY, { slug })
+      console.log("data", data)
       if (!data.adminTrack) return null
       return {
         id: data.adminTrack.id,

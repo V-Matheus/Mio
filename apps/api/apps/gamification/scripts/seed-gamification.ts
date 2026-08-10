@@ -96,8 +96,13 @@ export async function seedDemoUserXp(
   redisClient?: Redis,
 ): Promise<number> {
   let count = 0
+  const baseTime = Date.now() - 3600 * 1000
 
-  for (const demo of DEMO_USERS_XP) {
+  for (let i = 0; i < DEMO_USERS_XP.length; i++) {
+    const demo = DEMO_USERS_XP[i]
+    if (!demo) continue
+    const timestamp = baseTime - i * 60000
+
     await prisma.userXp.upsert({
       where: { userCode: demo.userCode },
       create: {
@@ -121,17 +126,19 @@ export async function seedDemoUserXp(
         amount: demo.total,
         reason: demo.reason,
         sourceId: "seed:initial_xp",
+        createdAt: new Date(timestamp),
       },
       update: {
         amount: demo.total,
         reason: demo.reason,
+        createdAt: new Date(timestamp),
       },
     })
 
     if (redisClient) {
       try {
-        const score = calculateCompositeScore(demo.total)
-        await redisClient.zadd("mio:xp:global", "GT", score, demo.userCode)
+        const score = calculateCompositeScore(demo.total, timestamp)
+        await redisClient.zadd("mio:xp:global", score, demo.userCode)
       } catch {
         // Ignora erro do Redis se não estiver acessível no momento
       }

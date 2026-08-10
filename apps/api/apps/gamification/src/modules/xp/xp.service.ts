@@ -53,17 +53,7 @@ export class XpService {
         return { total: user?.total ?? 0, newlyAwarded: false }
       }
 
-      // 2. Insere a transação de XP
-      await tx.xpTransaction.create({
-        data: {
-          userCode,
-          amount: rewardAmount,
-          reason: "lesson.completed",
-          sourceId,
-        },
-      })
-
-      // 3. Incrementa ou cria o registro do usuário
+      // 2. Incrementa ou cria o registro do usuário
       const userXp = await tx.userXp.upsert({
         where: { userCode },
         create: {
@@ -72,6 +62,16 @@ export class XpService {
         },
         update: {
           total: { increment: rewardAmount },
+        },
+      })
+
+      // 3. Insere a transação de XP vinculada ao UserXp existente
+      await tx.xpTransaction.create({
+        data: {
+          userCode,
+          amount: rewardAmount,
+          reason: "lesson.completed",
+          sourceId,
         },
       })
 

@@ -28,16 +28,22 @@ export abstract class AmqpConsumerService<TPayload = unknown>
     rawMessage: amqp.ConsumeMessage,
   ): Promise<void>
 
+  private reconnectTimer?: NodeJS.Timeout
+
   async onModuleInit(): Promise<void> {
     await this.startConsumer().catch((err) => {
       this.logger.error(
-        `Falha ao iniciar consumidor AMQP na fila ${this.options.queue}: ${(err as Error).message}`,
+        `Falha ao iniciar consumidor AMQP na fila ${this.options.queue}: ${(err as Error).message}. Agendando reconexão...`,
       )
+      this.scheduleReconnect()
     })
   }
 
   async onModuleDestroy(): Promise<void> {
     this.isClosing = true
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer)
+    }
     try {
       if (this.channel) {
         await this.channel.close().catch(() => {})
@@ -48,6 +54,22 @@ export abstract class AmqpConsumerService<TPayload = unknown>
     } catch {
       // Ignora erro de encerramento
     }
+  }
+
+  private scheduleReconnect(delayMs = 5000): void {
+    if (this.isClosing || this.reconnectTimer) return
+    this.reconnectTimer = setTimeout(async () => {
+      this.reconnectTimer = undefined
+      if (this.isClosing) return
+      try {
+        await this.startConsumer()
+      } catch (err) {
+        this.logger.error(
+          `Tentativa de reconexão AMQP falhou na fila ${this.options.queue}: ${(err as Error).message}. Tentando novamente em ${delayMs / 1000}s...`,
+        )
+        this.scheduleReconnect(Math.min(delayMs * 1.5, 30000))
+      }
+    }, delayMs)
   }
 
   /**
@@ -63,11 +85,13 @@ export abstract class AmqpConsumerService<TPayload = unknown>
       this.connection.on("error", (err) => {
         if (!this.isClosing) {
           this.logger.error(`Erro na conexão AMQP: ${err.message}`)
+          this.scheduleReconnect()
         }
       })
       this.connection.on("close", () => {
         if (!this.isClosing) {
-          this.logger.warn("Conexão AMQP fechada")
+          this.logger.warn("Conexão AMQP fechada. Agendando reconexão...")
+          this.scheduleReconnect()
         }
       })
 

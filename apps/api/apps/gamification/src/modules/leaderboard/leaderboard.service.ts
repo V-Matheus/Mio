@@ -1,6 +1,7 @@
 import { RedisService } from "@mio/redis"
-import { Injectable } from "@nestjs/common"
+import { Injectable, type OnModuleInit } from "@nestjs/common"
 import { CoreClientService } from "../core-client/core-client.service"
+import { PrismaService } from "../prisma/prisma.service"
 import { levelFor } from "../xp/level"
 
 export const LEADERBOARD_KEY = "mio:xp:global"
@@ -45,11 +46,59 @@ export interface LeaderboardResultDto {
 }
 
 @Injectable()
-export class LeaderboardService {
+export class LeaderboardService implements OnModuleInit {
   constructor(
     private readonly redis: RedisService,
     private readonly coreClient: CoreClientService,
+    private readonly prisma: PrismaService,
   ) {}
+
+  /**
+   * Na inicialização do módulo, sincroniza o ranking a partir do Postgres/seeds se necessário.
+   */
+  async onModuleInit(): Promise<void> {
+    try {
+      const count = await this.redis.zcard(LEADERBOARD_KEY)
+      const dbCount = await this.prisma.userXp
+        .count({ where: { total: { gt: 0 } } })
+        .catch(() => 0)
+
+      if (count === 0 || count < dbCount) {
+        await this.rebuildFromDatabase()
+      }
+    } catch {
+      // Falha defensiva caso o Redis ainda esteja conectando
+    }
+  }
+
+  /**
+   * Reconstrói o Sorted Set do Redis a partir dos registros de UserXp no Postgres.
+   */
+  async rebuildFromDatabase(): Promise<number> {
+    try {
+      const users = await this.prisma.userXp.findMany({
+        where: { total: { gt: 0 } },
+      })
+
+      if (users.length === 0) return 0
+
+      for (const u of users) {
+        const lastTx = await this.prisma.xpTransaction.findFirst({
+          where: { userCode: u.userCode },
+          orderBy: { createdAt: "desc" },
+          select: { createdAt: true },
+        })
+        const timestamp = lastTx?.createdAt
+          ? new Date(lastTx.createdAt).getTime()
+          : Date.now()
+        await this.updateScore(u.userCode, u.total, timestamp)
+      }
+
+      return users.length
+    } catch {
+      return 0
+    }
+  }
 
   /**
    * Atualiza a pontuação de XP do usuário no Sorted Set do Redis com desempate por tempo.
@@ -65,10 +114,21 @@ export class LeaderboardService {
 
   /**
    * Retorna a posição (rank 1-based) do usuário no ranking global.
-   * Retorna 0 se o usuário não constar no ranking.
+   * Se o usuário não for encontrado no Redis, reconstrói o ranking a partir do Postgres e tenta novamente.
    */
   async getUserRank(userCode: string): Promise<number> {
-    return await this.redis.zrevrank1Based(LEADERBOARD_KEY, userCode)
+    let rank = await this.redis.zrevrank1Based(LEADERBOARD_KEY, userCode)
+
+    if (rank === 0) {
+      try {
+        await this.rebuildFromDatabase()
+        rank = await this.redis.zrevrank1Based(LEADERBOARD_KEY, userCode)
+      } catch {
+        // Retorna 0 defensivamente
+      }
+    }
+
+    return rank
   }
 
   /**
@@ -79,10 +139,29 @@ export class LeaderboardService {
     const safeOffset = Math.max(0, offset)
     const stop = safeOffset + safeLimit - 1
 
-    const [rangeItems, totalUsers] = await Promise.all([
+    let [rangeItems, totalUsers] = await Promise.all([
       this.redis.zrevrangeWithScores(LEADERBOARD_KEY, safeOffset, stop),
       this.redis.zcard(LEADERBOARD_KEY),
     ])
+
+    const dbCount = await this.prisma.userXp
+      .count({ where: { total: { gt: 0 } } })
+      .catch(() => 0)
+
+    // Auto-rebuild se Redis estiver vazio ou desatualizado em relação ao Postgres
+    if (
+      (rangeItems.length === 0 && safeOffset === 0) ||
+      totalUsers < dbCount ||
+      totalUsers === 0
+    ) {
+      const rebuiltCount = await this.rebuildFromDatabase()
+      if (rebuiltCount > 0) {
+        ;[rangeItems, totalUsers] = await Promise.all([
+          this.redis.zrevrangeWithScores(LEADERBOARD_KEY, safeOffset, stop),
+          this.redis.zcard(LEADERBOARD_KEY),
+        ])
+      }
+    }
 
     if (rangeItems.length === 0) {
       return { entries: [], totalUsers }
@@ -90,16 +169,24 @@ export class LeaderboardService {
 
     const userCodes = rangeItems.map((item) => item.member)
     const usersData = await this.coreClient.batchGetUsers(userCodes)
-    const usersMap = new Map(usersData.map((u) => [u.code, u]))
+    const usersMap = new Map(
+      usersData.map((u) => [
+        u.code,
+        {
+          name: u.name,
+          avatarUrl: u.avatarUrl,
+        },
+      ]),
+    )
 
     const entries: LeaderboardEntryDto[] = rangeItems.map((item, idx) => {
-      const user = usersMap.get(item.member)
+      const coreUser = usersMap.get(item.member)
       const exactXp = extractXpFromScore(item.score)
       const levelProg = levelFor(exactXp)
       return {
         userCode: item.member,
-        name: user?.name ?? "Aluno Anônimo",
-        avatarUrl: user?.avatar_url ?? "",
+        name: coreUser?.name ?? "Aluno",
+        avatarUrl: coreUser?.avatarUrl ?? "",
         total: exactXp,
         rank: safeOffset + idx + 1,
         level: levelProg.level,

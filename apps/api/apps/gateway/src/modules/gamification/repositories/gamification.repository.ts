@@ -3,15 +3,15 @@ import type { Observable } from "rxjs"
 export interface UserXpGrpcResponse {
   total: number
   level: string
-  progress_to_next: number
-  xp_to_next_level: number
+  progressToNext: number
+  xpToNextLevel: number
   rank: number
 }
 
 export interface LeaderboardEntryGrpc {
-  user_code: string
+  userCode: string
   name: string
-  avatar_url: string
+  avatarUrl: string
   total: number
   rank: number
   level: string
@@ -19,11 +19,11 @@ export interface LeaderboardEntryGrpc {
 
 export interface LeaderboardGrpcResponse {
   entries: LeaderboardEntryGrpc[]
-  total_users: number
+  totalUsers: number
 }
 
 export interface GamificationServiceClient {
-  getUserXp(data: { user_code: string }): Observable<UserXpGrpcResponse>
+  getUserXp(data: { userCode: string }): Observable<UserXpGrpcResponse>
   getLeaderboard(data: {
     limit: number
     offset: number

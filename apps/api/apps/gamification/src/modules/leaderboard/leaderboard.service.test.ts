@@ -1,6 +1,7 @@
 import type { RedisService } from "@mio/redis"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { CoreClientService } from "../core-client/core-client.service"
+import type { PrismaService } from "../prisma/prisma.service"
 import {
   calculateCompositeScore,
   extractXpFromScore,
@@ -17,6 +18,18 @@ describe("LeaderboardService", () => {
   let coreClientMock: {
     batchGetUsers: ReturnType<typeof vi.fn>
   }
+  let prismaMock: {
+    userXp: {
+      findMany: ReturnType<typeof vi.fn>
+      findUnique: ReturnType<typeof vi.fn>
+      count: ReturnType<typeof vi.fn>
+      upsert: ReturnType<typeof vi.fn>
+    }
+    xpTransaction: {
+      findFirst: ReturnType<typeof vi.fn>
+      upsert: ReturnType<typeof vi.fn>
+    }
+  }
   let service: LeaderboardService
 
   beforeEach(() => {
@@ -29,9 +42,22 @@ describe("LeaderboardService", () => {
     coreClientMock = {
       batchGetUsers: vi.fn().mockResolvedValue([]),
     }
+    prismaMock = {
+      userXp: {
+        findMany: vi.fn().mockResolvedValue([]),
+        findUnique: vi.fn().mockResolvedValue(null),
+        count: vi.fn().mockResolvedValue(0),
+        upsert: vi.fn().mockResolvedValue({}),
+      },
+      xpTransaction: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        upsert: vi.fn().mockResolvedValue({}),
+      },
+    }
     service = new LeaderboardService(
       redisMock as unknown as RedisService,
       coreClientMock as unknown as CoreClientService,
+      prismaMock as unknown as PrismaService,
     )
   })
 
@@ -82,17 +108,48 @@ describe("LeaderboardService", () => {
       expect(rank).toBe(1)
     })
 
-    it("retorna 0 quando usuário não está no ranking", async () => {
+    it("retorna 0 quando usuário não está no ranking e não tem XP no Postgres", async () => {
       redisMock.zrevrank1Based.mockResolvedValue(0)
       const rank = await service.getUserRank("ghost")
       expect(rank).toBe(0)
     })
+
+    it("reconstrói o ranking no Redis a partir do Postgres se não encontrado", async () => {
+      redisMock.zrevrank1Based.mockResolvedValueOnce(0).mockResolvedValueOnce(3)
+      prismaMock.userXp.findMany.mockResolvedValue([
+        { userCode: "usr1", total: 300 },
+      ])
+
+      const rank = await service.getUserRank("usr1")
+
+      expect(rank).toBe(3)
+      expect(prismaMock.userXp.findMany).toHaveBeenCalled()
+      expect(redisMock.zaddGreater).toHaveBeenCalled()
+    })
+  })
+
+  describe("rebuildFromDatabase", () => {
+    it("reconstrói o ranking no Redis a partir do Postgres", async () => {
+      prismaMock.userXp.findMany.mockResolvedValue([
+        { userCode: "u1", total: 500 },
+        { userCode: "u2", total: 1000 },
+      ])
+      prismaMock.xpTransaction.findFirst.mockResolvedValue({
+        createdAt: new Date("2026-05-11T20:00:00Z"),
+      })
+
+      const count = await service.rebuildFromDatabase()
+
+      expect(count).toBe(2)
+      expect(redisMock.zaddGreater).toHaveBeenCalledTimes(2)
+    })
   })
 
   describe("getLeaderboard", () => {
-    it("retorna lista vazia se redis não tiver registros", async () => {
+    it("retorna lista vazia se redis e postgres não tiverem registros", async () => {
       redisMock.zrevrangeWithScores.mockResolvedValue([])
       redisMock.zcard.mockResolvedValue(0)
+      prismaMock.userXp.findMany.mockResolvedValue([])
 
       const result = await service.getLeaderboard(10, 0)
       expect(result.entries).toEqual([])
@@ -111,8 +168,8 @@ describe("LeaderboardService", () => {
       redisMock.zcard.mockResolvedValue(2)
 
       coreClientMock.batchGetUsers.mockResolvedValue([
-        { code: "usr1", name: "Alice", avatar_url: "https://avatar1.png" },
-        { code: "usr2", name: "Bob", avatar_url: "" },
+        { code: "usr1", name: "Alice", avatarUrl: "https://avatar1.png" },
+        { code: "usr2", name: "Bob", avatarUrl: "" },
       ])
 
       const result = await service.getLeaderboard(10, 0)
@@ -150,7 +207,7 @@ describe("LeaderboardService", () => {
       })
     })
 
-    it("aplica nome padrão 'Aluno Anônimo' se usuário não for retornado pelo Core", async () => {
+    it("aplica nome padrão 'Aluno' se usuário não for retornado pelo Core", async () => {
       const score = calculateCompositeScore(50, 1770000000000)
       redisMock.zrevrangeWithScores.mockResolvedValue([
         { member: "usr99", score },
@@ -159,7 +216,7 @@ describe("LeaderboardService", () => {
       coreClientMock.batchGetUsers.mockResolvedValue([])
 
       const result = await service.getLeaderboard(10, 0)
-      expect(result.entries[0]?.name).toBe("Aluno Anônimo")
+      expect(result.entries[0]?.name).toBe("Aluno")
       expect(result.entries[0]?.total).toBe(50)
       expect(result.entries[0]?.level).toBe("LEIGO")
     })

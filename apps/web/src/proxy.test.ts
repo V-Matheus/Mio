@@ -45,6 +45,13 @@ describe("proxy middleware", () => {
     expect(res).toBeUndefined()
   })
 
+  it("should allow STUDENT to access /ranking", async () => {
+    vi.mocked(getToken).mockResolvedValue({ sub: "user-1", roles: ["STUDENT"] })
+    const req = makeRequest("/ranking")
+    const res = await proxy(req)
+    expect(res).toBeUndefined()
+  })
+
   it("should redirect STUDENT trying to access /studio to /home", async () => {
     vi.mocked(getToken).mockResolvedValue({ sub: "user-1", roles: ["STUDENT"] })
     const req = makeRequest("/studio")

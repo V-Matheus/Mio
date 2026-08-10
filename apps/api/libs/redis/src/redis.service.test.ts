@@ -42,12 +42,20 @@ describe("RedisService (shared lib)", () => {
     expect(rank).toBe(0)
   })
 
-  it("zrevrangeWithScores formata pares em lista de objetos", async () => {
+  it("zrevrangeWithScores formata pares em lista de objetos e suporta notacao cientifica", async () => {
+    const client = service.getClient()
+    vi.spyOn(client, "zrevrange").mockResolvedValueOnce([
+      "user-admin",
+      "1.2500821360145954e+4",
+      "user-1",
+      "500.5",
+    ] as never)
+
     const list = await service.zrevrangeWithScores("mio:xp:global", 0, 9)
-    expect(list).toEqual([
-      { member: "user-1", score: 500 },
-      { member: "user-2", score: 300 },
-    ])
+    expect(list[0]?.member).toBe("user-admin")
+    expect(Math.floor(list[0]?.score ?? 0)).toBe(12500)
+    expect(list[1]?.member).toBe("user-1")
+    expect(Math.floor(list[1]?.score ?? 0)).toBe(500)
   })
 
   it("zcard retorna contagem total de membros", async () => {

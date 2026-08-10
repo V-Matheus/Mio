@@ -26,7 +26,7 @@ describe("XpController", () => {
   })
 
   describe("getUserXp", () => {
-    it("delega para XpService e mapeia campos snake_case para o proto", async () => {
+    it("delega para XpService e retorna UserXpResponse tipada", async () => {
       xpServiceMock.getUserXp.mockResolvedValue({
         total: 120,
         level: "INICIANTE",
@@ -35,14 +35,14 @@ describe("XpController", () => {
         rank: 3,
       })
 
-      const res = await controller.getUserXp({ user_code: "usr1" })
+      const res = await controller.getUserXp({ userCode: "usr1" })
 
       expect(xpServiceMock.getUserXp).toHaveBeenCalledWith("usr1")
       expect(res).toEqual({
         total: 120,
         level: "INICIANTE",
-        progress_to_next: 20,
-        xp_to_next_level: 380,
+        progressToNext: 20,
+        xpToNextLevel: 380,
         rank: 3,
       })
     })
@@ -70,15 +70,15 @@ describe("XpController", () => {
       expect(res).toEqual({
         entries: [
           {
-            user_code: "usr1",
+            userCode: "usr1",
             name: "Alice",
-            avatar_url: "https://avatar.png",
+            avatarUrl: "https://avatar.png",
             total: 500,
             rank: 1,
             level: "JUNIOR",
           },
         ],
-        total_users: 1,
+        totalUsers: 1,
       })
     })
   })

@@ -194,12 +194,14 @@ export async function syncContent(
       update: {
         name: demo.name,
         avatarUrl: demo.avatarUrl,
+        passwordHash: adminPasswordHash,
       },
       create: {
         code: demo.code,
         email: demo.email,
         name: demo.name,
         avatarUrl: demo.avatarUrl,
+        passwordHash: adminPasswordHash,
       },
     })
 

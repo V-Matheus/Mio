@@ -7,32 +7,32 @@ import { XpService } from "./xp.service"
 const SERVICE_NAME = gamificationContract.service
 
 export interface GetUserXpRequest {
-  user_code: string
+  userCode: string
 }
 
 export interface UserXpResponse {
   total: number
   level: string
-  progress_to_next: number
-  xp_to_next_level: number
+  progressToNext: number
+  xpToNextLevel: number
   rank: number
 }
 
 export interface GetLeaderboardRequest {
-  limit?: number
-  offset?: number
+  limit: number
+  offset: number
 }
 
 export interface LeaderboardResponse {
   entries: Array<{
-    user_code: string
+    userCode: string
     name: string
-    avatar_url: string
+    avatarUrl: string
     total: number
     rank: number
     level: string
   }>
-  total_users: number
+  totalUsers: number
 }
 
 @Controller()
@@ -44,12 +44,12 @@ export class XpController {
 
   @GrpcMethod(SERVICE_NAME, "GetUserXp")
   async getUserXp(data: GetUserXpRequest): Promise<UserXpResponse> {
-    const detail = await this.xpService.getUserXp(data.user_code)
+    const detail = await this.xpService.getUserXp(data.userCode)
     return {
       total: detail.total,
       level: detail.level,
-      progress_to_next: detail.progressToNext,
-      xp_to_next_level: detail.xpToNextLevel,
+      progressToNext: detail.progressToNext,
+      xpToNextLevel: detail.xpToNextLevel,
       rank: detail.rank,
     }
   }
@@ -65,14 +65,14 @@ export class XpController {
 
     return {
       entries: result.entries.map((entry) => ({
-        user_code: entry.userCode,
+        userCode: entry.userCode,
         name: entry.name,
-        avatar_url: entry.avatarUrl,
+        avatarUrl: entry.avatarUrl,
         total: entry.total,
         rank: entry.rank,
         level: entry.level,
       })),
-      total_users: result.totalUsers,
+      totalUsers: result.totalUsers,
     }
   }
 }

@@ -27,20 +27,18 @@ export class GamificationGatewayService implements OnModuleInit {
 
   async getUserXp(userCode: string): Promise<UserXp> {
     const res = await this.call(
-      this.gamificationService.getUserXp({
-        user_code: userCode,
-      }),
+      this.gamificationService.getUserXp({ userCode }),
     )
 
-    const levelKey = (res.level?.toUpperCase() ?? "LEIGO") as keyof typeof Level
+    const levelKey = res.level.toUpperCase() as keyof typeof Level
     const levelEnum = Level[levelKey] ?? Level.LEIGO
 
     return {
-      total: res.total ?? 0,
+      total: res.total,
       level: levelEnum,
-      progressToNext: res.progress_to_next ?? 0,
-      xpToNextLevel: res.xp_to_next_level ?? 0,
-      rank: res.rank ?? 0,
+      progressToNext: res.progressToNext,
+      xpToNextLevel: res.xpToNextLevel,
+      rank: res.rank,
     }
   }
 
@@ -52,10 +50,10 @@ export class GamificationGatewayService implements OnModuleInit {
       }),
     )
 
-    return (res.entries ?? []).map((entry) => ({
-      userCode: entry.user_code,
+    return res.entries.map((entry) => ({
+      userCode: entry.userCode,
       name: entry.name,
-      avatarUrl: entry.avatar_url || null,
+      avatarUrl: entry.avatarUrl || null,
       total: entry.total,
       rank: entry.rank,
       level: entry.level,
