@@ -1,5 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { getGrpcTimeoutMs } from "./grpc-timeout"
+import { getGrpcTimeoutMs, parsePositiveInteger } from "./grpc-timeout"
+
+describe("parsePositiveInteger", () => {
+  it("aceita apenas números inteiros estritamente positivos", () => {
+    expect(parsePositiveInteger("5000")).toBe(5000)
+    expect(parsePositiveInteger(" 3000 ")).toBe(3000)
+    expect(parsePositiveInteger("1")).toBe(1)
+  })
+
+  it("rejeita valores malformados, decimais, notação científica e unidades", () => {
+    expect(parsePositiveInteger("1e3")).toBeUndefined()
+    expect(parsePositiveInteger("5000ms")).toBeUndefined()
+    expect(parsePositiveInteger("5.5")).toBeUndefined()
+    expect(parsePositiveInteger("0")).toBeUndefined()
+    expect(parsePositiveInteger("-100")).toBeUndefined()
+    expect(parsePositiveInteger("invalid")).toBeUndefined()
+    expect(parsePositiveInteger("")).toBeUndefined()
+    expect(parsePositiveInteger(undefined)).toBeUndefined()
+  })
+})
 
 describe("getGrpcTimeoutMs", () => {
   const originalEnv = process.env
@@ -50,10 +69,60 @@ describe("getGrpcTimeoutMs", () => {
     expect(getGrpcTimeoutMs()).toBe(3500)
   })
 
-  it("ignora valores não numéricos ou <= 0 e retorna o fallback", () => {
-    process.env.GAMIFICATION_GRPC_TIMEOUT_MS = "invalid"
-    process.env.GRPC_TIMEOUT_MS = "-100"
+  it("rejeita valores malformados como '1e3', '5000ms' e '5.5' em todas as posições e retorna o fallback", () => {
+    delete process.env.GATEWAY_GRPC_TIMEOUT_MS
+    delete process.env.GRPC_TIMEOUT_MS
 
+    // Rejeita prefixos em service env var
+    process.env.GAMIFICATION_GRPC_TIMEOUT_MS = "1e3"
     expect(getGrpcTimeoutMs("GAMIFICATION_GRPC_TIMEOUT_MS", 5000)).toBe(5000)
+
+    process.env.GAMIFICATION_GRPC_TIMEOUT_MS = "5000ms"
+    expect(getGrpcTimeoutMs("GAMIFICATION_GRPC_TIMEOUT_MS", 5000)).toBe(5000)
+
+    process.env.GAMIFICATION_GRPC_TIMEOUT_MS = "5.5"
+    expect(getGrpcTimeoutMs("GAMIFICATION_GRPC_TIMEOUT_MS", 5000)).toBe(5000)
+
+    delete process.env.GAMIFICATION_GRPC_TIMEOUT_MS
+
+    // Rejeita prefixos em CORE_GRPC_TIMEOUT_MS
+    process.env.CORE_GRPC_TIMEOUT_MS = "1e3"
+    expect(getGrpcTimeoutMs("AUTH_GRPC_TIMEOUT_MS", 5000)).toBe(5000)
+
+    process.env.CORE_GRPC_TIMEOUT_MS = "5000ms"
+    expect(getGrpcTimeoutMs("AUTH_GRPC_TIMEOUT_MS", 5000)).toBe(5000)
+
+    process.env.CORE_GRPC_TIMEOUT_MS = "5.5"
+    expect(getGrpcTimeoutMs("AUTH_GRPC_TIMEOUT_MS", 5000)).toBe(5000)
+
+    delete process.env.CORE_GRPC_TIMEOUT_MS
+
+    // Rejeita prefixos em GATEWAY_GRPC_TIMEOUT_MS
+    process.env.GATEWAY_GRPC_TIMEOUT_MS = "1e3"
+    expect(getGrpcTimeoutMs(undefined, 5000)).toBe(5000)
+
+    process.env.GATEWAY_GRPC_TIMEOUT_MS = "5000ms"
+    expect(getGrpcTimeoutMs(undefined, 5000)).toBe(5000)
+
+    process.env.GATEWAY_GRPC_TIMEOUT_MS = "5.5"
+    expect(getGrpcTimeoutMs(undefined, 5000)).toBe(5000)
+
+    delete process.env.GATEWAY_GRPC_TIMEOUT_MS
+
+    // Rejeita prefixos em GRPC_TIMEOUT_MS
+    process.env.GRPC_TIMEOUT_MS = "1e3"
+    expect(getGrpcTimeoutMs(undefined, 5000)).toBe(5000)
+
+    process.env.GRPC_TIMEOUT_MS = "5000ms"
+    expect(getGrpcTimeoutMs(undefined, 5000)).toBe(5000)
+
+    process.env.GRPC_TIMEOUT_MS = "5.5"
+    expect(getGrpcTimeoutMs(undefined, 5000)).toBe(5000)
+
+    process.env.GRPC_TIMEOUT_MS = "-100"
+    expect(getGrpcTimeoutMs(undefined, 5000)).toBe(5000)
+
+    process.env.GRPC_TIMEOUT_MS = "invalid"
+    expect(getGrpcTimeoutMs(undefined, 5000)).toBe(5000)
   })
 })

@@ -17,13 +17,22 @@ export interface UsersServiceClient {
   }): Observable<{ users: UserResponseDto[] }>
 }
 
+function parsePositiveInteger(val: string | undefined): number | undefined {
+  if (!val || typeof val !== "string") return undefined
+  const trimmed = val.trim()
+  if (!/^\d+$/.test(trimmed)) return undefined
+  const num = Number(trimmed)
+  if (Number.isSafeInteger(num) && num > 0) {
+    return num
+  }
+  return undefined
+}
+
 export function getCoreGrpcTimeoutMs(): number {
   const envVal = process.env.CORE_GRPC_TIMEOUT_MS || process.env.GRPC_TIMEOUT_MS
-  if (envVal) {
-    const parsed = Number.parseInt(envVal, 10)
-    if (!Number.isNaN(parsed) && parsed > 0) {
-      return parsed
-    }
+  const parsed = parsePositiveInteger(envVal)
+  if (parsed !== undefined) {
+    return parsed
   }
   return 3000
 }

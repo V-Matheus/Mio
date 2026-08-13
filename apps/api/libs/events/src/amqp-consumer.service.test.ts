@@ -146,13 +146,14 @@ describe("AmqpConsumerService", () => {
     expect(mockChannel.ack).not.toHaveBeenCalled()
   })
 
-  it("faz nack com requeue (requeue: true) se o handleMessage falhar e nenhuma DLX estiver configurada", async () => {
-    consumer.shouldFail = true
-    await consumer.startConsumer()
+  it("republica com cabeçalho de retry incrementado mesmo sem DLX configurada", async () => {
+    const noDlxConsumer = new TestConsumer({ maxRetries: 3 })
+    noDlxConsumer.shouldFail = true
+    await noDlxConsumer.startConsumer()
 
     const consumeCallback = mockChannel.consume.mock.calls[0]?.[1]
     expect(consumeCallback).toBeDefined()
-    const fakeMsg: ConsumeMessage = {
+    const fakeMsg = {
       content: Buffer.from(JSON.stringify({ count: 1 })),
       fields: { routingKey: "test.event" },
       properties: { headers: {} },
@@ -160,8 +161,37 @@ describe("AmqpConsumerService", () => {
 
     await consumeCallback?.(fakeMsg)
 
-    expect(mockChannel.nack).toHaveBeenCalledWith(fakeMsg, false, true)
-    expect(mockChannel.ack).not.toHaveBeenCalled()
+    // Tentativa 1 de 3 falhou: deve republicar com x-retry-count: 1 e dar ack na mensagem original
+    expect(mockChannel.publish).toHaveBeenCalledWith(
+      "mio.events",
+      "test.event",
+      fakeMsg.content,
+      expect.objectContaining({
+        headers: { "x-retry-count": 1 },
+      }),
+    )
+    expect(mockChannel.ack).toHaveBeenCalledWith(fakeMsg)
+    expect(mockChannel.nack).not.toHaveBeenCalled()
+  })
+
+  it("interrompe reenfileiramento (nack false, false) quando maxRetries for atingido sem DLX configurada", async () => {
+    const noDlxConsumer = new TestConsumer({ maxRetries: 3 })
+    noDlxConsumer.shouldFail = true
+    await noDlxConsumer.startConsumer()
+
+    const consumeCallback = mockChannel.consume.mock.calls[0]?.[1]
+    expect(consumeCallback).toBeDefined()
+    const fakeMsg = {
+      content: Buffer.from(JSON.stringify({ count: 1 })),
+      fields: { routingKey: "test.event" },
+      properties: { headers: { "x-retry-count": 2 } },
+    } as unknown as ConsumeMessage
+
+    await consumeCallback?.(fakeMsg)
+
+    // Tentativa 3 de 3 falhou: deve interromper reenfileiramento descartando mensagem com nack(..., false, false)
+    expect(mockChannel.nack).toHaveBeenCalledWith(fakeMsg, false, false)
+    expect(mockChannel.publish).not.toHaveBeenCalled()
   })
 
   it("republica com cabeçalho de retry incrementado em caso de falha recuperável com DLX configurada", async () => {
@@ -174,7 +204,7 @@ describe("AmqpConsumerService", () => {
 
     const consumeCallback = mockChannel.consume.mock.calls[0]?.[1]
     expect(consumeCallback).toBeDefined()
-    const fakeMsg: ConsumeMessage = {
+    const fakeMsg = {
       content: Buffer.from(JSON.stringify({ count: 1 })),
       fields: { routingKey: "test.event" },
       properties: { headers: { "x-retry-count": 1 } },
@@ -205,7 +235,7 @@ describe("AmqpConsumerService", () => {
 
     const consumeCallback = mockChannel.consume.mock.calls[0]?.[1]
     expect(consumeCallback).toBeDefined()
-    const fakeMsg: ConsumeMessage = {
+    const fakeMsg = {
       content: Buffer.from(JSON.stringify({ count: 1 })),
       fields: { routingKey: "test.event" },
       properties: { headers: { "x-retry-count": 2 } },

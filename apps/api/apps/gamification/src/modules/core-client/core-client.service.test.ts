@@ -84,4 +84,18 @@ describe("CoreClientService", () => {
     process.env.GRPC_TIMEOUT_MS = "6000"
     expect(getCoreGrpcTimeoutMs()).toBe(6000)
   })
+
+  it("getCoreGrpcTimeoutMs rejeita valores malformados (1e3, 5000ms, 5.5, negativos)", () => {
+    process.env.CORE_GRPC_TIMEOUT_MS = "1e3"
+    expect(getCoreGrpcTimeoutMs()).toBe(3000)
+
+    process.env.CORE_GRPC_TIMEOUT_MS = "5000ms"
+    expect(getCoreGrpcTimeoutMs()).toBe(3000)
+
+    process.env.CORE_GRPC_TIMEOUT_MS = "5.5"
+    expect(getCoreGrpcTimeoutMs()).toBe(3000)
+
+    process.env.CORE_GRPC_TIMEOUT_MS = "-100"
+    expect(getCoreGrpcTimeoutMs()).toBe(3000)
+  })
 })

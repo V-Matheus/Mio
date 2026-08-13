@@ -8,13 +8,21 @@ import {
   LESSON_COMPLETED_QUEUE,
   LESSON_COMPLETED_ROUTING_KEY,
   LessonCompletedConsumer,
+  type LessonCompletedMessagePayload,
 } from "./lesson-completed.consumer"
+
+type ConsumerInternals = {
+  options: Record<string, unknown>
+  logger: { warn: (msg: string) => void }
+  processMessage: (channel: unknown, msg: unknown) => Promise<void>
+}
 
 describe("LessonCompletedConsumer", () => {
   let xpServiceMock: {
     rewardLessonCompleted: ReturnType<typeof vi.fn>
   }
   let consumer: LessonCompletedConsumer
+  let internals: ConsumerInternals
 
   beforeEach(() => {
     xpServiceMock = {
@@ -25,12 +33,11 @@ describe("LessonCompletedConsumer", () => {
     consumer = new LessonCompletedConsumer(
       xpServiceMock as unknown as XpService,
     )
+    internals = consumer as unknown as ConsumerInternals
   })
 
   it("possui configuração correta de fila, DLX, DLQ e maxRetries", () => {
-    const options = (
-      consumer as unknown as { options: Record<string, unknown> }
-    ).options
+    const options = internals.options
 
     expect(options.queue).toBe(LESSON_COMPLETED_QUEUE)
     expect(options.routingKey).toBe(LESSON_COMPLETED_ROUTING_KEY)
@@ -41,7 +48,7 @@ describe("LessonCompletedConsumer", () => {
   })
 
   it("processa mensagem válida e chama rewardLessonCompleted", async () => {
-    const payload = {
+    const payload: LessonCompletedMessagePayload = {
       userCode: "usr123",
       lessonId: "42",
       trackSlug: "front-end",
@@ -56,7 +63,7 @@ describe("LessonCompletedConsumer", () => {
   })
 
   it("descarta payload sem userCode ou lessonId sem chamar rewardLessonCompleted", async () => {
-    const payload = {
+    const payload: LessonCompletedMessagePayload = {
       userCode: "",
       lessonId: "",
     }
@@ -68,19 +75,15 @@ describe("LessonCompletedConsumer", () => {
 
   it("registra aviso de rejeição com motivo fixo e metadados sem vazar o payload bruto ou userCode", async () => {
     const warnSpy = vi
-      .spyOn(
-        (consumer as unknown as { logger: { warn: (msg: string) => void } })
-          .logger,
-        "warn",
-      )
+      .spyOn(internals.logger, "warn")
       .mockImplementation(() => {})
     const payload = {
       userCode: "secret-user-123",
       lessonId: "",
       unvalidatedSecretData: "confidential",
-    } as unknown as { userCode: string; lessonId: string }
+    }
 
-    await consumer.handleMessage(payload)
+    await consumer.handleMessage(payload as LessonCompletedMessagePayload)
 
     expect(xpServiceMock.rewardLessonCompleted).not.toHaveBeenCalled()
     expect(warnSpy).toHaveBeenCalled()
@@ -98,7 +101,7 @@ describe("LessonCompletedConsumer", () => {
       new Error("Database connection lost"),
     )
 
-    const payload = {
+    const payload: LessonCompletedMessagePayload = {
       userCode: "usr123",
       lessonId: "42",
     }
@@ -119,7 +122,7 @@ describe("LessonCompletedConsumer", () => {
       nack: vi.fn(),
     }
 
-    const fakeMsg: ConsumeMessage = {
+    const fakeMsg = {
       content: Buffer.from(
         JSON.stringify({ userCode: "usr123", lessonId: "42" }),
       ),
@@ -127,11 +130,7 @@ describe("LessonCompletedConsumer", () => {
       properties: { headers: {} },
     } as unknown as ConsumeMessage
 
-    await (
-      consumer as unknown as {
-        processMessage: (ch: unknown, msg: unknown) => Promise<void>
-      }
-    ).processMessage(mockChannel, fakeMsg)
+    await internals.processMessage(mockChannel, fakeMsg)
 
     expect(mockChannel.publish).toHaveBeenCalledWith(
       "mio.events",
@@ -156,7 +155,7 @@ describe("LessonCompletedConsumer", () => {
       nack: vi.fn(),
     }
 
-    const fakeMsg: ConsumeMessage = {
+    const fakeMsg = {
       content: Buffer.from(
         JSON.stringify({ userCode: "usr123", lessonId: "42" }),
       ),
@@ -164,11 +163,7 @@ describe("LessonCompletedConsumer", () => {
       properties: { headers: { "x-retry-count": 2 } },
     } as unknown as ConsumeMessage
 
-    await (
-      consumer as unknown as {
-        processMessage: (ch: unknown, msg: unknown) => Promise<void>
-      }
-    ).processMessage(mockChannel, fakeMsg)
+    await internals.processMessage(mockChannel, fakeMsg)
 
     // Tentativa 3 de 3 -> nack(..., false, false) enviando para a DLQ
     expect(mockChannel.nack).toHaveBeenCalledWith(fakeMsg, false, false)

@@ -220,22 +220,18 @@ export abstract class AmqpConsumerService<TPayload = unknown>
 
       try {
         if (nextRetryCount < maxRetries) {
-          if (this.options.deadLetterExchange) {
-            const exchange = this.options.exchange || "mio.events"
-            const routingKey = msg.fields?.routingKey || this.options.routingKey
-            const headers = {
-              ...(msg.properties?.headers || {}),
-              "x-retry-count": nextRetryCount,
-            }
-
-            channel.publish(exchange, routingKey, msg.content, {
-              ...(msg.properties || {}),
-              headers,
-            })
-            channel.ack(msg)
-          } else {
-            channel.nack(msg, false, true)
+          const exchange = this.options.exchange || "mio.events"
+          const routingKey = msg.fields?.routingKey || this.options.routingKey
+          const headers = {
+            ...(msg.properties?.headers || {}),
+            "x-retry-count": nextRetryCount,
           }
+
+          channel.publish(exchange, routingKey, msg.content, {
+            ...(msg.properties || {}),
+            headers,
+          })
+          channel.ack(msg)
         } else {
           this.logger.error(
             `Mensagem excedeu limite de ${maxRetries} tentativas na fila ${this.options.queue}. Encaminhando para DLQ / descarte definitivo.`,
@@ -254,6 +250,10 @@ export abstract class AmqpConsumerService<TPayload = unknown>
     const headers = msg.properties?.headers || {}
     if (typeof headers["x-retry-count"] === "number") {
       return headers["x-retry-count"]
+    }
+    if (typeof headers["x-retry-count"] === "string") {
+      const parsed = Number.parseInt(headers["x-retry-count"], 10)
+      if (!Number.isNaN(parsed)) return parsed
     }
     if (Array.isArray(headers["x-death"]) && headers["x-death"].length > 0) {
       const deathRecord = headers["x-death"][0]
