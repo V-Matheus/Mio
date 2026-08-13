@@ -1,8 +1,7 @@
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 import { JwtService } from "@nestjs/jwt"
 import type { ClientGrpc } from "@nestjs/microservices"
-import { GraphQLError } from "graphql"
-import { firstValueFrom, type Observable } from "rxjs"
+import { GrpcCaller } from "../../grpc/grpc-caller"
 import { USERS_PACKAGE_TOKEN } from "../../grpc/registry"
 import type { LoginInput } from "./dto/login.input"
 import type { RegisterInput } from "./dto/register.input"
@@ -25,6 +24,14 @@ const ERROR_MESSAGES: Record<string, string> = {
 @Injectable()
 export class AuthService implements OnModuleInit {
   private usersService!: UsersServiceClient
+  private readonly caller = new GrpcCaller({
+    serviceEnvVar: "AUTH_GRPC_TIMEOUT_MS",
+    errorMap: ERROR_MESSAGES,
+    defaultErrorMessage: "Erro interno",
+    timeoutCode: "UNAVAILABLE",
+    timeoutMessage:
+      "Serviço de autenticação indisponível (tempo limite excedido)",
+  })
 
   constructor(
     @Inject(USERS_PACKAGE_TOKEN) private readonly client: ClientGrpc,
@@ -37,17 +44,19 @@ export class AuthService implements OnModuleInit {
   }
 
   async register(input: RegisterInput): Promise<AuthPayload> {
-    const user = await this.call(this.usersService.register(input))
+    const user = await this.caller.call(this.usersService.register(input))
     return this.toAuthPayload(user)
   }
 
   async login(input: LoginInput): Promise<AuthPayload> {
-    const user = await this.call(this.usersService.validateCredentials(input))
+    const user = await this.caller.call(
+      this.usersService.validateCredentials(input),
+    )
     return this.toAuthPayload(user)
   }
 
   async upsertOAuthUser(input: UpsertOAuthInput): Promise<AuthPayload> {
-    const user = await this.call(
+    const user = await this.caller.call(
       this.usersService.upsertOAuthUser({
         provider: input.provider,
         providerAccountId: input.providerAccountId,
@@ -60,33 +69,33 @@ export class AuthService implements OnModuleInit {
   }
 
   async requestPasswordReset(email: string): Promise<boolean> {
-    await this.call(this.usersService.issuePasswordReset({ email }))
+    await this.caller.call(this.usersService.issuePasswordReset({ email }))
     return true
   }
 
   async resetPassword(token: string, newPassword: string): Promise<boolean> {
-    await this.call(
+    await this.caller.call(
       this.usersService.consumePasswordReset({ token, newPassword }),
     )
     return true
   }
 
   async me(userCode: string): Promise<User> {
-    const user = await this.call(
+    const user = await this.caller.call(
       this.usersService.findByCode({ code: userCode }),
     )
     return toUser(user)
   }
 
   async listUsers(search?: string): Promise<User[]> {
-    const { users } = await this.call(
+    const { users } = await this.caller.call(
       this.usersService.listUsers({ search: search ?? "" }),
     )
     return users.map(toUser)
   }
 
   async updateUserRole(code: string, role: string): Promise<User> {
-    const user = await this.call(
+    const user = await this.caller.call(
       this.usersService.updateUserRole({ code, role }),
     )
     return toUser(user)
@@ -101,14 +110,6 @@ export class AuthService implements OnModuleInit {
       user: toUser(user),
     }
   }
-
-  private async call<T>(source: Observable<T>): Promise<T> {
-    try {
-      return await firstValueFrom(source)
-    } catch (error) {
-      throw mapGrpcError(error)
-    }
-  }
 }
 
 function toUser(user: GrpcUserResponse): User {
@@ -119,12 +120,4 @@ function toUser(user: GrpcUserResponse): User {
     avatarUrl: user.avatarUrl || null,
     roles: user.roles || [],
   }
-}
-
-function mapGrpcError(error: unknown): GraphQLError {
-  const details = (error as { details?: string })?.details
-  const code = details && details in ERROR_MESSAGES ? details : "INTERNAL_ERROR"
-  return new GraphQLError(ERROR_MESSAGES[code] ?? "Erro interno", {
-    extensions: { code },
-  })
 }

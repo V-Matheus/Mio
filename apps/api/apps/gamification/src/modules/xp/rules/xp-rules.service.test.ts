@@ -47,6 +47,16 @@ describe("XpRulesService", () => {
       const amount = await service.getAmount("UNKNOWN_REASON")
       expect(amount).toBe(0)
     })
+
+    it("propaga falha do banco de dados sem recorrer ao valor padrão", async () => {
+      prismaMock.xpRule.findUnique.mockRejectedValue(
+        new Error("Database connection timeout"),
+      )
+
+      await expect(
+        service.getAmount(XpRuleKey.LESSON_COMPLETED),
+      ).rejects.toThrow("Database connection timeout")
+    })
   })
 
   describe("setAmount", () => {

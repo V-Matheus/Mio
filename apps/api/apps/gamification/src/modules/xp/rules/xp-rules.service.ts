@@ -72,18 +72,15 @@ export class XpRulesService implements OnModuleInit {
 
   /**
    * Obtém a quantidade de XP configurada para uma fonte/regra específica.
-   * Se não encontrada no banco, recorre ao valor padrão estático.
+   * Se não encontrada no banco (null), recorre ao valor padrão estático.
+   * Falhas de banco de dados são propagadas para permitir políticas de repetição.
    */
   async getAmount(key: string): Promise<number> {
-    try {
-      const rule = await this.prisma.xpRule.findUnique({
-        where: { key },
-      })
-      if (rule) {
-        return rule.amount
-      }
-    } catch {
-      // fallback em caso de erro temporário de banco
+    const rule = await this.prisma.xpRule.findUnique({
+      where: { key },
+    })
+    if (rule) {
+      return rule.amount
     }
 
     const defaultRule = DEFAULT_XP_RULES[key as XpRuleKey]

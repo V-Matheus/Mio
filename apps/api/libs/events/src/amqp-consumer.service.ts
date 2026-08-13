@@ -6,6 +6,11 @@ export type AmqpConsumerOptions = {
   routingKey: string
   exchange?: string
   exchangeType?: string
+  deadLetterExchange?: string
+  deadLetterRoutingKey?: string
+  deadLetterQueue?: string
+  maxRetries?: number
+  requeueOnFailure?: boolean
 }
 
 export abstract class AmqpConsumerService<TPayload = unknown>
@@ -81,6 +86,15 @@ export abstract class AmqpConsumerService<TPayload = unknown>
     const exchangeType = this.options.exchangeType || "topic"
 
     try {
+      if (this.channel) {
+        await this.channel.close().catch(() => {})
+        this.channel = undefined
+      }
+      if (this.connection) {
+        await this.connection.close().catch(() => {})
+        this.connection = undefined
+      }
+
       this.connection = await amqp.connect(url)
       this.connection.on("error", (err) => {
         if (!this.isClosing) {
@@ -95,22 +109,59 @@ export abstract class AmqpConsumerService<TPayload = unknown>
         }
       })
 
-      this.channel = await this.connection.createChannel()
-      await this.channel.assertExchange(exchange, exchangeType, {
+      const channel = await this.connection.createChannel()
+      this.channel = channel
+
+      await channel.assertExchange(exchange, exchangeType, {
         durable: true,
       })
-      await this.channel.assertQueue(this.options.queue, { durable: true })
-      await this.channel.bindQueue(
+
+      if (this.options.deadLetterExchange) {
+        await channel.assertExchange(
+          this.options.deadLetterExchange,
+          this.options.exchangeType || "topic",
+          { durable: true },
+        )
+
+        if (this.options.deadLetterQueue) {
+          await channel.assertQueue(this.options.deadLetterQueue, {
+            durable: true,
+          })
+          const dlRoutingKey =
+            this.options.deadLetterRoutingKey || `${this.options.queue}.dead`
+          await channel.bindQueue(
+            this.options.deadLetterQueue,
+            this.options.deadLetterExchange,
+            dlRoutingKey,
+          )
+        }
+      }
+
+      const queueOptions: amqp.Options.AssertQueue = {
+        durable: true,
+        ...(this.options.deadLetterExchange
+          ? {
+              deadLetterExchange: this.options.deadLetterExchange,
+              deadLetterRoutingKey:
+                this.options.deadLetterRoutingKey ||
+                `${this.options.queue}.dead`,
+            }
+          : {}),
+      }
+
+      await channel.assertQueue(this.options.queue, queueOptions)
+      await channel.bindQueue(
         this.options.queue,
         exchange,
         this.options.routingKey,
       )
 
-      await this.channel.consume(
+      // Vincula a liquidação (ack/nack) à instância do canal capturada antes do consume
+      await channel.consume(
         this.options.queue,
         async (msg) => {
           if (!msg) return
-          await this.processMessage(msg)
+          await this.processMessage(channel, msg)
         },
         { noAck: false },
       )
@@ -126,26 +177,90 @@ export abstract class AmqpConsumerService<TPayload = unknown>
     }
   }
 
-  private async processMessage(msg: amqp.ConsumeMessage): Promise<void> {
+  private async processMessage(
+    channel: amqp.Channel,
+    msg: amqp.ConsumeMessage,
+  ): Promise<void> {
     let payload: TPayload
     try {
       payload = JSON.parse(msg.content.toString()) as TPayload
     } catch (err) {
       this.logger.warn(
-        `Mensagem descartada por falha no parse JSON: ${(err as Error).message}`,
+        `Mensagem descartada por falha no parse JSON (malformada): ${(err as Error).message}`,
       )
-      this.channel?.nack(msg, false, false)
+      try {
+        // Mensagens malformadas não devem ser reenfileiradas (requeue = false)
+        channel.nack(msg, false, false)
+      } catch (nackErr) {
+        this.logger.warn(
+          `Falha ao executar nack de payload malformado: ${(nackErr as Error).message}`,
+        )
+      }
       return
     }
 
     try {
       await this.handleMessage(payload, msg)
-      this.channel?.ack(msg)
+      try {
+        channel.ack(msg)
+      } catch (ackErr) {
+        this.logger.warn(
+          `Falha ao confirmar (ack) mensagem na fila ${this.options.queue}: ${(ackErr as Error).message}`,
+        )
+      }
     } catch (err) {
+      const errorMessage = (err as Error).message || String(err)
+      const maxRetries = this.options.maxRetries ?? 3
+      const currentRetries = this.extractRetryCount(msg)
+      const nextRetryCount = currentRetries + 1
+
       this.logger.error(
-        `Erro ao processar mensagem na fila ${this.options.queue}: ${(err as Error).message}`,
+        `Erro ao processar mensagem na fila ${this.options.queue} (tentativa ${nextRetryCount}/${maxRetries}): ${errorMessage}`,
       )
-      this.channel?.nack(msg, false, false)
+
+      try {
+        if (nextRetryCount < maxRetries) {
+          if (this.options.deadLetterExchange) {
+            const exchange = this.options.exchange || "mio.events"
+            const routingKey = msg.fields?.routingKey || this.options.routingKey
+            const headers = {
+              ...(msg.properties?.headers || {}),
+              "x-retry-count": nextRetryCount,
+            }
+
+            channel.publish(exchange, routingKey, msg.content, {
+              ...(msg.properties || {}),
+              headers,
+            })
+            channel.ack(msg)
+          } else {
+            channel.nack(msg, false, true)
+          }
+        } else {
+          this.logger.error(
+            `Mensagem excedeu limite de ${maxRetries} tentativas na fila ${this.options.queue}. Encaminhando para DLQ / descarte definitivo.`,
+          )
+          channel.nack(msg, false, false)
+        }
+      } catch (settleErr) {
+        this.logger.warn(
+          `Falha ao liquidar mensagem na fila ${this.options.queue}: ${(settleErr as Error).message}`,
+        )
+      }
     }
+  }
+
+  private extractRetryCount(msg: amqp.ConsumeMessage): number {
+    const headers = msg.properties?.headers || {}
+    if (typeof headers["x-retry-count"] === "number") {
+      return headers["x-retry-count"]
+    }
+    if (Array.isArray(headers["x-death"]) && headers["x-death"].length > 0) {
+      const deathRecord = headers["x-death"][0]
+      if (typeof deathRecord?.count === "number") {
+        return deathRecord.count
+      }
+    }
+    return 0
   }
 }

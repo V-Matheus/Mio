@@ -1,7 +1,6 @@
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 import type { ClientGrpc } from "@nestjs/microservices"
-import { GraphQLError } from "graphql"
-import { firstValueFrom, type Observable } from "rxjs"
+import { GrpcCaller } from "../../grpc/grpc-caller"
 import { GAMIFICATION_PACKAGE_TOKEN } from "../../grpc/registry"
 import { type LeaderboardEntry, Level, type UserXp } from "./gamification.types"
 import type { GamificationServiceClient } from "./repositories/gamification.repository"
@@ -15,6 +14,13 @@ const ERROR_MESSAGES: Record<string, string> = {
 @Injectable()
 export class GamificationGatewayService implements OnModuleInit {
   private gamificationService!: GamificationServiceClient
+  private readonly caller = new GrpcCaller({
+    serviceEnvVar: "GAMIFICATION_GRPC_TIMEOUT_MS",
+    errorMap: ERROR_MESSAGES,
+    defaultErrorMessage: "Erro ao consultar gamificação",
+    timeoutCode: "LEADERBOARD_UNAVAILABLE",
+    timeoutMessage: "Ranking indisponível no momento (tempo limite excedido)",
+  })
 
   constructor(
     @Inject(GAMIFICATION_PACKAGE_TOKEN) private readonly client: ClientGrpc,
@@ -26,7 +32,7 @@ export class GamificationGatewayService implements OnModuleInit {
   }
 
   async getUserXp(userCode: string): Promise<UserXp> {
-    const res = await this.call(
+    const res = await this.caller.call(
       this.gamificationService.getUserXp({ userCode }),
     )
 
@@ -43,7 +49,7 @@ export class GamificationGatewayService implements OnModuleInit {
   }
 
   async getLeaderboard(limit = 50, offset = 0): Promise<LeaderboardEntry[]> {
-    const res = await this.call(
+    const res = await this.caller.call(
       this.gamificationService.getLeaderboard({
         limit,
         offset,
@@ -59,23 +65,4 @@ export class GamificationGatewayService implements OnModuleInit {
       level: entry.level,
     }))
   }
-
-  private async call<T>(source: Observable<T>): Promise<T> {
-    try {
-      return await firstValueFrom(source)
-    } catch (error) {
-      throw mapGrpcError(error)
-    }
-  }
-}
-
-function mapGrpcError(error: unknown): GraphQLError {
-  const details = (error as { details?: string })?.details
-  const code = details && details in ERROR_MESSAGES ? details : "INTERNAL_ERROR"
-  return new GraphQLError(
-    ERROR_MESSAGES[code] ?? "Erro ao consultar gamificação",
-    {
-      extensions: { code },
-    },
-  )
 }

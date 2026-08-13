@@ -97,7 +97,7 @@ describe("XpService", () => {
       expect(leaderboardMock.updateScore).toHaveBeenCalledWith("usr1", 50)
     })
 
-    it("idempotência: não duplica XP se transação para a mesma aula já existir", async () => {
+    it("idempotência: não duplica XP se transação para a mesma aula já existir, mas sincroniza/repara o Redis", async () => {
       prismaMock.xpTransaction.findUnique.mockResolvedValue({ id: 10n })
       prismaMock.userXp.findUnique.mockResolvedValue({
         userCode: "usr1",
@@ -110,7 +110,40 @@ describe("XpService", () => {
       expect(prismaMock.xpTransaction.create).not.toHaveBeenCalled()
       expect(prismaMock.userXp.upsert).not.toHaveBeenCalled()
       expect(eventsMock.xpRewarded).not.toHaveBeenCalled()
-      expect(leaderboardMock.updateScore).not.toHaveBeenCalled()
+      expect(leaderboardMock.updateScore).toHaveBeenCalledWith("usr1", 100)
+    })
+
+    it("repara o Redis quando uma entrega anterior falha na sincronização e é reentregue", async () => {
+      // 1ª Entrega: banco comita com sucesso, mas a sincronização com o Redis falha
+      prismaMock.xpTransaction.findUnique.mockResolvedValueOnce(null)
+      prismaMock.userXp.upsert.mockResolvedValueOnce({
+        userCode: "usr1",
+        total: 50,
+      })
+      leaderboardMock.updateScore.mockRejectedValueOnce(
+        new Error("Redis connection failure"),
+      )
+
+      await expect(service.rewardLessonCompleted("usr1", 42)).rejects.toThrow(
+        "Redis connection failure",
+      )
+
+      expect(prismaMock.xpTransaction.create).toHaveBeenCalledTimes(1)
+      prismaMock.xpTransaction.create.mockClear()
+
+      // 2ª Entrega (retry/redelivery): transação já existe no banco, agora sincroniza o Redis com sucesso
+      prismaMock.xpTransaction.findUnique.mockResolvedValueOnce({ id: 10n })
+      prismaMock.userXp.findUnique.mockResolvedValueOnce({
+        userCode: "usr1",
+        total: 50,
+      })
+      leaderboardMock.updateScore.mockResolvedValueOnce(undefined)
+
+      const redeliveryResult = await service.rewardLessonCompleted("usr1", 42)
+
+      expect(redeliveryResult).toEqual({ total: 50, newlyAwarded: false })
+      expect(prismaMock.xpTransaction.create).not.toHaveBeenCalled()
+      expect(leaderboardMock.updateScore).toHaveBeenLastCalledWith("usr1", 50)
     })
   })
 

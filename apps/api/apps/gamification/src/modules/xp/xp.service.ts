@@ -93,8 +93,8 @@ export class XpService {
       return { total: userXp.total, newlyAwarded: true }
     })
 
-    // Atualiza o Sorted Set no Redis fora da transação
-    if (result.newlyAwarded) {
+    // Atualiza/repara o Sorted Set no Redis fora da transação
+    if (result.total > 0) {
       await this.leaderboard.updateScore(userCode, result.total)
     }
 

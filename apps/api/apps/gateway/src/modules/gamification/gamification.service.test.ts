@@ -73,6 +73,21 @@ describe("GamificationGatewayService", () => {
         extensions: { code: "INTERNAL_ERROR" },
       })
     })
+
+    it("lança LEADERBOARD_UNAVAILABLE quando a chamada excede o tempo limite", async () => {
+      grpcServiceMock.getUserXp.mockReturnValue(
+        throwError(() => {
+          const err = new Error("Timeout")
+          err.name = "TimeoutError"
+          return err
+        }),
+      )
+
+      await expect(service.getUserXp("usr123")).rejects.toMatchObject({
+        message: "Ranking indisponível no momento (tempo limite excedido)",
+        extensions: { code: "LEADERBOARD_UNAVAILABLE" },
+      })
+    })
   })
 
   describe("getLeaderboard", () => {
@@ -123,6 +138,21 @@ describe("GamificationGatewayService", () => {
         total: 500,
         rank: 2,
         level: "JUNIOR",
+      })
+    })
+
+    it("lança erro amigável quando getLeaderboard excede o tempo limite", async () => {
+      grpcServiceMock.getLeaderboard.mockReturnValue(
+        throwError(() => {
+          const err = new Error("Timeout")
+          err.name = "TimeoutError"
+          return err
+        }),
+      )
+
+      await expect(service.getLeaderboard(10, 0)).rejects.toMatchObject({
+        message: "Ranking indisponível no momento (tempo limite excedido)",
+        extensions: { code: "LEADERBOARD_UNAVAILABLE" },
       })
     })
   })

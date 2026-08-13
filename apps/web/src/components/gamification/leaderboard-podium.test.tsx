@@ -42,6 +42,25 @@ describe("LeaderboardPodium", () => {
     expect(screen.getByText("3º Lugar")).toBeInTheDocument()
   })
 
+  it("renderiza os elementos na ordem natural de classificação no DOM (1º, 2º e 3º)", () => {
+    const { container } = render(<LeaderboardPodium entries={mockEntries} />)
+
+    const podiumCards = container.querySelectorAll(".grid > div")
+    expect(podiumCards).toHaveLength(3)
+
+    // O 1º elemento no DOM deve ser o 1º colocado (Ana Silva)
+    expect(podiumCards[0]).toHaveTextContent("Ana Silva")
+    expect(podiumCards[0]).toHaveTextContent("Campeão Global")
+
+    // O 2º elemento no DOM deve ser o 2º colocado (Carlos Eduardo)
+    expect(podiumCards[1]).toHaveTextContent("Carlos Eduardo")
+    expect(podiumCards[1]).toHaveTextContent("2º Lugar")
+
+    // O 3º elemento no DOM deve ser o 3º colocado (Beatriz Costa)
+    expect(podiumCards[2]).toHaveTextContent("Beatriz Costa")
+    expect(podiumCards[2]).toHaveTextContent("3º Lugar")
+  })
+
   it("não renderiza nada se lista for vazia", () => {
     const { container } = render(<LeaderboardPodium entries={[]} />)
     expect(container.firstChild).toBeNull()

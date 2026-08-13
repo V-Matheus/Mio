@@ -35,6 +35,9 @@ export default async function RankingPage() {
       {/* Card do Usuário Logado */}
       {myXp && (
         <section aria-labelledby="meu-desempenho">
+          <h2 id="meu-desempenho" className="sr-only">
+            Meu Desempenho
+          </h2>
           <XpProgressCard xp={myXp} userName={user.name ?? undefined} />
         </section>
       )}

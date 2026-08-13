@@ -10,10 +10,13 @@ import {
 
 describe("LeaderboardService", () => {
   let redisMock: {
+    zadd: ReturnType<typeof vi.fn>
     zaddGreater: ReturnType<typeof vi.fn>
     zrevrank1Based: ReturnType<typeof vi.fn>
     zrevrangeWithScores: ReturnType<typeof vi.fn>
     zcard: ReturnType<typeof vi.fn>
+    rename: ReturnType<typeof vi.fn>
+    del: ReturnType<typeof vi.fn>
   }
   let coreClientMock: {
     batchGetUsers: ReturnType<typeof vi.fn>
@@ -34,10 +37,13 @@ describe("LeaderboardService", () => {
 
   beforeEach(() => {
     redisMock = {
+      zadd: vi.fn().mockResolvedValue(undefined),
       zaddGreater: vi.fn().mockResolvedValue(undefined),
       zrevrank1Based: vi.fn(),
       zrevrangeWithScores: vi.fn(),
       zcard: vi.fn().mockResolvedValue(0),
+      rename: vi.fn().mockResolvedValue("OK"),
+      del: vi.fn().mockResolvedValue(1),
     }
     coreClientMock = {
       batchGetUsers: vi.fn().mockResolvedValue([]),
@@ -89,6 +95,45 @@ describe("LeaderboardService", () => {
     })
   })
 
+  describe("onModuleInit", () => {
+    it("reconstrói quando contagem do Postgres for maior que a do Redis (redisCount < dbCount)", async () => {
+      redisMock.zcard.mockResolvedValue(2)
+      prismaMock.userXp.count.mockResolvedValue(5)
+      prismaMock.userXp.findMany.mockResolvedValue([
+        { userCode: "u1", total: 100 },
+      ])
+
+      await service.onModuleInit()
+
+      expect(redisMock.zadd).toHaveBeenCalled()
+      expect(redisMock.rename).toHaveBeenCalled()
+    })
+
+    it("reconstrói quando contagem do Redis for maior que a do Postgres (redisCount > dbCount - membros obsoletos)", async () => {
+      redisMock.zcard.mockResolvedValue(5)
+      prismaMock.userXp.count.mockResolvedValue(2)
+      prismaMock.userXp.findMany.mockResolvedValue([
+        { userCode: "u1", total: 100 },
+        { userCode: "u2", total: 200 },
+      ])
+
+      await service.onModuleInit()
+
+      expect(redisMock.zadd).toHaveBeenCalledTimes(2)
+      expect(redisMock.rename).toHaveBeenCalled()
+    })
+
+    it("não reconstrói quando contagens do Redis e Postgres forem iguais", async () => {
+      redisMock.zcard.mockResolvedValue(3)
+      prismaMock.userXp.count.mockResolvedValue(3)
+
+      await service.onModuleInit()
+
+      expect(redisMock.zadd).not.toHaveBeenCalled()
+      expect(redisMock.rename).not.toHaveBeenCalled()
+    })
+  })
+
   it("updateScore executa zaddGreater com o score composto", async () => {
     const fixedTime = 1770000000000
     await service.updateScore("usr1", 250, fixedTime)
@@ -106,16 +151,43 @@ describe("LeaderboardService", () => {
       redisMock.zrevrank1Based.mockResolvedValue(1)
       const rank = await service.getUserRank("usr1")
       expect(rank).toBe(1)
+      expect(prismaMock.userXp.findUnique).not.toHaveBeenCalled()
     })
 
-    it("retorna 0 quando usuário não está no ranking e não tem XP no Postgres", async () => {
+    it("retorna 0 e não aciona reconstrução quando usuário não tem registro no Postgres", async () => {
       redisMock.zrevrank1Based.mockResolvedValue(0)
+      prismaMock.userXp.findUnique.mockResolvedValue(null)
+
       const rank = await service.getUserRank("ghost")
+
       expect(rank).toBe(0)
+      expect(prismaMock.userXp.findUnique).toHaveBeenCalledWith({
+        where: { userCode: "ghost" },
+        select: { total: true },
+      })
+      expect(prismaMock.userXp.findMany).not.toHaveBeenCalled()
+      expect(redisMock.zadd).not.toHaveBeenCalled()
     })
 
-    it("reconstrói o ranking no Redis a partir do Postgres se não encontrado", async () => {
+    it("retorna 0 e não aciona reconstrução quando usuário possui zero XP (total: 0)", async () => {
+      redisMock.zrevrank1Based.mockResolvedValue(0)
+      prismaMock.userXp.findUnique.mockResolvedValue({ total: 0 })
+
+      const rank = await service.getUserRank("zero_user")
+
+      expect(rank).toBe(0)
+      expect(prismaMock.userXp.findUnique).toHaveBeenCalledWith({
+        where: { userCode: "zero_user" },
+        select: { total: true },
+      })
+      expect(prismaMock.userXp.findMany).not.toHaveBeenCalled()
+      expect(redisMock.zadd).not.toHaveBeenCalled()
+      expect(redisMock.rename).not.toHaveBeenCalled()
+    })
+
+    it("reconstrói o ranking no Redis a partir do Postgres se não encontrado e possui XP positivo", async () => {
       redisMock.zrevrank1Based.mockResolvedValueOnce(0).mockResolvedValueOnce(3)
+      prismaMock.userXp.findUnique.mockResolvedValue({ total: 300 })
       prismaMock.userXp.findMany.mockResolvedValue([
         { userCode: "usr1", total: 300 },
       ])
@@ -123,13 +195,18 @@ describe("LeaderboardService", () => {
       const rank = await service.getUserRank("usr1")
 
       expect(rank).toBe(3)
+      expect(prismaMock.userXp.findUnique).toHaveBeenCalledWith({
+        where: { userCode: "usr1" },
+        select: { total: true },
+      })
       expect(prismaMock.userXp.findMany).toHaveBeenCalled()
-      expect(redisMock.zaddGreater).toHaveBeenCalled()
+      expect(redisMock.zadd).toHaveBeenCalled()
+      expect(redisMock.rename).toHaveBeenCalled()
     })
   })
 
   describe("rebuildFromDatabase", () => {
-    it("reconstrói o ranking no Redis a partir do Postgres", async () => {
+    it("reconstrói o ranking em chave temporária e substitui atomicamente a chave global", async () => {
       prismaMock.userXp.findMany.mockResolvedValue([
         { userCode: "u1", total: 500 },
         { userCode: "u2", total: 1000 },
@@ -141,7 +218,92 @@ describe("LeaderboardService", () => {
       const count = await service.rebuildFromDatabase()
 
       expect(count).toBe(2)
-      expect(redisMock.zaddGreater).toHaveBeenCalledTimes(2)
+      expect(redisMock.zadd).toHaveBeenCalledTimes(2)
+      expect(redisMock.zadd).toHaveBeenCalledWith(
+        expect.stringMatching(/^mio:xp:global:tmp:/),
+        expect.any(Number),
+        "u1",
+      )
+      expect(redisMock.zadd).toHaveBeenCalledWith(
+        expect.stringMatching(/^mio:xp:global:tmp:/),
+        expect.any(Number),
+        "u2",
+      )
+      expect(redisMock.rename).toHaveBeenCalledWith(
+        expect.stringMatching(/^mio:xp:global:tmp:/),
+        "mio:xp:global",
+      )
+    })
+
+    it("remove usuários excluídos/zerados ao substituir a chave inteira", async () => {
+      // Postgres agora só tem 1 usuário ativo (o outro foi deletado/zerado)
+      prismaMock.userXp.findMany.mockResolvedValue([
+        { userCode: "active_user", total: 500 },
+      ])
+
+      const count = await service.rebuildFromDatabase()
+
+      expect(count).toBe(1)
+      expect(redisMock.zadd).toHaveBeenCalledTimes(1)
+      expect(redisMock.zadd).toHaveBeenCalledWith(
+        expect.stringMatching(/^mio:xp:global:tmp:/),
+        expect.any(Number),
+        "active_user",
+      )
+      expect(redisMock.rename).toHaveBeenCalledWith(
+        expect.stringMatching(/^mio:xp:global:tmp:/),
+        "mio:xp:global",
+      )
+    })
+
+    it("aplica totais corrigidos menores sem bloqueio do GT", async () => {
+      // Pontuação corrigida para baixo (de 1000 para 300)
+      const fixedTime = 1770000000000
+      prismaMock.userXp.findMany.mockResolvedValue([
+        { userCode: "corrected_user", total: 300 },
+      ])
+      prismaMock.xpTransaction.findFirst.mockResolvedValue({
+        createdAt: new Date(fixedTime),
+      })
+
+      const count = await service.rebuildFromDatabase()
+
+      expect(count).toBe(1)
+      const expectedScore = calculateCompositeScore(300, fixedTime)
+      expect(redisMock.zadd).toHaveBeenCalledWith(
+        expect.stringMatching(/^mio:xp:global:tmp:/),
+        expectedScore,
+        "corrected_user",
+      )
+      expect(redisMock.rename).toHaveBeenCalledWith(
+        expect.stringMatching(/^mio:xp:global:tmp:/),
+        "mio:xp:global",
+      )
+    })
+
+    it("deleta a chave do ranking se o banco estiver sem usuários com XP > 0", async () => {
+      prismaMock.userXp.findMany.mockResolvedValue([])
+
+      const count = await service.rebuildFromDatabase()
+
+      expect(count).toBe(0)
+      expect(redisMock.del).toHaveBeenCalledWith("mio:xp:global")
+      expect(redisMock.zadd).not.toHaveBeenCalled()
+      expect(redisMock.rename).not.toHaveBeenCalled()
+    })
+
+    it("limpa chave temporária em caso de erro na reconstrução", async () => {
+      prismaMock.userXp.findMany.mockResolvedValue([
+        { userCode: "u1", total: 500 },
+      ])
+      redisMock.rename.mockRejectedValueOnce(new Error("Redis rename error"))
+
+      const count = await service.rebuildFromDatabase()
+
+      expect(count).toBe(0)
+      expect(redisMock.del).toHaveBeenCalledWith(
+        expect.stringMatching(/^mio:xp:global:tmp:/),
+      )
     })
   })
 
@@ -150,11 +312,40 @@ describe("LeaderboardService", () => {
       redisMock.zrevrangeWithScores.mockResolvedValue([])
       redisMock.zcard.mockResolvedValue(0)
       prismaMock.userXp.findMany.mockResolvedValue([])
+      prismaMock.userXp.count.mockResolvedValue(0)
 
       const result = await service.getLeaderboard(10, 0)
       expect(result.entries).toEqual([])
       expect(result.totalUsers).toBe(0)
       expect(coreClientMock.batchGetUsers).not.toHaveBeenCalled()
+    })
+
+    it("aciona reconstrução quando contagem do Redis for maior que a do banco (membros obsoletos)", async () => {
+      // Redis tem 3 membros, Postgres tem apenas 1
+      redisMock.zcard.mockResolvedValueOnce(3).mockResolvedValueOnce(1)
+      prismaMock.userXp.count.mockResolvedValue(1)
+      prismaMock.userXp.findMany.mockResolvedValue([
+        { userCode: "u1", total: 500 },
+      ])
+      redisMock.zrevrangeWithScores
+        .mockResolvedValueOnce([
+          { member: "u1", score: 500.9 },
+          { member: "stale_u2", score: 400.9 },
+          { member: "stale_u3", score: 300.9 },
+        ])
+        .mockResolvedValueOnce([{ member: "u1", score: 500.9 }])
+
+      coreClientMock.batchGetUsers.mockResolvedValue([
+        { code: "u1", name: "Alice", avatarUrl: "" },
+      ])
+
+      const result = await service.getLeaderboard(10, 0)
+
+      expect(redisMock.zadd).toHaveBeenCalled()
+      expect(redisMock.rename).toHaveBeenCalled()
+      expect(result.totalUsers).toBe(1)
+      expect(result.entries).toHaveLength(1)
+      expect(result.entries[0]?.userCode).toBe("u1")
     })
 
     it("consulta redis, remove decimais de desempate e enriquece com dados cadastrais do Core", async () => {
@@ -166,6 +357,7 @@ describe("LeaderboardService", () => {
         { member: "usr2", score: scoreCarlos },
       ])
       redisMock.zcard.mockResolvedValue(2)
+      prismaMock.userXp.count.mockResolvedValue(2)
 
       coreClientMock.batchGetUsers.mockResolvedValue([
         { code: "usr1", name: "Alice", avatarUrl: "https://avatar1.png" },
@@ -213,6 +405,7 @@ describe("LeaderboardService", () => {
         { member: "usr99", score },
       ])
       redisMock.zcard.mockResolvedValue(1)
+      prismaMock.userXp.count.mockResolvedValue(1)
       coreClientMock.batchGetUsers.mockResolvedValue([])
 
       const result = await service.getLeaderboard(10, 0)

@@ -4,6 +4,7 @@ import { RedisService } from "./redis.service"
 vi.mock("ioredis", () => {
   return {
     default: class MockRedis {
+      status = "ready"
       on = vi.fn()
       connect = vi.fn().mockResolvedValue(undefined)
       quit = vi.fn().mockResolvedValue("OK")
@@ -13,6 +14,8 @@ vi.mock("ioredis", () => {
       zcard = vi.fn().mockResolvedValue(10)
       zrevrange = vi.fn().mockResolvedValue(["user-1", "500", "user-2", "300"])
       publish = vi.fn().mockResolvedValue(1)
+      rename = vi.fn().mockResolvedValue("OK")
+      del = vi.fn().mockResolvedValue(1)
     },
   }
 })
@@ -63,8 +66,57 @@ describe("RedisService (shared lib)", () => {
     expect(total).toBe(10)
   })
 
+  it("zadd executa zadd sem flag GT", async () => {
+    const client = service.getClient()
+    await service.zadd("mio:xp:global:tmp", 300, "usr1")
+    expect(client.zadd).toHaveBeenCalledWith("mio:xp:global:tmp", 300, "usr1")
+  })
+
+  it("rename executa rename de chave de forma atomica", async () => {
+    const client = service.getClient()
+    await service.rename("mio:xp:global:tmp", "mio:xp:global")
+    expect(client.rename).toHaveBeenCalledWith(
+      "mio:xp:global:tmp",
+      "mio:xp:global",
+    )
+  })
+
+  it("del remove chaves especificadas", async () => {
+    const client = service.getClient()
+    const count = await service.del("mio:xp:global")
+    expect(client.del).toHaveBeenCalledWith("mio:xp:global")
+    expect(count).toBe(1)
+  })
+
   it("publish despacha mensagem para canal", async () => {
     const res = await service.publish("mio:user:123", '{"test":true}')
     expect(res).toBe(1)
+  })
+
+  it("onModuleDestroy executa quit quando o cliente estiver ready", async () => {
+    const client = service.getClient()
+    client.status = "ready"
+    await service.onModuleDestroy()
+    expect(client.quit).toHaveBeenCalled()
+    expect(client.disconnect).not.toHaveBeenCalled()
+  })
+
+  it("onModuleDestroy executa disconnect quando o cliente estiver em reconnecting", async () => {
+    const client = service.getClient()
+    client.status = "reconnecting"
+    await service.onModuleDestroy()
+    expect(client.disconnect).toHaveBeenCalled()
+    expect(client.quit).not.toHaveBeenCalled()
+  })
+
+  it("onModuleDestroy faz fallback para disconnect quando quit falha", async () => {
+    const client = service.getClient()
+    client.status = "ready"
+    vi.spyOn(client, "quit").mockRejectedValueOnce(
+      new Error("Connection error"),
+    )
+    await service.onModuleDestroy()
+    expect(client.quit).toHaveBeenCalled()
+    expect(client.disconnect).toHaveBeenCalled()
   })
 })

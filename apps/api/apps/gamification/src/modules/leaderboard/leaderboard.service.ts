@@ -63,7 +63,7 @@ export class LeaderboardService implements OnModuleInit {
         .count({ where: { total: { gt: 0 } } })
         .catch(() => 0)
 
-      if (count === 0 || count < dbCount) {
+      if (count !== dbCount) {
         await this.rebuildFromDatabase()
       }
     } catch {
@@ -73,6 +73,7 @@ export class LeaderboardService implements OnModuleInit {
 
   /**
    * Reconstrói o Sorted Set do Redis a partir dos registros de UserXp no Postgres.
+   * Escreve os dados em uma chave temporária e substitui atomicamente a chave global.
    */
   async rebuildFromDatabase(): Promise<number> {
     try {
@@ -80,18 +81,31 @@ export class LeaderboardService implements OnModuleInit {
         where: { total: { gt: 0 } },
       })
 
-      if (users.length === 0) return 0
+      if (users.length === 0) {
+        await this.redis.del(LEADERBOARD_KEY)
+        return 0
+      }
 
-      for (const u of users) {
-        const lastTx = await this.prisma.xpTransaction.findFirst({
-          where: { userCode: u.userCode },
-          orderBy: { createdAt: "desc" },
-          select: { createdAt: true },
-        })
-        const timestamp = lastTx?.createdAt
-          ? new Date(lastTx.createdAt).getTime()
-          : Date.now()
-        await this.updateScore(u.userCode, u.total, timestamp)
+      const tmpKey = `${LEADERBOARD_KEY}:tmp:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`
+
+      try {
+        for (const u of users) {
+          const lastTx = await this.prisma.xpTransaction.findFirst({
+            where: { userCode: u.userCode },
+            orderBy: { createdAt: "desc" },
+            select: { createdAt: true },
+          })
+          const timestamp = lastTx?.createdAt
+            ? new Date(lastTx.createdAt).getTime()
+            : Date.now()
+          const compositeScore = calculateCompositeScore(u.total, timestamp)
+          await this.redis.zadd(tmpKey, compositeScore, u.userCode)
+        }
+
+        await this.redis.rename(tmpKey, LEADERBOARD_KEY)
+      } catch (err) {
+        await this.redis.del(tmpKey).catch(() => {})
+        throw err
       }
 
       return users.length
@@ -114,15 +128,25 @@ export class LeaderboardService implements OnModuleInit {
 
   /**
    * Retorna a posição (rank 1-based) do usuário no ranking global.
-   * Se o usuário não for encontrado no Redis, reconstrói o ranking a partir do Postgres e tenta novamente.
+   * Se o usuário não for encontrado no Redis mas possuir XP positivo no Postgres,
+   * reconstrói o ranking a partir do Postgres e tenta novamente.
    */
   async getUserRank(userCode: string): Promise<number> {
     let rank = await this.redis.zrevrank1Based(LEADERBOARD_KEY, userCode)
 
     if (rank === 0) {
       try {
-        await this.rebuildFromDatabase()
-        rank = await this.redis.zrevrank1Based(LEADERBOARD_KEY, userCode)
+        const userXp = await this.prisma.userXp
+          .findUnique({
+            where: { userCode },
+            select: { total: true },
+          })
+          .catch(() => null)
+
+        if (userXp && userXp.total > 0) {
+          await this.rebuildFromDatabase()
+          rank = await this.redis.zrevrank1Based(LEADERBOARD_KEY, userCode)
+        }
       } catch {
         // Retorna 0 defensivamente
       }
@@ -148,14 +172,13 @@ export class LeaderboardService implements OnModuleInit {
       .count({ where: { total: { gt: 0 } } })
       .catch(() => 0)
 
-    // Auto-rebuild se Redis estiver vazio ou desatualizado em relação ao Postgres
+    // Auto-rebuild se Redis estiver vazio ou as contagens divergirem em qualquer direção
     if (
-      (rangeItems.length === 0 && safeOffset === 0) ||
-      totalUsers < dbCount ||
-      totalUsers === 0
+      (rangeItems.length === 0 && safeOffset === 0 && dbCount > 0) ||
+      totalUsers !== dbCount
     ) {
       const rebuiltCount = await this.rebuildFromDatabase()
-      if (rebuiltCount > 0) {
+      if (rebuiltCount > 0 || (rebuiltCount === 0 && dbCount === 0)) {
         ;[rangeItems, totalUsers] = await Promise.all([
           this.redis.zrevrangeWithScores(LEADERBOARD_KEY, safeOffset, stop),
           this.redis.zcard(LEADERBOARD_KEY),

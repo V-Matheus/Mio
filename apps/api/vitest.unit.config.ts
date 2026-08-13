@@ -9,6 +9,6 @@ export default defineConfig({
   test: {
     ...sharedConfig,
     root: "./",
-    include: ["apps/**/*.test.ts"],
+    include: ["apps/**/*.test.ts", "libs/**/*.test.ts"],
   },
 })

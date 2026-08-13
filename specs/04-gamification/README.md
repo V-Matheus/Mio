@@ -49,7 +49,7 @@ Traduz ações em recompensas. Escuta `lesson.completed`, calcula XP de forma di
 | Sênior | 4000 |
 | Especialista | 10000 |
 
-### gRPC (`packages/grpc-contracts/proto/gamification.proto`)
+### gRPC (`packages/grpc-contracts/src/mio/gamification/v1/gamification.proto`)
 
 ```proto
 syntax = "proto3";

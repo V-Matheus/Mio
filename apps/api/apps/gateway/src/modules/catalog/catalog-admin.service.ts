@@ -1,6 +1,7 @@
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 import type { ClientGrpc } from "@nestjs/microservices"
-import { firstValueFrom, type Observable } from "rxjs"
+import type { Observable } from "rxjs"
+import { GrpcCaller } from "../../grpc/grpc-caller"
 import { CATALOG_ADMIN_PACKAGE_TOKEN } from "../../grpc/registry"
 import type {
   CreateTrackInput,
@@ -64,7 +65,7 @@ interface CatalogAdminGrpcClient {
   listAdminTracks(data: {
     requestorCode: string
     requestorRole: string
-  }): Observable<{ tracks?: ProtoTrack[] }>
+  }): Observable<{ tracks: ProtoTrack[] }>
 
   getAdminTrack(data: {
     slug: string
@@ -101,7 +102,7 @@ interface CatalogAdminGrpcClient {
     position?: number
     requestorCode: string
     requestorRole: string
-  }): Observable<ProtoLesson & { trackId: number }>
+  }): Observable<ProtoLesson>
 
   deleteLesson(data: {
     lessonId: number
@@ -130,6 +131,12 @@ interface CatalogAdminGrpcClient {
 @Injectable()
 export class CatalogAdminService implements OnModuleInit {
   private client!: CatalogAdminGrpcClient
+  private readonly caller = new GrpcCaller({
+    serviceEnvVar: "CATALOG_ADMIN_GRPC_TIMEOUT_MS",
+    timeoutCode: "UNAVAILABLE",
+    timeoutMessage:
+      "Serviço de administração de catálogo indisponível (tempo limite excedido)",
+  })
 
   constructor(
     @Inject(CATALOG_ADMIN_PACKAGE_TOKEN)
@@ -143,7 +150,7 @@ export class CatalogAdminService implements OnModuleInit {
   }
 
   async adminTracks(userCode: string, role: string): Promise<AdminTrack[]> {
-    const res = await firstValueFrom(
+    const res = await this.caller.call(
       this.client.listAdminTracks({
         requestorCode: userCode,
         requestorRole: role,
@@ -173,7 +180,7 @@ export class CatalogAdminService implements OnModuleInit {
     role: string,
   ): Promise<AdminTrackDetail | null> {
     try {
-      const res = await firstValueFrom(
+      const res = await this.caller.call(
         this.client.getAdminTrack({
           slug,
           requestorCode: userCode,
@@ -211,10 +218,13 @@ export class CatalogAdminService implements OnModuleInit {
         })),
       }
     } catch (error: unknown) {
-      const details = (error as { details?: string })?.details
+      const details =
+        (error as { details?: string })?.details ||
+        (error as { extensions?: { details?: string } })?.extensions?.details ||
+        (error as Error)?.message
       if (
-        details?.includes("FORBIDDEN") ||
-        details?.includes("TRACK_NOT_FOUND")
+        typeof details === "string" &&
+        (details.includes("FORBIDDEN") || details.includes("TRACK_NOT_FOUND"))
       ) {
         return null
       }
@@ -226,7 +236,7 @@ export class CatalogAdminService implements OnModuleInit {
     input: CreateTrackInput,
     userCode: string,
   ): Promise<AdminTrack> {
-    const res = await firstValueFrom(
+    const res = await this.caller.call(
       this.client.createTrack({
         title: input.title,
         description: input.description ?? "",
@@ -258,7 +268,7 @@ export class CatalogAdminService implements OnModuleInit {
     userCode: string,
     role: string,
   ): Promise<AdminTrack> {
-    const res = await firstValueFrom(
+    const res = await this.caller.call(
       this.client.updateTrack({
         trackId: id,
         title: input.title,
@@ -291,7 +301,7 @@ export class CatalogAdminService implements OnModuleInit {
     userCode: string,
     role: string,
   ): Promise<boolean> {
-    const res = await firstValueFrom(
+    const res = await this.caller.call(
       this.client.deleteTrack({
         trackId: id,
         requestorCode: userCode,
@@ -306,7 +316,7 @@ export class CatalogAdminService implements OnModuleInit {
     userCode: string,
     role: string,
   ): Promise<AdminLessonSummary> {
-    const res = await firstValueFrom(
+    const res = await this.caller.call(
       this.client.upsertLesson({
         trackId: input.trackId,
         lessonId: input.id ?? undefined,
@@ -337,7 +347,7 @@ export class CatalogAdminService implements OnModuleInit {
     userCode: string,
     role: string,
   ): Promise<boolean> {
-    const res = await firstValueFrom(
+    const res = await this.caller.call(
       this.client.deleteLesson({
         lessonId: id,
         requestorCode: userCode,
@@ -352,7 +362,7 @@ export class CatalogAdminService implements OnModuleInit {
     userCode: string,
     role: string,
   ): Promise<AdminSectionSummary> {
-    const res = await firstValueFrom(
+    const res = await this.caller.call(
       this.client.upsertSection({
         lessonId: input.lessonId,
         sectionId: input.id ?? undefined,
@@ -379,7 +389,7 @@ export class CatalogAdminService implements OnModuleInit {
     userCode: string,
     role: string,
   ): Promise<boolean> {
-    const res = await firstValueFrom(
+    const res = await this.caller.call(
       this.client.deleteSection({
         sectionId: id,
         requestorCode: userCode,

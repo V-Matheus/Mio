@@ -154,13 +154,20 @@ async function main() {
   const prisma = new PrismaClient()
   const redisUrl = process.env.REDIS_URL || "redis://localhost:6379"
   let redis: Redis | undefined
+  let candidate: Redis | undefined
 
   try {
-    redis = new Redis(redisUrl, { lazyConnect: true, maxRetriesPerRequest: 1 })
-    await redis.connect().catch(() => {
-      redis = undefined
+    candidate = new Redis(redisUrl, {
+      lazyConnect: true,
+      maxRetriesPerRequest: 1,
     })
+    await candidate.connect().catch(() => {
+      candidate?.disconnect()
+      candidate = undefined
+    })
+    redis = candidate
   } catch {
+    candidate?.disconnect()
     redis = undefined
   }
 
@@ -175,11 +182,19 @@ async function main() {
     )
   } catch (error) {
     console.error("❌ Erro ao executar seed de gamificação:", error)
-    process.exit(1)
+    process.exitCode = 1
   } finally {
     await prisma.$disconnect()
     if (redis) {
-      await redis.quit()
+      if (redis.status === "ready") {
+        try {
+          await redis.quit()
+        } catch {
+          redis.disconnect()
+        }
+      } else {
+        redis.disconnect()
+      }
     }
   }
 }

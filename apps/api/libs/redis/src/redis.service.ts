@@ -10,7 +10,6 @@ import Redis, { type Redis as RedisClient } from "ioredis"
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name)
   private client!: RedisClient
-  private isConnected = false
 
   constructor() {
     const url = process.env.REDIS_URL || "redis://localhost:6379"
@@ -23,17 +22,14 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     })
 
     this.client.on("connect", () => {
-      this.isConnected = true
       this.logger.log("Conectado ao Redis com sucesso")
     })
 
     this.client.on("error", (err) => {
-      this.isConnected = false
       this.logger.error(`Erro na conexão com Redis: ${err.message}`)
     })
 
     this.client.on("close", () => {
-      this.isConnected = false
       this.logger.warn("Conexão com Redis encerrada")
     })
   }
@@ -49,12 +45,16 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
-    if (this.isConnected) {
+    if (!this.client) return
+
+    if (this.client.status === "ready") {
       try {
         await this.client.quit()
       } catch {
         this.client.disconnect()
       }
+    } else {
+      this.client.disconnect()
     }
   }
 
@@ -63,6 +63,27 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    */
   getClient(): RedisClient {
     return this.client
+  }
+
+  /**
+   * Adiciona ou atualiza a pontuação no Sorted Set (sem restrição GT).
+   */
+  async zadd(key: string, score: number, member: string): Promise<void> {
+    await this.client.zadd(key, score, member)
+  }
+
+  /**
+   * Renomeia uma chave de forma atômica no Redis.
+   */
+  async rename(sourceKey: string, targetKey: string): Promise<void> {
+    await this.client.rename(sourceKey, targetKey)
+  }
+
+  /**
+   * Remove uma ou mais chaves do Redis.
+   */
+  async del(...keys: string[]): Promise<number> {
+    return await this.client.del(...keys)
   }
 
   /**
