@@ -111,7 +111,7 @@ export async function syncContent(
   }
 
   // 1. Garantir que as roles padrões existam
-  await prisma.role.upsert({
+  const studentRole = await prisma.role.upsert({
     where: { name: "STUDENT" },
     update: {},
     create: { name: "STUDENT" },
@@ -153,6 +153,72 @@ export async function syncContent(
       roleId: adminRole.id,
     },
   })
+
+  // 4. Cadastrar alunos de demonstração para comporem o ranking de gamificação
+  const demoUsers = [
+    {
+      code: "aluno-ana",
+      email: "ana@mio.dev",
+      name: "Ana Silva",
+      avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=Ana",
+    },
+    {
+      code: "aluno-carlos",
+      email: "carlos@mio.dev",
+      name: "Carlos Dev",
+      avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=Carlos",
+    },
+    {
+      code: "aluno-beatriz",
+      email: "beatriz@mio.dev",
+      name: "Beatriz Lima",
+      avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=Beatriz",
+    },
+    {
+      code: "aluno-diego",
+      email: "diego@mio.dev",
+      name: "Diego Souza",
+      avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=Diego",
+    },
+    {
+      code: "aluno-fernanda",
+      email: "fernanda@mio.dev",
+      name: "Fernanda Rocha",
+      avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=Fernanda",
+    },
+  ]
+
+  for (const demo of demoUsers) {
+    const user = await prisma.user.upsert({
+      where: { code: demo.code },
+      update: {
+        name: demo.name,
+        avatarUrl: demo.avatarUrl,
+        passwordHash: adminPasswordHash,
+      },
+      create: {
+        code: demo.code,
+        email: demo.email,
+        name: demo.name,
+        avatarUrl: demo.avatarUrl,
+        passwordHash: adminPasswordHash,
+      },
+    })
+
+    await prisma.userRole.upsert({
+      where: {
+        userId_roleId: {
+          userId: user.id,
+          roleId: studentRole.id,
+        },
+      },
+      update: {},
+      create: {
+        userId: user.id,
+        roleId: studentRole.id,
+      },
+    })
+  }
 
   await warnOrphanTracks(prisma, tracks)
 

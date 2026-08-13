@@ -8,6 +8,7 @@ const PUBLIC_ROUTES = ["/"]
 const STUDENT_ALLOWED_PREFIXES = [
   "/home",
   "/trilhas",
+  "/ranking",
   "/desafios",
   "/comunidade",
   "/perfil",

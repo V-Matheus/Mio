@@ -1,7 +1,6 @@
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 import type { ClientGrpc } from "@nestjs/microservices"
-import { GraphQLError } from "graphql"
-import { firstValueFrom, type Observable } from "rxjs"
+import { GrpcCaller } from "../../grpc/grpc-caller"
 import { CATALOG_PACKAGE_TOKEN } from "../../grpc/registry"
 import { Category } from "./models/category.model"
 import { LessonDetail } from "./models/lesson-detail.model"
@@ -39,6 +38,13 @@ const NOT_FOUND_CODES = new Set([
 @Injectable()
 export class CatalogService implements OnModuleInit {
   private catalogService!: CatalogServiceClient
+  private readonly caller = new GrpcCaller({
+    serviceEnvVar: "CATALOG_GRPC_TIMEOUT_MS",
+    errorMap: ERROR_MESSAGES,
+    defaultErrorMessage: "Erro interno",
+    timeoutCode: "UNAVAILABLE",
+    timeoutMessage: "Serviço de catálogo indisponível (tempo limite excedido)",
+  })
 
   constructor(
     @Inject(CATALOG_PACKAGE_TOKEN) private readonly client: ClientGrpc,
@@ -51,7 +57,9 @@ export class CatalogService implements OnModuleInit {
 
   async categories(): Promise<Category[]> {
     try {
-      const response = await this.call(this.catalogService.listCategories({}))
+      const response = await this.caller.call(
+        this.catalogService.listCategories({}),
+      )
       return (response.categories ?? []).map(toCategory)
     } catch {
       return []
@@ -59,16 +67,17 @@ export class CatalogService implements OnModuleInit {
   }
 
   async tracks(userCode?: string): Promise<Track[]> {
-    const response = await this.call(
+    const response = await this.caller.call(
       this.catalogService.listTracks({ userCode: userCode ?? "" }),
     )
     return (response.tracks ?? []).map(toTrack)
   }
 
   async track(slug: string, userCode?: string): Promise<TrackDetail | null> {
-    return this.callNullable(
+    return this.caller.callNullable(
       this.catalogService.getTrack({ slug, userCode: userCode ?? "" }),
       toTrackDetail,
+      NOT_FOUND_CODES,
     )
   }
 
@@ -77,13 +86,14 @@ export class CatalogService implements OnModuleInit {
     lessonSlug: string,
     userCode?: string,
   ): Promise<LessonDetail | null> {
-    return this.callNullable(
+    return this.caller.callNullable(
       this.catalogService.getLesson({
         trackSlug,
         lessonSlug,
         userCode: userCode ?? "",
       }),
       toLessonDetail,
+      NOT_FOUND_CODES,
     )
   }
 
@@ -93,7 +103,7 @@ export class CatalogService implements OnModuleInit {
     sectionSlug: string,
     userCode?: string,
   ): Promise<SectionDetail | null> {
-    return this.callNullable(
+    return this.caller.callNullable(
       this.catalogService.getSection({
         trackSlug,
         lessonSlug,
@@ -101,35 +111,15 @@ export class CatalogService implements OnModuleInit {
         userCode: userCode ?? "",
       }),
       toSectionDetail,
+      NOT_FOUND_CODES,
     )
   }
 
   async enrollInTrack(userCode: string, trackId: number): Promise<boolean> {
-    await this.call(this.catalogService.enrollUser({ userCode, trackId }))
+    await this.caller.call(
+      this.catalogService.enrollUser({ userCode, trackId }),
+    )
     return true
-  }
-
-  private async call<T>(source: Observable<T>): Promise<T> {
-    try {
-      return await firstValueFrom(source)
-    } catch (error) {
-      throw mapGrpcError(error)
-    }
-  }
-
-  private async callNullable<T, R>(
-    source: Observable<T>,
-    map: (response: T) => R,
-  ): Promise<R | null> {
-    try {
-      return map(await firstValueFrom(source))
-    } catch (error) {
-      const mapped = mapGrpcError(error)
-      if (NOT_FOUND_CODES.has(mapped.extensions.code as string)) {
-        return null
-      }
-      throw mapped
-    }
   }
 }
 
@@ -209,12 +199,4 @@ function toSectionDetail(section: GrpcSectionDetail): SectionDetail {
 
 function toSectionKind(kind?: string): SectionKind {
   return kind === SectionKind.EXERCISE ? SectionKind.EXERCISE : SectionKind.TEXT
-}
-
-function mapGrpcError(error: unknown): GraphQLError {
-  const details = (error as { details?: string })?.details
-  const code = details && details in ERROR_MESSAGES ? details : "INTERNAL_ERROR"
-  return new GraphQLError(ERROR_MESSAGES[code] ?? "Erro interno", {
-    extensions: { code },
-  })
 }

@@ -1,4 +1,8 @@
 export { BadgeIcon } from "./badge-icon"
 export { BadgeValue } from "./badge-value"
 export { BadgeWrapper } from "./badge-wrapper"
+export { LeaderboardList } from "./leaderboard-list"
+export { LeaderboardPodium } from "./leaderboard-podium"
 export { ProgressBar } from "./progress-bar"
+export { XpBadge } from "./xp-badge"
+export { XpProgressCard } from "./xp-progress-card"

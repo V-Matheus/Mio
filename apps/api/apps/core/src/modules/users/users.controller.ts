@@ -72,4 +72,11 @@ export class UsersController {
   listUsers(data: { search?: string }): Promise<{ users: UserResponse[] }> {
     return this.users.listUsers(data.search).then((users) => ({ users }))
   }
+
+  @GrpcMethod(USERS_SERVICE, "BatchGetUsers")
+  batchGetUsers(data: { codes: string[] }): Promise<{ users: UserResponse[] }> {
+    return this.users
+      .batchGetUsers(data.codes ?? [])
+      .then((users) => ({ users }))
+  }
 }

@@ -304,6 +304,19 @@ export class UsersService {
     })
     return users.map(toUserResponse)
   }
+
+  async batchGetUsers(codes: string[]): Promise<UserResponse[]> {
+    if (!codes || codes.length === 0) {
+      return []
+    }
+    const users = await this.prisma.user.findMany({
+      where: {
+        code: { in: codes },
+      },
+      include: INCLUDE_ROLES,
+    })
+    return users.map(toUserResponse)
+  }
 }
 
 function toUserResponse(user: UserWithRoles): UserResponse {

@@ -1,7 +1,6 @@
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 import type { ClientGrpc } from "@nestjs/microservices"
-import { GraphQLError } from "graphql"
-import { firstValueFrom, type Observable } from "rxjs"
+import { GrpcCaller } from "../../grpc/grpc-caller"
 import { PROGRESS_PACKAGE_TOKEN } from "../../grpc/registry"
 import type { LessonProgress, MarkSectionResult } from "./dto/progress.dto"
 import type { ProgressServiceClient } from "./repositories/progress.repository"
@@ -9,6 +8,13 @@ import type { ProgressServiceClient } from "./repositories/progress.repository"
 @Injectable()
 export class ProgressGatewayService implements OnModuleInit {
   private progressService!: ProgressServiceClient
+  private readonly caller = new GrpcCaller({
+    serviceEnvVar: "PROGRESS_GRPC_TIMEOUT_MS",
+    defaultErrorCode: "PROGRESS_ERROR",
+    defaultErrorMessage: "Erro ao processar progresso",
+    timeoutCode: "PROGRESS_ERROR",
+    timeoutMessage: "Serviço de progresso indisponível (tempo limite excedido)",
+  })
 
   constructor(
     @Inject(PROGRESS_PACKAGE_TOKEN) private readonly client: ClientGrpc,
@@ -23,7 +29,7 @@ export class ProgressGatewayService implements OnModuleInit {
     userCode: string,
     sectionId: number,
   ): Promise<MarkSectionResult> {
-    const res = await this.call(
+    const res = await this.caller.call(
       this.progressService.markSectionViewed({
         userCode,
         sectionId,
@@ -39,7 +45,7 @@ export class ProgressGatewayService implements OnModuleInit {
     userCode: string,
     lessonId: number,
   ): Promise<boolean> {
-    const res = await this.call(
+    const res = await this.caller.call(
       this.progressService.markLessonCompleted({
         userCode,
         lessonId,
@@ -52,7 +58,7 @@ export class ProgressGatewayService implements OnModuleInit {
     userCode: string,
     lessonId: number,
   ): Promise<LessonProgress> {
-    const res = await this.call(
+    const res = await this.caller.call(
       this.progressService.getLessonProgress({
         userCode,
         lessonId,
@@ -62,17 +68,6 @@ export class ProgressGatewayService implements OnModuleInit {
       lastSectionId: res.lastSectionId ?? undefined,
       completedAt: res.completedAt || undefined,
       viewedSectionIds: res.viewedSectionIds ?? [],
-    }
-  }
-
-  private async call<T>(source: Observable<T>): Promise<T> {
-    try {
-      return await firstValueFrom(source)
-    } catch (error) {
-      const details = (error as { details?: string })?.details
-      throw new GraphQLError(details ?? "Erro ao processar progresso", {
-        extensions: { code: "PROGRESS_ERROR" },
-      })
     }
   }
 }

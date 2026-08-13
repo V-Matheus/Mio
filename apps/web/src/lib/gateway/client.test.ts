@@ -1,6 +1,5 @@
 import { ClientError } from "graphql-request"
-import { describe, expect, it, vi } from "vitest"
-import { signOut } from "@/auth"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   gatewayError,
   getGatewayClient,
@@ -10,7 +9,6 @@ import {
 vi.mock("server-only", () => ({}))
 vi.mock("@/auth", () => ({
   auth: vi.fn().mockResolvedValue(null),
-  signOut: vi.fn().mockResolvedValue(undefined),
 }))
 
 type ClientErrorArgs = ConstructorParameters<typeof ClientError>
@@ -94,13 +92,6 @@ describe("isUnauthenticatedError", () => {
 })
 
 describe("gatewayError", () => {
-  it("chama signOut({ redirectTo: '/login' }) quando o erro for UNAUTHENTICATED", async () => {
-    const error = makeClientError(["Não autenticado"], 401, "UNAUTHENTICATED")
-    await gatewayError(error, "fallback")
-
-    expect(signOut).toHaveBeenCalledWith({ redirectTo: "/login" })
-  })
-
   it("returns the first GraphQL error message from a ClientError", async () => {
     const error = makeClientError(["Credenciais inválidas", "outro erro"])
 

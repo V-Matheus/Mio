@@ -13,9 +13,18 @@ import { resolve } from "node:path"
  */
 export const testAlias = {
   ".prisma/core": resolve(import.meta.dirname, "node_modules/.prisma/core"),
+  ".prisma/gamification": resolve(
+    import.meta.dirname,
+    "node_modules/.prisma/gamification",
+  ),
+  ".prisma/achievements": resolve(
+    import.meta.dirname,
+    "node_modules/.prisma/achievements",
+  ),
   "@mio/grpc-contracts": resolve(
     import.meta.dirname,
     "../../packages/grpc-contracts/src",
   ),
   "@mio/events": resolve(import.meta.dirname, "libs/events/src"),
+  "@mio/redis": resolve(import.meta.dirname, "libs/redis/src"),
 }

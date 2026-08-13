@@ -1,3 +1,4 @@
+export * from "./amqp-consumer.service"
 export * from "./domain-event"
 export * from "./event-publisher.service"
 export * from "./events.module"

@@ -13,6 +13,7 @@ function makeController() {
     consumePasswordReset: vi.fn().mockResolvedValue({}),
     updateUserRole: vi.fn().mockResolvedValue({}),
     listUsers: vi.fn().mockResolvedValue([]),
+    batchGetUsers: vi.fn().mockResolvedValue([]),
   }
   return {
     controller: new UsersController(users as unknown as UsersService),
@@ -81,5 +82,11 @@ describe("UsersController", () => {
     const { controller, users } = makeController()
     await controller.listUsers({ search: "john" })
     expect(users.listUsers).toHaveBeenCalledWith("john")
+  })
+
+  it("batchGetUsers repassa os codes", async () => {
+    const { controller, users } = makeController()
+    await controller.batchGetUsers({ codes: ["c1", "c2"] })
+    expect(users.batchGetUsers).toHaveBeenCalledWith(["c1", "c2"])
   })
 })

@@ -57,6 +57,27 @@ input CreateTrackInput {
   title: String!
 }
 
+"""Item da listagem de ranking global"""
+type LeaderboardEntry {
+  """URL da foto de perfil do usuário"""
+  avatarUrl: String
+
+  """Nível atual do usuário"""
+  level: String!
+
+  """Nome de exibição do usuário"""
+  name: String!
+
+  """Posição no ranking global (1-based)"""
+  rank: Int!
+
+  """Pontuação total de XP"""
+  total: Int!
+
+  """Código único do usuário"""
+  userCode: ID!
+}
+
 type LessonDetail {
   id: Int!
   lessonSlug: ID!
@@ -77,6 +98,16 @@ type LessonSummary {
   position: Int!
   slug: ID!
   title: String!
+}
+
+"""Nível de graduação por XP do usuário"""
+enum Level {
+  ESPECIALISTA
+  INICIANTE
+  JUNIOR
+  LEIGO
+  PLENO
+  SENIOR
 }
 
 input LoginInput {
@@ -112,10 +143,16 @@ type Query {
   adminTrack(slug: ID!): AdminTrackDetail
   adminTracks: [AdminTrack!]!
   categories: [Category!]!
+
+  """Consulta o ranking global de alunos paginado"""
+  leaderboard(limit: Int = 50, offset: Int = 0): [LeaderboardEntry!]!
   lesson(lessonSlug: ID!, trackSlug: ID!): LessonDetail
   lessonProgress(lessonId: Int!): LessonProgress!
   listUsers(search: String): [User!]!
   me: User!
+
+  """Consulta informações de XP, nível e ranking do usuário logado"""
+  myXp: UserXp!
   section(lessonSlug: ID!, sectionSlug: ID!, trackSlug: ID!): SectionDetail
   track(slug: ID!): TrackDetail
   tracks: [Track!]!
@@ -213,4 +250,22 @@ enum UserRole {
   ADMIN
   STUDENT
   TEACHER
+}
+
+"""Informações de XP e nível do usuário"""
+type UserXp {
+  """Nível atual de graduação"""
+  level: Level!
+
+  """Percentual de progresso para o próximo nível (0..100)"""
+  progressToNext: Int!
+
+  """Posição global no ranking (1-based, 0 se não classificado)"""
+  rank: Int!
+
+  """XP total acumulado"""
+  total: Int!
+
+  """XP restante para alcançar o próximo nível"""
+  xpToNextLevel: Int!
 }

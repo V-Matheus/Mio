@@ -26,5 +26,28 @@ model XpTransaction {
 
   user UserXp @relation(fields: [userCode], references: [userCode], onDelete: Cascade)
 
+  @@unique([userCode, sourceId])
   @@index([userCode, createdAt])
+}
+
+model OutboxEvent {
+  id          BigInt    @id @default(autoincrement())
+  routingKey  String
+  payload     Json
+  headers     Json?
+  retryCount  Int       @default(0)
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  publishedAt DateTime?
+
+  @@index([publishedAt])
+  @@index([publishedAt, retryCount])
+}
+
+model XpRule {
+  key         String   @id // Ex.: "LESSON_COMPLETED", "TRACK_COMPLETED", "SECTION_COMPLETED"
+  amount      Int      @default(0)
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

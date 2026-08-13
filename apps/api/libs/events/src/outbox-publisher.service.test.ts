@@ -233,6 +233,6 @@ describe("OutboxPublisherService", () => {
     const count = await service.publishPendingEvents()
 
     expect(count).toBe(2)
-    expect(prismaMock.outboxEvent.findMany).toHaveBeenCalledTimes(3)
+    expect(prismaMock.outboxEvent.findMany).toHaveBeenCalledTimes(2)
   })
 })

@@ -13,14 +13,20 @@ import logosGoogleIcon from "@iconify-icons/logos/google-icon"
 import lucideAlertCircle from "@iconify-icons/lucide/alert-circle"
 import lucideAlertTriangle from "@iconify-icons/lucide/alert-triangle"
 import lucideArrowLeft from "@iconify-icons/lucide/arrow-left"
+import lucideAward from "@iconify-icons/lucide/award"
 import lucideBold from "@iconify-icons/lucide/bold"
 import lucideBookOpen from "@iconify-icons/lucide/book-open"
+import lucideChevronDown from "@iconify-icons/lucide/chevron-down"
 import lucideChevronRight from "@iconify-icons/lucide/chevron-right"
 import lucideChevronUp from "@iconify-icons/lucide/chevron-up"
 import lucideCode from "@iconify-icons/lucide/code"
 import lucideCode2 from "@iconify-icons/lucide/code-2"
+import lucideCompass from "@iconify-icons/lucide/compass"
+import lucideCrown from "@iconify-icons/lucide/crown"
 import lucideEye from "@iconify-icons/lucide/eye"
 import lucideFeather from "@iconify-icons/lucide/feather"
+import lucideFileText from "@iconify-icons/lucide/file-text"
+import lucideFlame from "@iconify-icons/lucide/flame"
 import lucideFolderOpen from "@iconify-icons/lucide/folder-open"
 import lucideFolderPlus from "@iconify-icons/lucide/folder-plus"
 import lucideGamepad2 from "@iconify-icons/lucide/gamepad-2"
@@ -32,6 +38,7 @@ import lucideLayoutDashboard from "@iconify-icons/lucide/layout-dashboard"
 import lucideLink from "@iconify-icons/lucide/link"
 import lucideList from "@iconify-icons/lucide/list"
 import lucideLogOut from "@iconify-icons/lucide/log-out"
+import lucideMedal from "@iconify-icons/lucide/medal"
 import lucideMenu from "@iconify-icons/lucide/menu"
 import lucideMessageSquare from "@iconify-icons/lucide/message-square"
 import lucideMoreVertical from "@iconify-icons/lucide/more-vertical"
@@ -41,11 +48,15 @@ import lucidePlusCircle from "@iconify-icons/lucide/plus-circle"
 import lucideQuote from "@iconify-icons/lucide/quote"
 import lucideSave from "@iconify-icons/lucide/save"
 import lucideSearch from "@iconify-icons/lucide/search"
+import lucideShield from "@iconify-icons/lucide/shield"
 import lucideShieldAlert from "@iconify-icons/lucide/shield-alert"
 import lucideShieldCheck from "@iconify-icons/lucide/shield-check"
+import lucideSprout from "@iconify-icons/lucide/sprout"
 import lucideTrash2 from "@iconify-icons/lucide/trash-2"
+import lucideTrophy from "@iconify-icons/lucide/trophy"
 import lucideUser from "@iconify-icons/lucide/user"
 import lucideX from "@iconify-icons/lucide/x"
+import lucideZap from "@iconify-icons/lucide/zap"
 import mdiAccountGroupOutline from "@iconify-icons/mdi/account-group-outline"
 import mdiAccountStarOutline from "@iconify-icons/mdi/account-star-outline"
 import mdiArrowLeft from "@iconify-icons/mdi/arrow-left"
@@ -98,14 +109,20 @@ const registry: Record<string, IconProps["icon"]> = {
   "lucide:alert-circle": lucideAlertCircle,
   "lucide:alert-triangle": lucideAlertTriangle,
   "lucide:arrow-left": lucideArrowLeft,
+  "lucide:award": lucideAward,
   "lucide:bold": lucideBold,
   "lucide:book-open": lucideBookOpen,
+  "lucide:chevron-down": lucideChevronDown,
   "lucide:chevron-right": lucideChevronRight,
   "lucide:chevron-up": lucideChevronUp,
   "lucide:code": lucideCode,
   "lucide:code-2": lucideCode2,
+  "lucide:compass": lucideCompass,
+  "lucide:crown": lucideCrown,
   "lucide:eye": lucideEye,
   "lucide:feather": lucideFeather,
+  "lucide:file-text": lucideFileText,
+  "lucide:flame": lucideFlame,
   "lucide:folder-open": lucideFolderOpen,
   "lucide:folder-plus": lucideFolderPlus,
   "lucide:gamepad-2": lucideGamepad2,
@@ -117,6 +134,7 @@ const registry: Record<string, IconProps["icon"]> = {
   "lucide:link": lucideLink,
   "lucide:list": lucideList,
   "lucide:log-out": lucideLogOut,
+  "lucide:medal": lucideMedal,
   "lucide:menu": lucideMenu,
   "lucide:message-square": lucideMessageSquare,
   "lucide:more-vertical": lucideMoreVertical,
@@ -126,11 +144,15 @@ const registry: Record<string, IconProps["icon"]> = {
   "lucide:quote": lucideQuote,
   "lucide:save": lucideSave,
   "lucide:search": lucideSearch,
+  "lucide:shield": lucideShield,
   "lucide:shield-alert": lucideShieldAlert,
   "lucide:shield-check": lucideShieldCheck,
+  "lucide:sprout": lucideSprout,
   "lucide:trash-2": lucideTrash2,
+  "lucide:trophy": lucideTrophy,
   "lucide:user": lucideUser,
   "lucide:x": lucideX,
+  "lucide:zap": lucideZap,
   "mdi:account-group-outline": mdiAccountGroupOutline,
   "mdi:account-star-outline": mdiAccountStarOutline,
   "mdi:arrow-left": mdiArrowLeft,

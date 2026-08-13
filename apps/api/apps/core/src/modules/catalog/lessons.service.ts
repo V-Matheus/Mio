@@ -38,7 +38,10 @@ export class LessonsService {
   ): Promise<LessonDetail> {
     const lesson = await this.prisma.lesson.findFirst({
       where: { slug: lessonSlug, track: { slug: trackSlug } },
-      include: { sections: { orderBy: { position: "asc" } } },
+      include: {
+        track: { select: { id: true, creatorId: true } },
+        sections: { orderBy: { position: "asc" } },
+      },
     })
     if (!lesson) {
       throw catalogError("LESSON_NOT_FOUND")
@@ -48,14 +51,27 @@ export class LessonsService {
       throw catalogError("FORBIDDEN")
     }
 
-    const enrollment = await this.prisma.enrollment.findFirst({
-      where: {
-        user: { code: userCode },
-        trackId: lesson.trackId,
-      },
+    const user = await this.prisma.user.findUnique({
+      where: { code: userCode },
+      include: { roles: { include: { role: true } } },
     })
-    if (!enrollment) {
-      throw catalogError("FORBIDDEN")
+    const isStaff =
+      user?.roles.some(
+        (r) => r.role.name === "ADMIN" || r.role.name === "TEACHER",
+      ) ||
+      (lesson.track?.creatorId !== undefined &&
+        lesson.track?.creatorId === user?.id)
+
+    if (!isStaff) {
+      const enrollment = await this.prisma.enrollment.findFirst({
+        where: {
+          user: { code: userCode },
+          trackId: lesson.trackId,
+        },
+      })
+      if (!enrollment) {
+        throw catalogError("FORBIDDEN")
+      }
     }
 
     let viewedSectionIds = new Set<number>()
@@ -99,7 +115,12 @@ export class LessonsService {
         lesson: { slug: lessonSlug, track: { slug: trackSlug } },
       },
       include: {
-        lesson: { select: { trackId: true } },
+        lesson: {
+          select: {
+            trackId: true,
+            track: { select: { creatorId: true } },
+          },
+        },
       },
     })
     if (!section) {
@@ -110,14 +131,27 @@ export class LessonsService {
       throw catalogError("FORBIDDEN")
     }
 
-    const enrollment = await this.prisma.enrollment.findFirst({
-      where: {
-        user: { code: userCode },
-        trackId: section.lesson.trackId,
-      },
+    const user = await this.prisma.user.findUnique({
+      where: { code: userCode },
+      include: { roles: { include: { role: true } } },
     })
-    if (!enrollment) {
-      throw catalogError("FORBIDDEN")
+    const isStaff =
+      user?.roles.some(
+        (r) => r.role.name === "ADMIN" || r.role.name === "TEACHER",
+      ) ||
+      (section.lesson?.track?.creatorId !== undefined &&
+        section.lesson?.track?.creatorId === user?.id)
+
+    if (!isStaff) {
+      const enrollment = await this.prisma.enrollment.findFirst({
+        where: {
+          user: { code: userCode },
+          trackId: section.lesson.trackId,
+        },
+      })
+      if (!enrollment) {
+        throw catalogError("FORBIDDEN")
+      }
     }
 
     return {

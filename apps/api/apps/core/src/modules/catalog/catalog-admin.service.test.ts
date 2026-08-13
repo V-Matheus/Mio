@@ -1,9 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import type { PrismaService } from "../prisma/prisma.service"
 import { CatalogAdminService } from "./catalog-admin.service"
 
 describe("CatalogAdminService", () => {
   let service: CatalogAdminService
-  let prismaMock: any
+  let prismaMock: {
+    track: { findUnique: ReturnType<typeof vi.fn> }
+    lesson: {
+      findUnique: ReturnType<typeof vi.fn>
+      findMany: ReturnType<typeof vi.fn>
+      update: ReturnType<typeof vi.fn>
+      create: ReturnType<typeof vi.fn>
+      count: ReturnType<typeof vi.fn>
+    }
+    section: {
+      findUnique: ReturnType<typeof vi.fn>
+      findMany: ReturnType<typeof vi.fn>
+      update: ReturnType<typeof vi.fn>
+      create: ReturnType<typeof vi.fn>
+      count: ReturnType<typeof vi.fn>
+    }
+  }
 
   beforeEach(() => {
     prismaMock = {
@@ -25,7 +42,7 @@ describe("CatalogAdminService", () => {
         count: vi.fn(),
       },
     }
-    service = new CatalogAdminService(prismaMock)
+    service = new CatalogAdminService(prismaMock as unknown as PrismaService)
   })
 
   describe("upsertLesson", () => {
@@ -44,12 +61,14 @@ describe("CatalogAdminService", () => {
           position: 5,
         },
       ])
-      prismaMock.lesson.update.mockImplementation(({ data }: any) => ({
-        id: 10,
-        slug: "licao-1",
-        title: data.title,
-        position: data.position,
-      }))
+      prismaMock.lesson.update.mockImplementation(
+        ({ data }: { data: { title: string; position: number } }) => ({
+          id: 10,
+          slug: "licao-1",
+          title: data.title,
+          position: data.position,
+        }),
+      )
 
       const result = await service.upsertLesson(
         1,
@@ -86,12 +105,14 @@ describe("CatalogAdminService", () => {
           position: 5,
         },
       ])
-      prismaMock.lesson.update.mockImplementation(({ data }: any) => ({
-        id: 10,
-        slug: "licao-1",
-        title: data.title,
-        position: data.position,
-      }))
+      prismaMock.lesson.update.mockImplementation(
+        ({ data }: { data: { title: string; position: number } }) => ({
+          id: 10,
+          slug: "licao-1",
+          title: data.title,
+          position: data.position,
+        }),
+      )
 
       const result = await service.upsertLesson(
         1,
@@ -128,22 +149,24 @@ describe("CatalogAdminService", () => {
           position: 1,
         },
       ])
-      prismaMock.lesson.update.mockImplementation(({ data }: any) => ({
-        id: 10,
-        slug: "licao-1",
-        title: data.title,
-        position: data.position,
-        sections: [
-          {
-            id: 100,
-            slug: "sec-1",
-            title: "Seção 1",
-            position: 1,
-            kind: "TEXT",
-            contentMarkdown: "md",
-          },
-        ],
-      }))
+      prismaMock.lesson.update.mockImplementation(
+        ({ data }: { data: { title: string; position: number } }) => ({
+          id: 10,
+          slug: "licao-1",
+          title: data.title,
+          position: data.position,
+          sections: [
+            {
+              id: 100,
+              slug: "sec-1",
+              title: "Seção 1",
+              position: 1,
+              kind: "TEXT",
+              contentMarkdown: "md",
+            },
+          ],
+        }),
+      )
 
       const result = await service.upsertLesson(
         1,
@@ -185,14 +208,25 @@ describe("CatalogAdminService", () => {
           },
         ],
       })
-      prismaMock.section.update.mockImplementation(({ data }: any) => ({
-        id: 100,
-        slug: "secao-1",
-        title: data.title,
-        position: data.position,
-        kind: data.kind,
-        contentMarkdown: data.contentMarkdown,
-      }))
+      prismaMock.section.update.mockImplementation(
+        ({
+          data,
+        }: {
+          data: {
+            title: string
+            position: number
+            kind: string
+            contentMarkdown: string
+          }
+        }) => ({
+          id: 100,
+          slug: "secao-1",
+          title: data.title,
+          position: data.position,
+          kind: data.kind,
+          contentMarkdown: data.contentMarkdown,
+        }),
+      )
 
       const result = await service.upsertSection(
         10,

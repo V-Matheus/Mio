@@ -8,6 +8,7 @@ import type { Request } from "express"
 import { InternalSecretGuard } from "./common/guards/internal-secret.guard"
 import { AuthModule } from "./modules/auth/auth.module"
 import { CatalogModule } from "./modules/catalog/catalog.module"
+import { GamificationModule } from "./modules/gamification/gamification.module"
 import { HealthModule } from "./modules/health/health.module"
 import { ProgressModule } from "./modules/progress/progress.module"
 
@@ -35,6 +36,7 @@ const autoSchemaFile = isProduction
     AuthModule,
     CatalogModule,
     ProgressModule,
+    GamificationModule,
   ],
   controllers: [],
   providers: [

@@ -1,7 +1,7 @@
 import "server-only"
 
 import { ClientError, GraphQLClient } from "graphql-request"
-import { auth, signOut } from "@/auth"
+import { auth } from "@/auth"
 
 const GATEWAY_GRAPHQL_URL =
   process.env.GATEWAY_GRAPHQL_URL ?? "http://localhost:3333/graphql"
@@ -50,15 +50,11 @@ export async function getGatewayClient(
 /**
  * Extrai a mensagem do primeiro erro de uma falha do Gateway. As respostas de
  * erro já vêm com mensagem localizada em `extensions.code` + `message`.
- * Caso seja um erro de autenticação inválida (UNAUTHENTICATED), desloga o usuário usando o método signOut do NextAuth e redireciona para `/login`.
  */
 export async function gatewayError(
   error: unknown,
   fallback: string,
 ): Promise<string> {
-  if (isUnauthenticatedError(error)) {
-    await signOut({ redirectTo: "/login" })
-  }
   if (error instanceof ClientError) {
     const message = error.response.errors?.[0]?.message
     if (message) {
