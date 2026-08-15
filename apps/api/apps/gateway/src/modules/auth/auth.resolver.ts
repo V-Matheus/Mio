@@ -39,6 +39,13 @@ export class AuthResolver {
     return this.auth.upsertOAuthUser(input)
   }
 
+  @Mutation(() => AuthPayload)
+  refreshToken(
+    @Args("refreshToken", { type: () => String }) refreshToken: string,
+  ): Promise<AuthPayload> {
+    return this.auth.refreshToken(refreshToken)
+  }
+
   @Mutation(() => Boolean)
   requestPasswordReset(
     @Args("email", new ZodValidationPipe(loginSchema.shape.email))

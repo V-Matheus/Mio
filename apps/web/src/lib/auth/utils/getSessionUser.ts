@@ -54,7 +54,10 @@ export async function getSessionUser(options?: {
       }
     : null
 
-  if (!user?.accessToken && (options?.require ?? true)) {
+  if (
+    (!user?.accessToken || session?.error === "RefreshTokenError") &&
+    (options?.require ?? true)
+  ) {
     redirect("/login")
   }
 

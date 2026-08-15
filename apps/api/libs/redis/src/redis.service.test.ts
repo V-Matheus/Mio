@@ -16,6 +16,8 @@ vi.mock("ioredis", () => {
       publish = vi.fn().mockResolvedValue(1)
       rename = vi.fn().mockResolvedValue("OK")
       del = vi.fn().mockResolvedValue(1)
+      get = vi.fn().mockResolvedValue("val")
+      set = vi.fn().mockResolvedValue("OK")
     },
   }
 })
@@ -107,6 +109,22 @@ describe("RedisService (shared lib)", () => {
     await service.onModuleDestroy()
     expect(client.disconnect).toHaveBeenCalled()
     expect(client.quit).not.toHaveBeenCalled()
+  })
+
+  it("get busca valor de chave", async () => {
+    const client = service.getClient()
+    const val = await service.get("test-key")
+    expect(client.get).toHaveBeenCalledWith("test-key")
+    expect(val).toBe("val")
+  })
+
+  it("set grava chave com ou sem TTL", async () => {
+    const client = service.getClient()
+    await service.set("key1", "val1")
+    expect(client.set).toHaveBeenCalledWith("key1", "val1")
+
+    await service.set("key2", "val2", 3600)
+    expect(client.set).toHaveBeenCalledWith("key2", "val2", "EX", 3600)
   })
 
   it("onModuleDestroy faz fallback para disconnect quando quit falha", async () => {

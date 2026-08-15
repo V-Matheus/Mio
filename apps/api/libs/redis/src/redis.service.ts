@@ -80,6 +80,24 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Obtém o valor de uma chave.
+   */
+  async get(key: string): Promise<string | null> {
+    return await this.client.get(key)
+  }
+
+  /**
+   * Define o valor de uma chave com TTL opcional em segundos.
+   */
+  async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
+    if (ttlSeconds) {
+      await this.client.set(key, value, "EX", ttlSeconds)
+    } else {
+      await this.client.set(key, value)
+    }
+  }
+
+  /**
    * Remove uma ou mais chaves do Redis.
    */
   async del(...keys: string[]): Promise<number> {

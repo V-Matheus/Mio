@@ -1,3 +1,4 @@
+import { RedisModule } from "@mio/redis"
 import { Module } from "@nestjs/common"
 import { JwtModule, type JwtSignOptions } from "@nestjs/jwt"
 import { ClientsModule } from "@nestjs/microservices"
@@ -12,6 +13,7 @@ import { RolesGuard } from "./guards/roles.guard"
 @Module({
   imports: [
     ClientsModule.register(gatewayGrpcClients),
+    RedisModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: {

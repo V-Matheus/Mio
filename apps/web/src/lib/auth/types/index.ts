@@ -6,4 +6,5 @@ export type {
   UpsertOAuthInput,
   UpsertOAuthResult,
 } from "./oauth"
+export type { RefreshTokenResult } from "./refresh-token"
 export type { RegisterResult } from "./register"

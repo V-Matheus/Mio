@@ -195,6 +195,7 @@ describe("registerAction", () => {
     vi.mocked(authService.register).mockResolvedValue({
       ok: true,
       accessToken: "stub-token",
+      refreshToken: "stub-refresh-token",
     })
     vi.mocked(signIn).mockResolvedValue(undefined as never)
 
@@ -213,6 +214,7 @@ describe("registerAction", () => {
     vi.mocked(authService.register).mockResolvedValue({
       ok: true,
       accessToken: "stub-token",
+      refreshToken: "stub-refresh-token",
     })
     vi.mocked(signIn).mockResolvedValue(undefined as never)
 
@@ -242,6 +244,7 @@ describe("registerAction", () => {
     vi.mocked(authService.register).mockResolvedValue({
       ok: true,
       accessToken: "stub-token",
+      refreshToken: "stub-refresh-token",
     })
     vi.mocked(signIn).mockRejectedValue(new AuthError("CredentialsSignin"))
 
@@ -255,6 +258,7 @@ describe("registerAction", () => {
     vi.mocked(authService.register).mockResolvedValue({
       ok: true,
       accessToken: "stub-token",
+      refreshToken: "stub-refresh-token",
     })
     const unexpected = new Error("network down")
     vi.mocked(signIn).mockRejectedValue(unexpected)

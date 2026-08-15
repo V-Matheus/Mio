@@ -87,10 +87,15 @@ describe("proxy middleware", () => {
     expect(res).toBeUndefined()
   })
 
-  it("should allow ADMIN to access /studio", async () => {
-    vi.mocked(getToken).mockResolvedValue({ sub: "user-1", roles: ["ADMIN"] })
-    const req = makeRequest("/studio")
+  it("should redirect when token has RefreshTokenError to /login", async () => {
+    vi.mocked(getToken).mockResolvedValue({
+      sub: "user-1",
+      roles: ["STUDENT"],
+      error: "RefreshTokenError",
+    })
+    const req = makeRequest("/home")
     const res = await proxy(req)
-    expect(res).toBeUndefined()
+    expect(res).toBeInstanceOf(NextResponse)
+    expect(res?.headers.get("location")).toBe("http://localhost:3000/login")
   })
 })

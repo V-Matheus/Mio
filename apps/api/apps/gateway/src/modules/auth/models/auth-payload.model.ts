@@ -6,6 +6,9 @@ export class AuthPayload {
   @Field()
   accessToken!: string
 
+  @Field()
+  refreshToken!: string
+
   @Field(() => User)
   user!: User
 }

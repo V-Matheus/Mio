@@ -24,7 +24,8 @@ export async function proxy(req: NextRequest) {
     secret: process.env.AUTH_SECRET,
   })
 
-  const isLoggedIn = !!token
+  const hasAuthError = token?.error === "RefreshTokenError"
+  const isLoggedIn = !!token && !hasAuthError
   const pathname = req.nextUrl.pathname
   const isAuthRoute = AUTH_ROUTES.some((path) => pathname.startsWith(path))
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname)
