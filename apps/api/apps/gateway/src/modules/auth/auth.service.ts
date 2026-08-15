@@ -1,7 +1,10 @@
+import { RedisService } from "@mio/redis"
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 import { JwtService, type JwtSignOptions } from "@nestjs/jwt"
 import type { ClientGrpc } from "@nestjs/microservices"
 import { GraphQLError } from "graphql"
+import { nanoid } from "nanoid"
+import { parseTtlSeconds } from "../../common/utils"
 import { GrpcCaller } from "../../grpc/grpc-caller"
 import { USERS_PACKAGE_TOKEN } from "../../grpc/registry"
 import type { LoginInput } from "./dto/login.input"
@@ -37,6 +40,7 @@ export class AuthService implements OnModuleInit {
   constructor(
     @Inject(USERS_PACKAGE_TOKEN) private readonly client: ClientGrpc,
     private readonly jwt: JwtService,
+    private readonly redis: RedisService,
   ) {}
 
   onModuleInit(): void {
@@ -46,14 +50,14 @@ export class AuthService implements OnModuleInit {
 
   async register(input: RegisterInput): Promise<AuthPayload> {
     const user = await this.caller.call(this.usersService.register(input))
-    return this.toAuthPayload(user)
+    return await this.toAuthPayload(user)
   }
 
   async login(input: LoginInput): Promise<AuthPayload> {
     const user = await this.caller.call(
       this.usersService.validateCredentials(input),
     )
-    return this.toAuthPayload(user)
+    return await this.toAuthPayload(user)
   }
 
   async upsertOAuthUser(input: UpsertOAuthInput): Promise<AuthPayload> {
@@ -66,23 +70,39 @@ export class AuthService implements OnModuleInit {
         avatarUrl: input.avatarUrl ?? "",
       }),
     )
-    return this.toAuthPayload(user)
+    return await this.toAuthPayload(user)
   }
 
   async refreshToken(token: string): Promise<AuthPayload> {
     try {
-      const payload = this.jwt.verify<{ sub: string; tokenType?: string }>(
-        token,
-      )
-      if (payload.tokenType !== "refresh") {
+      const payload = this.jwt.verify<{
+        sub: string
+        tokenType?: string
+        jti?: string
+      }>(token)
+
+      if (payload.tokenType !== "refresh" || !payload.jti) {
         throw new GraphQLError("Token de atualização inválido", {
           extensions: { code: "UNAUTHENTICATED" },
         })
       }
+
+      // Invalidação atômica do JTI antigo no Redis.
+      // del() retorna 1 se a chave existia e foi removida, ou 0 se já havia sido consumida/inexistente.
+      const deleted = await this.redis.del(`auth:refresh_token:${payload.jti}`)
+      if (deleted === 0) {
+        throw new GraphQLError(
+          "Token de atualização já utilizado ou revogado",
+          {
+            extensions: { code: "UNAUTHENTICATED" },
+          },
+        )
+      }
+
       const user = await this.caller.call(
         this.usersService.findByCode({ code: payload.sub }),
       )
-      return this.toAuthPayload(user)
+      return await this.toAuthPayload(user)
     } catch (error) {
       if (error instanceof GraphQLError) {
         throw error
@@ -126,22 +146,36 @@ export class AuthService implements OnModuleInit {
     return toUser(user)
   }
 
-  private toAuthPayload(user: GrpcUserResponse): AuthPayload {
-    return {
-      accessToken: this.jwt.sign({
+  private async toAuthPayload(user: GrpcUserResponse): Promise<AuthPayload> {
+    const jti = nanoid()
+    const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN ?? "1d"
+    const refreshTtlSeconds = parseTtlSeconds(refreshExpiresIn, 86400)
+
+    const accessToken = this.jwt.sign({
+      sub: user.code,
+      roles: user.roles || [],
+    })
+
+    const refreshToken = this.jwt.sign(
+      {
         sub: user.code,
-        roles: user.roles || [],
-      }),
-      refreshToken: this.jwt.sign(
-        {
-          sub: user.code,
-          tokenType: "refresh",
-        },
-        {
-          expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ??
-            "7d") as JwtSignOptions["expiresIn"],
-        },
-      ),
+        tokenType: "refresh",
+        jti,
+      },
+      {
+        expiresIn: refreshExpiresIn as JwtSignOptions["expiresIn"],
+      },
+    )
+
+    await this.redis.set(
+      `auth:refresh_token:${jti}`,
+      user.code,
+      refreshTtlSeconds,
+    )
+
+    return {
+      accessToken,
+      refreshToken,
       user: toUser(user),
     }
   }
