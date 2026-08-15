@@ -132,4 +132,30 @@ describe("AuthService", () => {
     const user = await service.me(grpcUser.code)
     expect(user.code).toBe(grpcUser.code)
   })
+
+  it("refreshToken emite novo par de tokens para refresh token válido", async () => {
+    const { service, jwt } = setup({
+      findByCode: vi.fn().mockReturnValue(of(grpcUser)),
+    })
+    jwt.verify = vi
+      .fn()
+      .mockReturnValue({ sub: grpcUser.code, tokenType: "refresh" })
+
+    const result = await service.refreshToken("valid-refresh-token")
+    expect(jwt.verify).toHaveBeenCalledWith("valid-refresh-token")
+    expect(result.accessToken).toBe("signed.jwt")
+    expect(result.refreshToken).toBe("signed.jwt")
+    expect(result.user.code).toBe(grpcUser.code)
+  })
+
+  it("refreshToken rejeita token que não é do tipo refresh", async () => {
+    const { service, jwt } = setup({})
+    jwt.verify = vi
+      .fn()
+      .mockReturnValue({ sub: grpcUser.code, tokenType: "access" })
+
+    await expect(service.refreshToken("not-refresh-token")).rejects.toThrow(
+      GraphQLError,
+    )
+  })
 })

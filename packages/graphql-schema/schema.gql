@@ -41,6 +41,7 @@ type AdminTrackDetail {
 
 type AuthPayload {
   accessToken: String!
+  refreshToken: String!
   user: User!
 }
 
@@ -129,6 +130,7 @@ type Mutation {
   login(input: LoginInput!): AuthPayload!
   markLessonCompleted(lessonId: Int!): Boolean!
   markSectionViewed(sectionId: Int!): MarkSectionResult!
+  refreshToken(refreshToken: String!): AuthPayload!
   register(input: RegisterInput!): AuthPayload!
   requestPasswordReset(email: String!): Boolean!
   resetPassword(newPassword: String!, token: String!): Boolean!

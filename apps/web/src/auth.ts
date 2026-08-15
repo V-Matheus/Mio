@@ -5,6 +5,20 @@ import Google from "next-auth/providers/google"
 
 import { loginCredentialsAction, upsertOAuthAction } from "@/lib/auth/actions"
 import { meQuery } from "@/lib/auth/queries"
+import { authService } from "@/lib/auth/service"
+
+function getJwtExpiry(token: string): number | null {
+  try {
+    const parts = token.split(".")
+    if (parts.length !== 3 || !parts[1]) return null
+    const payload = JSON.parse(
+      Buffer.from(parts[1], "base64").toString("utf-8"),
+    )
+    return typeof payload.exp === "number" ? payload.exp * 1000 : null
+  } catch {
+    return null
+  }
+}
 
 const nextAuth = NextAuth({
   providers: [
@@ -36,6 +50,7 @@ const nextAuth = NextAuth({
           email: meResult.user.email,
           image: meResult.user.avatarUrl,
           accessToken: loginResult.accessToken,
+          refreshToken: loginResult.refreshToken,
           roles: meResult.user.roles,
         }
       },
@@ -80,6 +95,7 @@ const nextAuth = NextAuth({
       user.email = meResult.user.email
       user.image = meResult.user.avatarUrl
       user.accessToken = upsertResult.accessToken
+      user.refreshToken = upsertResult.refreshToken
       user.roles = meResult.user.roles
 
       return true
@@ -87,11 +103,16 @@ const nextAuth = NextAuth({
     async jwt({ token, user, trigger }) {
       if (user) {
         token.accessToken = user.accessToken
+        token.refreshToken = user.refreshToken
+        token.accessTokenExpires = user.accessToken
+          ? (getJwtExpiry(user.accessToken) ?? Date.now() + 60 * 60 * 1000)
+          : Date.now() + 60 * 60 * 1000
         token.id = user.id
         token.name = user.name
         token.email = user.email
         token.picture = user.image
         token.roles = user.roles
+        token.error = undefined
         return token
       }
 
@@ -106,10 +127,43 @@ const nextAuth = NextAuth({
         }
       }
 
+      const expiresAt =
+        (token.accessTokenExpires as number) ??
+        (token.accessToken ? getJwtExpiry(token.accessToken as string) : null)
+
+      // Se o accessToken ainda é válido com margem de segurança de 60 segundos
+      if (expiresAt && Date.now() < expiresAt - 60_000) {
+        return token
+      }
+
+      // Se expirou ou está para expirar, tenta renovar usando o refresh token
+      if (token.refreshToken) {
+        const refreshResult = await authService.refreshToken(
+          token.refreshToken as string,
+        )
+        if (refreshResult.ok) {
+          token.accessToken = refreshResult.accessToken
+          token.refreshToken = refreshResult.refreshToken
+          token.accessTokenExpires =
+            getJwtExpiry(refreshResult.accessToken) ??
+            Date.now() + 60 * 60 * 1000
+          token.id = refreshResult.user.code
+          token.name = refreshResult.user.name
+          token.email = refreshResult.user.email
+          token.picture = refreshResult.user.avatarUrl
+          token.roles = refreshResult.user.roles
+          token.error = undefined
+          return token
+        }
+      }
+
+      token.error = "RefreshTokenError"
       return token
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken
+      session.refreshToken = token.refreshToken
+      session.error = token.error as string | undefined
 
       if (session.user) {
         session.user.id = (token.id as string) || (token.sub as string)

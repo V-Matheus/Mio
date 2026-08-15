@@ -18,15 +18,21 @@ describe("authService", () => {
   })
 
   describe("login", () => {
-    it("resolves with the accessToken from the login mutation", async () => {
-      mockRequest.mockResolvedValueOnce({ login: { accessToken: "jwt-123" } })
+    it("resolves with the accessToken and refreshToken from the login mutation", async () => {
+      mockRequest.mockResolvedValueOnce({
+        login: { accessToken: "jwt-123", refreshToken: "refresh-123" },
+      })
 
       const result = await authService.login({
         email: "user@example.com",
         password: "secret",
       })
 
-      expect(result).toEqual({ ok: true, accessToken: "jwt-123" })
+      expect(result).toEqual({
+        ok: true,
+        accessToken: "jwt-123",
+        refreshToken: "refresh-123",
+      })
       expect(mockRequest).toHaveBeenCalledWith(expect.anything(), {
         input: { email: "user@example.com", password: "secret" },
       })
@@ -45,9 +51,9 @@ describe("authService", () => {
   })
 
   describe("register", () => {
-    it("sends only email/name/password and returns the accessToken", async () => {
+    it("sends only email/name/password and returns the accessToken and refreshToken", async () => {
       mockRequest.mockResolvedValueOnce({
-        register: { accessToken: "jwt-456" },
+        register: { accessToken: "jwt-456", refreshToken: "refresh-456" },
       })
 
       const result = await authService.register({
@@ -58,7 +64,11 @@ describe("authService", () => {
         terms: "on",
       })
 
-      expect(result).toEqual({ ok: true, accessToken: "jwt-456" })
+      expect(result).toEqual({
+        ok: true,
+        accessToken: "jwt-456",
+        refreshToken: "refresh-456",
+      })
       expect(mockRequest).toHaveBeenCalledWith(expect.anything(), {
         input: {
           email: "victor@example.com",
@@ -78,6 +88,50 @@ describe("authService", () => {
         confirmPassword: "Strong1Pass",
         terms: "on",
       })
+
+      expect(result).toEqual({ ok: false, error: expect.any(String) })
+    })
+  })
+
+  describe("refreshToken", () => {
+    it("resolves with updated tokens and user data", async () => {
+      mockRequest.mockResolvedValueOnce({
+        refreshToken: {
+          accessToken: "new-jwt",
+          refreshToken: "new-refresh",
+          user: {
+            code: "abc123",
+            email: "victor@example.com",
+            name: "Victor",
+            avatarUrl: null,
+            roles: ["STUDENT"],
+          },
+        },
+      })
+
+      const result = await authService.refreshToken("current-refresh-token")
+
+      expect(result).toEqual({
+        ok: true,
+        accessToken: "new-jwt",
+        refreshToken: "new-refresh",
+        user: {
+          code: "abc123",
+          email: "victor@example.com",
+          name: "Victor",
+          avatarUrl: null,
+          roles: ["STUDENT"],
+        },
+      })
+      expect(mockRequest).toHaveBeenCalledWith(expect.anything(), {
+        refreshToken: "current-refresh-token",
+      })
+    })
+
+    it("resolves with ok: false when the gateway rejects", async () => {
+      mockRequest.mockRejectedValueOnce(new Error("expired"))
+
+      const result = await authService.refreshToken("invalid-token")
 
       expect(result).toEqual({ ok: false, error: expect.any(String) })
     })
@@ -145,9 +199,12 @@ describe("authService", () => {
   })
 
   describe("upsertOAuthUser", () => {
-    it("returns the accessToken when input is complete", async () => {
+    it("returns the accessToken and refreshToken when input is complete", async () => {
       mockRequest.mockResolvedValueOnce({
-        upsertOAuthUser: { accessToken: "jwt-oauth" },
+        upsertOAuthUser: {
+          accessToken: "jwt-oauth",
+          refreshToken: "refresh-oauth",
+        },
       })
 
       const result = await authService.upsertOAuthUser({
@@ -158,7 +215,11 @@ describe("authService", () => {
         avatarUrl: null,
       })
 
-      expect(result).toEqual({ ok: true, accessToken: "jwt-oauth" })
+      expect(result).toEqual({
+        ok: true,
+        accessToken: "jwt-oauth",
+        refreshToken: "refresh-oauth",
+      })
       expect(mockRequest).toHaveBeenCalledWith(expect.anything(), {
         input: {
           provider: "google",

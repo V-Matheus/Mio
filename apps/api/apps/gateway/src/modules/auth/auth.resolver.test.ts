@@ -13,6 +13,9 @@ function makeResolver() {
     me: vi.fn().mockResolvedValue({ code: "c" }),
     updateUserRole: vi.fn().mockResolvedValue({}),
     listUsers: vi.fn().mockResolvedValue([]),
+    refreshToken: vi
+      .fn()
+      .mockResolvedValue({ accessToken: "t", refreshToken: "r", user: {} }),
   }
   return { resolver: new AuthResolver(auth as unknown as AuthService), auth }
 }
@@ -43,6 +46,12 @@ describe("AuthResolver", () => {
     }
     await resolver.upsertOAuthUser(input)
     expect(auth.upsertOAuthUser).toHaveBeenCalledWith(input)
+  })
+
+  it("refreshToken delega para AuthService.refreshToken", async () => {
+    const { resolver, auth } = makeResolver()
+    await resolver.refreshToken("refresh-token-123")
+    expect(auth.refreshToken).toHaveBeenCalledWith("refresh-token-123")
   })
 
   it("requestPasswordReset delega o email", async () => {

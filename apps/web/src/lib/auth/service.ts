@@ -4,6 +4,7 @@ import {
   LIST_USERS_QUERY,
   LOGIN_MUTATION,
   ME_QUERY,
+  REFRESH_TOKEN_MUTATION,
   REGISTER_MUTATION,
   REQUEST_PASSWORD_RESET_MUTATION,
   UPDATE_USER_ROLE_MUTATION,
@@ -15,6 +16,7 @@ import type {
   LoginResult,
   MeResult,
   MeUser,
+  RefreshTokenResult,
   RegisterResult,
   UpsertOAuthInput,
   UpsertOAuthResult,
@@ -30,7 +32,11 @@ export const authService = {
       const { login } = await client.request(LOGIN_MUTATION, {
         input,
       })
-      return { ok: true, accessToken: login.accessToken }
+      return {
+        ok: true,
+        accessToken: login.accessToken,
+        refreshToken: login.refreshToken,
+      }
     } catch (error) {
       return { ok: false, error: await gatewayError(error, "Falha no login") }
     }
@@ -46,11 +52,44 @@ export const authService = {
           password: input.password,
         },
       })
-      return { ok: true, accessToken: register.accessToken }
+      return {
+        ok: true,
+        accessToken: register.accessToken,
+        refreshToken: register.refreshToken,
+      }
     } catch (error) {
       return {
         ok: false,
         error: await gatewayError(error, "Falha ao cadastrar"),
+      }
+    }
+  },
+
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResult> {
+    try {
+      const client = await getGatewayClient()
+      const { refreshToken: data } = await client.request(
+        REFRESH_TOKEN_MUTATION,
+        {
+          refreshToken,
+        },
+      )
+      return {
+        ok: true,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        user: {
+          code: data.user.code,
+          email: data.user.email,
+          name: data.user.name,
+          avatarUrl: data.user.avatarUrl ?? null,
+          roles: data.user.roles ?? [],
+        },
+      }
+    } catch (error) {
+      return {
+        ok: false,
+        error: await gatewayError(error, "Falha ao renovar sessão"),
       }
     }
   },
@@ -136,7 +175,11 @@ export const authService = {
       const { upsertOAuthUser } = await client.request(UPSERT_OAUTH_MUTATION, {
         input,
       })
-      return { ok: true, accessToken: upsertOAuthUser.accessToken }
+      return {
+        ok: true,
+        accessToken: upsertOAuthUser.accessToken,
+        refreshToken: upsertOAuthUser.refreshToken,
+      }
     } catch (error) {
       return {
         ok: false,

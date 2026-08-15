@@ -1,6 +1,7 @@
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
-import { JwtService } from "@nestjs/jwt"
+import { JwtService, type JwtSignOptions } from "@nestjs/jwt"
 import type { ClientGrpc } from "@nestjs/microservices"
+import { GraphQLError } from "graphql"
 import { GrpcCaller } from "../../grpc/grpc-caller"
 import { USERS_PACKAGE_TOKEN } from "../../grpc/registry"
 import type { LoginInput } from "./dto/login.input"
@@ -68,6 +69,30 @@ export class AuthService implements OnModuleInit {
     return this.toAuthPayload(user)
   }
 
+  async refreshToken(token: string): Promise<AuthPayload> {
+    try {
+      const payload = this.jwt.verify<{ sub: string; tokenType?: string }>(
+        token,
+      )
+      if (payload.tokenType !== "refresh") {
+        throw new GraphQLError("Token de atualização inválido", {
+          extensions: { code: "UNAUTHENTICATED" },
+        })
+      }
+      const user = await this.caller.call(
+        this.usersService.findByCode({ code: payload.sub }),
+      )
+      return this.toAuthPayload(user)
+    } catch (error) {
+      if (error instanceof GraphQLError) {
+        throw error
+      }
+      throw new GraphQLError("Token de atualização inválido ou expirado", {
+        extensions: { code: "UNAUTHENTICATED" },
+      })
+    }
+  }
+
   async requestPasswordReset(email: string): Promise<boolean> {
     await this.caller.call(this.usersService.issuePasswordReset({ email }))
     return true
@@ -107,6 +132,16 @@ export class AuthService implements OnModuleInit {
         sub: user.code,
         roles: user.roles || [],
       }),
+      refreshToken: this.jwt.sign(
+        {
+          sub: user.code,
+          tokenType: "refresh",
+        },
+        {
+          expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ??
+            "7d") as JwtSignOptions["expiresIn"],
+        },
+      ),
       user: toUser(user),
     }
   }
