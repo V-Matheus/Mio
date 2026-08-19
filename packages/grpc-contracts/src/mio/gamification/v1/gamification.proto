@@ -5,6 +5,7 @@ package mio.gamification.v1;
 service GamificationService {
   rpc GetUserXp(GetUserXpRequest) returns (UserXpResponse);
   rpc GetLeaderboard(GetLeaderboardRequest) returns (LeaderboardResponse);
+  rpc GetUserGamificationProfile(GetUserXpRequest) returns (GamificationProfileResponse);
 }
 
 message GetUserXpRequest {
@@ -17,6 +18,33 @@ message UserXpResponse {
   int32 progress_to_next = 3;     // 0..100
   int32 xp_to_next_level = 4;
   int32 rank = 5;                 // posição global (1-based)
+}
+
+message StreakInfo {
+  int32 streak_current = 1;
+  int32 streak_best = 2;
+  string last_study_date = 3;
+}
+
+message WeeklyXpDay {
+  string day = 1;
+  string date = 2;
+  int32 xp = 3;
+}
+
+message WeeklyXpSummary {
+  repeated WeeklyXpDay days = 1;
+  int32 total_weekly_xp = 2;
+}
+
+message GamificationProfileResponse {
+  int32 total = 1;
+  string level = 2;
+  int32 progress_to_next = 3;
+  int32 xp_to_next_level = 4;
+  int32 rank = 5;
+  StreakInfo streak = 6;
+  WeeklyXpSummary weekly_xp = 7;
 }
 
 message GetLeaderboardRequest {

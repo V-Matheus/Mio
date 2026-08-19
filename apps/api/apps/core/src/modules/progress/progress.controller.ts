@@ -45,4 +45,33 @@ export class ProgressController {
       viewedSectionIds: progress.viewedSectionIds,
     }
   }
+
+  @GrpcMethod(SERVICE_NAME, "GetStudentProfileProgress")
+  async getStudentProfileProgress(data: { userCode: string }) {
+    const result = await this.progressService.getStudentProfileProgress(
+      data.userCode,
+    )
+    return {
+      totalCompletedLessons: result.totalCompletedLessons,
+      completedTracksCount: result.completedTracksCount,
+      inProgressTracks: result.inProgressTracks.map((t) => ({
+        trackId: t.trackId,
+        trackSlug: t.trackSlug,
+        trackTitle: t.trackTitle,
+        totalLessons: t.totalLessons,
+        completedLessons: t.completedLessons,
+        progressPercentage: t.progressPercentage,
+        currentLessonSlug: t.currentLessonSlug,
+        currentLessonTitle: t.currentLessonTitle,
+      })),
+      recentActivities: result.recentActivities.map((a) => ({
+        lessonId: a.lessonId,
+        lessonSlug: a.lessonSlug,
+        lessonTitle: a.lessonTitle,
+        trackSlug: a.trackSlug,
+        trackTitle: a.trackTitle,
+        completedAt: a.completedAt,
+      })),
+    }
+  }
 }

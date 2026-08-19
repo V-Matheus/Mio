@@ -1,4 +1,3 @@
-import { join } from "node:path"
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default"
 import { ApolloDriver, type ApolloDriverConfig } from "@nestjs/apollo"
 import { Module } from "@nestjs/common"
@@ -10,13 +9,14 @@ import { AuthModule } from "./modules/auth/auth.module"
 import { CatalogModule } from "./modules/catalog/catalog.module"
 import { GamificationModule } from "./modules/gamification/gamification.module"
 import { HealthModule } from "./modules/health/health.module"
+import { ProfileModule } from "./modules/profile/profile.module"
 import { ProgressModule } from "./modules/progress/progress.module"
 
 const isProduction = process.env.NODE_ENV === "production"
 
 const autoSchemaFile = isProduction
   ? true
-  : join(process.cwd(), "../../packages/graphql-schema/schema.gql")
+  : "../../packages/graphql-schema/schema.gql"
 
 @Module({
   imports: [
@@ -37,6 +37,7 @@ const autoSchemaFile = isProduction
     CatalogModule,
     ProgressModule,
     GamificationModule,
+    ProfileModule,
   ],
   controllers: [],
   providers: [

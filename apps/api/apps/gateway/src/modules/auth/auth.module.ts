@@ -32,6 +32,7 @@ import { RolesGuard } from "./guards/roles.guard"
     PermissionsGuard,
   ],
   exports: [
+    AuthService,
     JwtModule,
     GqlAuthGuard,
     OptionalGqlAuthGuard,

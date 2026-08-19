@@ -14,6 +14,33 @@ export type LessonProgressDetail = {
   viewedSectionIds: number[]
 }
 
+export type TrackProgressSummaryDetail = {
+  trackId: number
+  trackSlug: string
+  trackTitle: string
+  totalLessons: number
+  completedLessons: number
+  progressPercentage: number
+  currentLessonSlug: string
+  currentLessonTitle: string
+}
+
+export type RecentActivityEntryDetail = {
+  lessonId: number
+  lessonSlug: string
+  lessonTitle: string
+  trackSlug: string
+  trackTitle: string
+  completedAt: string
+}
+
+export type StudentProfileProgressDetail = {
+  totalCompletedLessons: number
+  completedTracksCount: number
+  inProgressTracks: TrackProgressSummaryDetail[]
+  recentActivities: RecentActivityEntryDetail[]
+}
+
 @Injectable()
 export class ProgressService {
   constructor(
@@ -252,6 +279,137 @@ export class ProgressService {
         ? progress.completedAt.toISOString()
         : "",
       viewedSectionIds: sectionViews.map((sv) => sv.sectionId),
+    }
+  }
+
+  async getStudentProfileProgress(
+    userCode: string,
+  ): Promise<StudentProfileProgressDetail> {
+    const user = await this.prisma.user.findUnique({
+      where: { code: userCode },
+    })
+    if (!user) {
+      return {
+        totalCompletedLessons: 0,
+        completedTracksCount: 0,
+        inProgressTracks: [],
+        recentActivities: [],
+      }
+    }
+
+    const [
+      totalCompletedLessons,
+      enrollments,
+      lessonProgresses,
+      recentProgresses,
+    ] = await Promise.all([
+      this.prisma.lessonProgress.count({
+        where: {
+          userId: user.id,
+          completedAt: { not: null },
+        },
+      }),
+      this.prisma.enrollment.findMany({
+        where: { userId: user.id },
+        include: {
+          track: {
+            include: {
+              lessons: {
+                orderBy: { position: "asc" },
+                select: {
+                  id: true,
+                  slug: true,
+                  title: true,
+                  position: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      this.prisma.lessonProgress.findMany({
+        where: {
+          userId: user.id,
+          completedAt: { not: null },
+        },
+        select: {
+          lessonId: true,
+        },
+      }),
+      this.prisma.lessonProgress.findMany({
+        where: {
+          userId: user.id,
+          completedAt: { not: null },
+        },
+        include: {
+          lesson: {
+            include: {
+              track: true,
+            },
+          },
+        },
+        orderBy: { completedAt: "desc" },
+        take: 10,
+      }),
+    ])
+
+    const completedLessonIdSet = new Set(
+      lessonProgresses.map((p) => p.lessonId),
+    )
+
+    let completedTracksCount = 0
+    const inProgressTracks: TrackProgressSummaryDetail[] = []
+
+    for (const enrollment of enrollments) {
+      const track = enrollment.track
+      const totalLessons = track.lessons.length
+      if (totalLessons === 0) continue
+
+      const completedCount = track.lessons.filter((l) =>
+        completedLessonIdSet.has(l.id),
+      ).length
+
+      if (completedCount === totalLessons) {
+        completedTracksCount += 1
+      }
+
+      const currentLesson =
+        track.lessons.find((l) => !completedLessonIdSet.has(l.id)) ??
+        track.lessons[track.lessons.length - 1]
+
+      const progressPercentage = Math.round(
+        (completedCount / totalLessons) * 100,
+      )
+
+      inProgressTracks.push({
+        trackId: track.id,
+        trackSlug: track.slug,
+        trackTitle: track.title,
+        totalLessons,
+        completedLessons: completedCount,
+        progressPercentage,
+        currentLessonSlug: currentLesson ? currentLesson.slug : "",
+        currentLessonTitle: currentLesson ? currentLesson.title : "",
+      })
+    }
+
+    const recentActivities: RecentActivityEntryDetail[] = recentProgresses.map(
+      (p) => ({
+        lessonId: p.lesson.id,
+        lessonSlug: p.lesson.slug,
+        lessonTitle: p.lesson.title,
+        trackSlug: p.lesson.track.slug,
+        trackTitle: p.lesson.track.title,
+        completedAt: p.completedAt ? p.completedAt.toISOString() : "",
+      }),
+    )
+
+    return {
+      totalCompletedLessons,
+      completedTracksCount,
+      inProgressTracks,
+      recentActivities,
     }
   }
 }

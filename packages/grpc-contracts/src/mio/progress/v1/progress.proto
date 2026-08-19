@@ -6,6 +6,7 @@ service ProgressService {
   rpc MarkSectionViewed(MarkSectionViewedRequest) returns (ProgressResponse);
   rpc MarkLessonCompleted(MarkLessonCompletedRequest) returns (ProgressResponse);
   rpc GetLessonProgress(GetLessonProgressRequest) returns (LessonProgressResponse);
+  rpc GetStudentProfileProgress(GetStudentProfileProgressRequest) returns (StudentProfileProgressResponse);
 }
 
 message MarkSectionViewedRequest {
@@ -23,6 +24,10 @@ message GetLessonProgressRequest {
   int32 lesson_id = 2;
 }
 
+message GetStudentProfileProgressRequest {
+  string user_code = 1;
+}
+
 message ProgressResponse {
   bool ok = 1;
   bool lesson_completed = 2;
@@ -32,4 +37,31 @@ message LessonProgressResponse {
   int32 last_section_id = 1;
   string completed_at = 2;
   repeated int32 viewed_section_ids = 3;
+}
+
+message TrackProgressSummary {
+  int32 track_id = 1;
+  string track_slug = 2;
+  string track_title = 3;
+  int32 total_lessons = 4;
+  int32 completed_lessons = 5;
+  int32 progress_percentage = 6;
+  string current_lesson_slug = 7;
+  string current_lesson_title = 8;
+}
+
+message RecentActivityEntry {
+  int32 lesson_id = 1;
+  string lesson_slug = 2;
+  string lesson_title = 3;
+  string track_slug = 4;
+  string track_title = 5;
+  string completed_at = 6;
+}
+
+message StudentProfileProgressResponse {
+  int32 total_completed_lessons = 1;
+  int32 completed_tracks_count = 2;
+  repeated TrackProgressSummary in_progress_tracks = 3;
+  repeated RecentActivityEntry recent_activities = 4;
 }

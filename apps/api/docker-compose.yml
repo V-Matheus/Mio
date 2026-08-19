@@ -51,6 +51,8 @@ services:
 
   rabbitmq:
     image: rabbitmq:4-management-alpine
+    env_file:
+      - .env
     ports:
       - "${RABBITMQ_PORT}:5672"
       - "${RABBITMQ_MANAGEMENT_PORT}:15672"
@@ -84,7 +86,7 @@ services:
     environment:
       SERVICE: core
     expose:
-      - "5001"
+      - "${CORE_GRPC_PORT}"
     depends_on:
       - api-gateway
       - postgres-core
@@ -97,7 +99,7 @@ services:
     environment:
       SERVICE: gamification
     expose:
-      - "5002"
+      - "${GAMIFICATION_GRPC_PORT}"
     depends_on:
       - api-gateway
       - postgres-gamification
@@ -110,7 +112,7 @@ services:
     environment:
       SERVICE: achievements
     expose:
-      - "5003"
+      - "${ACHIEVEMENTS_GRPC_PORT}"
     depends_on:
       - api-gateway
       - postgres-achievements
@@ -123,7 +125,7 @@ services:
     environment:
       SERVICE: messenger
     expose:
-      - "5004"
+      - "${MESSENGER_GRPC_PORT}"
     depends_on:
       - api-gateway
     restart: unless-stopped
@@ -135,7 +137,7 @@ services:
     environment:
       SERVICE: notifications
     expose:
-      - "5005"
+      - "${NOTIFICATIONS_GRPC_PORT}"
     depends_on:
       - api-gateway
     restart: unless-stopped

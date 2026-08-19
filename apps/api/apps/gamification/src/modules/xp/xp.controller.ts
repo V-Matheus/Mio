@@ -18,6 +18,33 @@ export interface UserXpResponse {
   rank: number
 }
 
+export interface StreakInfoResponse {
+  streakCurrent: number
+  streakBest: number
+  lastStudyDate: string
+}
+
+export interface WeeklyXpDayResponse {
+  day: string
+  date: string
+  xp: number
+}
+
+export interface WeeklyXpSummaryResponse {
+  days: WeeklyXpDayResponse[]
+  totalWeeklyXp: number
+}
+
+export interface GamificationProfileResponse {
+  total: number
+  level: string
+  progressToNext: number
+  xpToNextLevel: number
+  rank: number
+  streak: StreakInfoResponse
+  weeklyXp: WeeklyXpSummaryResponse
+}
+
 export interface GetLeaderboardRequest {
   limit: number
   offset: number
@@ -51,6 +78,31 @@ export class XpController {
       progressToNext: detail.progressToNext,
       xpToNextLevel: detail.xpToNextLevel,
       rank: detail.rank,
+    }
+  }
+
+  @GrpcMethod(SERVICE_NAME, "GetUserGamificationProfile")
+  async getUserGamificationProfile(
+    data: GetUserXpRequest,
+  ): Promise<GamificationProfileResponse> {
+    const detail = await this.xpService.getUserGamificationProfile(
+      data.userCode,
+    )
+    return {
+      total: detail.total,
+      level: detail.level,
+      progressToNext: detail.progressToNext,
+      xpToNextLevel: detail.xpToNextLevel,
+      rank: detail.rank,
+      streak: {
+        streakCurrent: detail.streak.streakCurrent,
+        streakBest: detail.streak.streakBest,
+        lastStudyDate: detail.streak.lastStudyDate ?? "",
+      },
+      weeklyXp: {
+        days: detail.weeklyXp.days,
+        totalWeeklyXp: detail.weeklyXp.totalWeeklyXp,
+      },
     }
   }
 

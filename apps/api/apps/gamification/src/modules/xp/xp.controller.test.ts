@@ -6,6 +6,7 @@ import type { XpService } from "./xp.service"
 describe("XpController", () => {
   let xpServiceMock: {
     getUserXp: ReturnType<typeof vi.fn>
+    getUserGamificationProfile: ReturnType<typeof vi.fn>
   }
   let leaderboardMock: {
     getLeaderboard: ReturnType<typeof vi.fn>
@@ -15,6 +16,7 @@ describe("XpController", () => {
   beforeEach(() => {
     xpServiceMock = {
       getUserXp: vi.fn(),
+      getUserGamificationProfile: vi.fn(),
     }
     leaderboardMock = {
       getLeaderboard: vi.fn(),
@@ -79,6 +81,57 @@ describe("XpController", () => {
           },
         ],
         totalUsers: 1,
+      })
+    })
+  })
+
+  describe("getUserGamificationProfile", () => {
+    it("delega para XpService e formata resposta com streak e weekly XP", async () => {
+      xpServiceMock.getUserGamificationProfile = vi.fn().mockResolvedValue({
+        total: 120,
+        level: "INICIANTE",
+        progressToNext: 20,
+        xpToNextLevel: 380,
+        rank: 3,
+        streak: {
+          streakCurrent: 4,
+          streakBest: 8,
+          lastStudyDate: "2026-08-17T12:00:00.000Z",
+        },
+        weeklyXp: {
+          days: [
+            { day: "Seg", date: "2026-08-17", xp: 120 },
+            { day: "Ter", date: "2026-08-18", xp: 0 },
+          ],
+          totalWeeklyXp: 120,
+        },
+      })
+
+      const res = await controller.getUserGamificationProfile({
+        userCode: "usr1",
+      })
+
+      expect(xpServiceMock.getUserGamificationProfile).toHaveBeenCalledWith(
+        "usr1",
+      )
+      expect(res).toEqual({
+        total: 120,
+        level: "INICIANTE",
+        progressToNext: 20,
+        xpToNextLevel: 380,
+        rank: 3,
+        streak: {
+          streakCurrent: 4,
+          streakBest: 8,
+          lastStudyDate: "2026-08-17T12:00:00.000Z",
+        },
+        weeklyXp: {
+          days: [
+            { day: "Seg", date: "2026-08-17", xp: 120 },
+            { day: "Ter", date: "2026-08-18", xp: 0 },
+          ],
+          totalWeeklyXp: 120,
+        },
       })
     })
   })
