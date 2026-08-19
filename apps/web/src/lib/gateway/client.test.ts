@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   gatewayError,
   getGatewayClient,
-  isUnauthenticatedError,
+  getPublicGatewayClient,
 } from "@/lib/gateway/client"
 
 vi.mock("server-only", () => ({}))
@@ -74,20 +74,24 @@ describe("getGatewayClient", () => {
   })
 })
 
-describe("isUnauthenticatedError", () => {
-  it("identifica erro de UNAUTHENTICATED via extension code", () => {
-    const error = makeClientError(["Erro"], 401, "UNAUTHENTICATED")
-    expect(isUnauthenticatedError(error)).toBe(true)
+describe("getPublicGatewayClient", () => {
+  const original = process.env.INTERNAL_API_SECRET
+
+  beforeEach(() => {
+    process.env.INTERNAL_API_SECRET = "test-secret"
   })
 
-  it("identifica erro de UNAUTHENTICATED via mensagem 'Não autenticado'", () => {
-    const error = makeClientError(["Não autenticado"], 401)
-    expect(isUnauthenticatedError(error)).toBe(true)
+  afterEach(() => {
+    process.env.INTERNAL_API_SECRET = original
   })
 
-  it("retorna false para outros erros", () => {
-    const error = makeClientError(["Credenciais inválidas"], 400)
-    expect(isUnauthenticatedError(error)).toBe(false)
+  it("creates a client with internal secret and without authorization header", () => {
+    const client = getPublicGatewayClient()
+
+    expect(client.requestConfig.headers).toMatchObject({
+      "x-internal-secret": "test-secret",
+    })
+    expect(client.requestConfig.headers).not.toHaveProperty("authorization")
   })
 })
 

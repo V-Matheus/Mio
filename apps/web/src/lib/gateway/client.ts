@@ -7,26 +7,19 @@ const GATEWAY_GRAPHQL_URL =
   process.env.GATEWAY_GRAPHQL_URL ?? "http://localhost:3333/graphql"
 
 /**
- * Verifica se um erro retornado pelo GraphQL do Gateway é de falta de autenticação (UNAUTHENTICATED).
+ * Cria um client para o API Gateway (GraphQL) para operações públicas ou de autenticação.
+ * Não lê cookies de sessão do NextAuth (evita deadlocks nos callbacks do auth()).
  */
-export function isUnauthenticatedError(error: unknown): boolean {
-  if (error instanceof ClientError) {
-    const firstError = error.response.errors?.[0]
-    const code = firstError?.extensions?.code
-    const message = firstError?.message
-    if (
-      code === "UNAUTHENTICATED" ||
-      message === "Não autenticado" ||
-      message === "UNAUTHENTICATED"
-    ) {
-      return true
-    }
-  }
-  return false
+export function getPublicGatewayClient(): GraphQLClient {
+  return new GraphQLClient(GATEWAY_GRAPHQL_URL, {
+    headers: {
+      "x-internal-secret": process.env.INTERNAL_API_SECRET ?? "",
+    },
+  })
 }
 
 /**
- * Cria um client para o API Gateway (GraphQL). Server-side apenas.
+ * Cria um client para o API Gateway (GraphQL) para operações autenticadas. Server-side apenas.
  *
  * Injeta automaticamente o `x-internal-secret` (`INTERNAL_API_SECRET`) e o
  * `Authorization: Bearer <token>` obtido da sessão do NextAuth (`auth()`)

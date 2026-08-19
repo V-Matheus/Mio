@@ -1,4 +1,8 @@
-import { gatewayError, getGatewayClient } from "@/lib/gateway/client"
+import {
+  gatewayError,
+  getGatewayClient,
+  getPublicGatewayClient,
+} from "@/lib/gateway/client"
 import type { UserRole } from "@/lib/gql/generated/graphql"
 import {
   LIST_USERS_QUERY,
@@ -28,7 +32,7 @@ export type * from "./types"
 export const authService = {
   async login(input: LoginInput): Promise<LoginResult> {
     try {
-      const client = await getGatewayClient()
+      const client = getPublicGatewayClient()
       const { login } = await client.request(LOGIN_MUTATION, {
         input,
       })
@@ -44,7 +48,7 @@ export const authService = {
 
   async register(input: RegisterInput): Promise<RegisterResult> {
     try {
-      const client = await getGatewayClient()
+      const client = getPublicGatewayClient()
       const { register } = await client.request(REGISTER_MUTATION, {
         input: {
           email: input.email,
@@ -67,7 +71,7 @@ export const authService = {
 
   async refreshToken(refreshToken: string): Promise<RefreshTokenResult> {
     try {
-      const client = await getGatewayClient()
+      const client = getPublicGatewayClient()
       const { refreshToken: data } = await client.request(
         REFRESH_TOKEN_MUTATION,
         {
@@ -98,7 +102,7 @@ export const authService = {
     input: ForgotPasswordInput,
   ): Promise<ForgotPasswordResult> {
     try {
-      const client = await getGatewayClient()
+      const client = getPublicGatewayClient()
       await client.request(REQUEST_PASSWORD_RESET_MUTATION, {
         email: input.email,
       })
@@ -171,7 +175,7 @@ export const authService = {
       return { ok: false, error: "Missing OAuth identification" }
     }
     try {
-      const client = await getGatewayClient()
+      const client = getPublicGatewayClient()
       const { upsertOAuthUser } = await client.request(UPSERT_OAUTH_MUTATION, {
         input,
       })

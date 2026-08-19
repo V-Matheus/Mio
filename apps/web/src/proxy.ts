@@ -18,31 +18,47 @@ const TEACHER_ALLOWED_PREFIXES = [...STUDENT_ALLOWED_PREFIXES, "/studio"]
 
 const ADMIN_ALLOWED_PREFIXES = [...TEACHER_ALLOWED_PREFIXES, "/painel"]
 
+function isTokenValid(token: unknown): boolean {
+  if (!token || typeof token !== "object") return false
+  const t = token as Record<string, unknown>
+  if (t.error === "RefreshTokenError") return false
+  if (!t.accessToken || typeof t.accessToken !== "string") return false
+
+  // Se possuir data de expiração, verifica se ainda está dentro do prazo de validade
+  if (typeof t.accessTokenExpires === "number") {
+    if (Date.now() >= t.accessTokenExpires) {
+      return false
+    }
+  }
+
+  return true
+}
+
 export async function proxy(req: NextRequest) {
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET,
   })
 
-  const hasAuthError = token?.error === "RefreshTokenError"
-  const isLoggedIn = !!token && !hasAuthError
+  const validToken = isTokenValid(token)
   const pathname = req.nextUrl.pathname
   const isAuthRoute = AUTH_ROUTES.some((path) => pathname.startsWith(path))
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname)
 
-  // Redireciona usuários já logados tentando acessar páginas de autenticação (login/cadastro)
-  if (isLoggedIn && isAuthRoute) {
+  // Redireciona para /home SOMENTE se o token for comprovadamente válido e não expirado
+  if (validToken && isAuthRoute) {
     return NextResponse.redirect(new URL("/home", req.nextUrl))
   }
 
-  // Redireciona usuários anônimos tentando acessar qualquer rota privada
-  if (!isLoggedIn && !isAuthRoute && !isPublicRoute) {
+  // Redireciona usuários sem token válido tentando acessar qualquer rota privada
+  if (!validToken && !isAuthRoute && !isPublicRoute) {
     return NextResponse.redirect(new URL("/login", req.nextUrl))
   }
 
-  // Validação de permissões para usuários autenticados usando os arrays de rotas
-  if (isLoggedIn) {
-    const roles = (token?.roles as string[]) || []
+  // Validação de permissões para usuários com token válido em rotas privadas
+  if (validToken && !isPublicRoute && !isAuthRoute) {
+    const t = token as Record<string, unknown>
+    const roles = (t.roles as string[]) || []
     const isAdmin = roles.includes("ADMIN")
     const isTeacher = roles.includes("TEACHER")
 
@@ -60,7 +76,9 @@ export async function proxy(req: NextRequest) {
       // Se for um professor tentando acessar uma rota restrita do Admin (ex: /painel) -> /studio
       // Se for um estudante tentando acessar rotas de staff (/studio ou /painel) -> /home
       const fallback = isTeacher ? "/studio" : "/home"
-      return NextResponse.redirect(new URL(fallback, req.nextUrl))
+      if (pathname !== fallback) {
+        return NextResponse.redirect(new URL(fallback, req.nextUrl))
+      }
     }
   }
 }

@@ -147,6 +147,7 @@ src/app/                               # código da app vive em src/
 - ✅ `components/avatar/` — `AvatarWrapper`, `AvatarImage` (com fallback de iniciais via `getInitials`), `AvatarFallback`. Stories + testes unitários.
 - ✅ `components/layout/` — `app-shell.tsx`, `sidebar.tsx`, `sidebar-user.tsx`, `nav-items.ts`. **Não há `topbar.tsx`/`UserMenu`** — o bloco do usuário (Perfil/Sair) fica no rodapé do sidebar (ver decisão). _Faltam stories + testes destes._
 - ✅ `components/icon/` — componente `Icon` central que registra ícones offline (Iconify) e renderiza no SSR sem "piscar". Usar sempre este, não `@iconify/react` direto.
+- ⏳ `components/charts/` — biblioteca de visualização de dados baseada em **Recharts** (`AreaChart` para Atividade Semanal, `RadarChart` para Tecnologias dominadas, `BarChart` para consistência).
 - ❌ `components/streak/streak-badge.tsx` — pendente (depende do backend de streak).
 - ❌ `components/activity/activity-list.tsx` — pendente.
 
@@ -169,7 +170,8 @@ Para os novos: stories em `stories/` + testes unitários.
 - [x] `AppShell` (`components/layout/app-shell.tsx`) com sidebar fixa (drawer no mobile). _Sem header sticky — ver decisão._
 - [x] Componentes `Sidebar`, `SidebarUser` (substitui `Topbar`/`UserMenu`), `AvatarWrapper`/`AvatarImage`/`AvatarFallback`.
 - [x] Página `/home` (placeholder com saudação). _Falta consumir `query { home }`._
-- [x] Página `/perfil` mínima (avatar + nome + e-mail de `/me`). _Falta consumir `query { profile }` e os cards de gamificação._
+- [x] Página `/perfil` com `ProfileHeader`, `QuickStats`, `InProgressTracks`, `RecentActivityList`, `NextGoals` e `WeeklyActivity`.
+- [ ] Implementação de gráficos com Recharts: `WeeklyActivity` (Spline Area Chart com gradiente) e `RadarChart` de Tecnologias.
 - [x] Menu do usuário com "Sair" (`signOutAction` → `signOut()` do NextAuth), no rodapé do sidebar.
 - [x] `proxy.ts` — sem mudança: a lógica atual "tudo que não é auth/portal é protegido" já cobre `/home` e `/perfil`.
 - [ ] `/home` consumindo `query { home }` (dashboard completo: cards de progresso, mascote, próximas aulas).
