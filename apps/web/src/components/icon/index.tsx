@@ -10,15 +10,19 @@ import deviconPython from "@iconify-icons/devicon/python"
 import deviconReact from "@iconify-icons/devicon/react"
 import deviconTypescript from "@iconify-icons/devicon/typescript"
 import logosGoogleIcon from "@iconify-icons/logos/google-icon"
+import lucideActivity from "@iconify-icons/lucide/activity"
 import lucideAlertCircle from "@iconify-icons/lucide/alert-circle"
 import lucideAlertTriangle from "@iconify-icons/lucide/alert-triangle"
 import lucideArrowLeft from "@iconify-icons/lucide/arrow-left"
+import lucideArrowRight from "@iconify-icons/lucide/arrow-right"
 import lucideAward from "@iconify-icons/lucide/award"
 import lucideBold from "@iconify-icons/lucide/bold"
 import lucideBookOpen from "@iconify-icons/lucide/book-open"
+import lucideCheck from "@iconify-icons/lucide/check"
 import lucideChevronDown from "@iconify-icons/lucide/chevron-down"
 import lucideChevronRight from "@iconify-icons/lucide/chevron-right"
 import lucideChevronUp from "@iconify-icons/lucide/chevron-up"
+import lucideClock from "@iconify-icons/lucide/clock"
 import lucideCode from "@iconify-icons/lucide/code"
 import lucideCode2 from "@iconify-icons/lucide/code-2"
 import lucideCompass from "@iconify-icons/lucide/compass"
@@ -30,6 +34,8 @@ import lucideFlame from "@iconify-icons/lucide/flame"
 import lucideFolderOpen from "@iconify-icons/lucide/folder-open"
 import lucideFolderPlus from "@iconify-icons/lucide/folder-plus"
 import lucideGamepad2 from "@iconify-icons/lucide/gamepad-2"
+import lucideGraduationCap from "@iconify-icons/lucide/graduation-cap"
+import lucideHistory from "@iconify-icons/lucide/history"
 import lucideHome from "@iconify-icons/lucide/home"
 import lucideInfo from "@iconify-icons/lucide/info"
 import lucideItalic from "@iconify-icons/lucide/italic"
@@ -43,6 +49,7 @@ import lucideMenu from "@iconify-icons/lucide/menu"
 import lucideMessageSquare from "@iconify-icons/lucide/message-square"
 import lucideMoreVertical from "@iconify-icons/lucide/more-vertical"
 import lucidePencil from "@iconify-icons/lucide/pencil"
+import lucidePlay from "@iconify-icons/lucide/play"
 import lucidePlus from "@iconify-icons/lucide/plus"
 import lucidePlusCircle from "@iconify-icons/lucide/plus-circle"
 import lucideQuote from "@iconify-icons/lucide/quote"
@@ -52,7 +59,10 @@ import lucideShield from "@iconify-icons/lucide/shield"
 import lucideShieldAlert from "@iconify-icons/lucide/shield-alert"
 import lucideShieldCheck from "@iconify-icons/lucide/shield-check"
 import lucideSprout from "@iconify-icons/lucide/sprout"
+import lucideStar from "@iconify-icons/lucide/star"
+import lucideTarget from "@iconify-icons/lucide/target"
 import lucideTrash2 from "@iconify-icons/lucide/trash-2"
+import lucideTrendingUp from "@iconify-icons/lucide/trending-up"
 import lucideTrophy from "@iconify-icons/lucide/trophy"
 import lucideUser from "@iconify-icons/lucide/user"
 import lucideX from "@iconify-icons/lucide/x"
@@ -106,15 +116,19 @@ const registry: Record<string, IconProps["icon"]> = {
   "devicon:react": deviconReact,
   "devicon:typescript": deviconTypescript,
   "logos:google-icon": logosGoogleIcon,
+  "lucide:activity": lucideActivity,
   "lucide:alert-circle": lucideAlertCircle,
   "lucide:alert-triangle": lucideAlertTriangle,
   "lucide:arrow-left": lucideArrowLeft,
+  "lucide:arrow-right": lucideArrowRight,
   "lucide:award": lucideAward,
   "lucide:bold": lucideBold,
   "lucide:book-open": lucideBookOpen,
+  "lucide:check": lucideCheck,
   "lucide:chevron-down": lucideChevronDown,
   "lucide:chevron-right": lucideChevronRight,
   "lucide:chevron-up": lucideChevronUp,
+  "lucide:clock": lucideClock,
   "lucide:code": lucideCode,
   "lucide:code-2": lucideCode2,
   "lucide:compass": lucideCompass,
@@ -126,6 +140,8 @@ const registry: Record<string, IconProps["icon"]> = {
   "lucide:folder-open": lucideFolderOpen,
   "lucide:folder-plus": lucideFolderPlus,
   "lucide:gamepad-2": lucideGamepad2,
+  "lucide:graduation-cap": lucideGraduationCap,
+  "lucide:history": lucideHistory,
   "lucide:home": lucideHome,
   "lucide:info": lucideInfo,
   "lucide:italic": lucideItalic,
@@ -139,6 +155,7 @@ const registry: Record<string, IconProps["icon"]> = {
   "lucide:message-square": lucideMessageSquare,
   "lucide:more-vertical": lucideMoreVertical,
   "lucide:pencil": lucidePencil,
+  "lucide:play": lucidePlay,
   "lucide:plus": lucidePlus,
   "lucide:plus-circle": lucidePlusCircle,
   "lucide:quote": lucideQuote,
@@ -148,7 +165,10 @@ const registry: Record<string, IconProps["icon"]> = {
   "lucide:shield-alert": lucideShieldAlert,
   "lucide:shield-check": lucideShieldCheck,
   "lucide:sprout": lucideSprout,
+  "lucide:star": lucideStar,
+  "lucide:target": lucideTarget,
   "lucide:trash-2": lucideTrash2,
+  "lucide:trending-up": lucideTrendingUp,
   "lucide:trophy": lucideTrophy,
   "lucide:user": lucideUser,
   "lucide:x": lucideX,

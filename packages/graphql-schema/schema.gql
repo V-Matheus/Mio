@@ -155,9 +155,33 @@ type Query {
 
   """Consulta informações de XP, nível e ranking do usuário logado"""
   myXp: UserXp!
+
+  """Consulta o perfil consolidado do aluno autenticado"""
+  profile: UserProfile!
   section(lessonSlug: ID!, sectionSlug: ID!, trackSlug: ID!): SectionDetail
   track(slug: ID!): TrackDetail
   tracks: [Track!]!
+}
+
+"""Entrada de atividade recente do aluno"""
+type RecentActivityEntry {
+  """Data/hora da conclusão em formato ISO-8601"""
+  completedAt: String!
+
+  """ID da lição concluída"""
+  lessonId: Int!
+
+  """Slug da lição concluída"""
+  lessonSlug: ID!
+
+  """Título da lição concluída"""
+  lessonTitle: String!
+
+  """Slug da trilha correspondente"""
+  trackSlug: ID!
+
+  """Título da trilha correspondente"""
+  trackTitle: String!
 }
 
 input RegisterInput {
@@ -189,6 +213,18 @@ type SectionSummary {
   title: String!
 }
 
+"""Informações de ofensiva (streak) do usuário"""
+type StreakInfo {
+  """Data do último dia de estudo registrado (ISO-8601)"""
+  lastStudyDate: String
+
+  """Melhor sequência histórica alcançada"""
+  streakBest: Int!
+
+  """Sequência atual de dias consecutivos"""
+  streakCurrent: Int!
+}
+
 type Track {
   category: Category
   description: String
@@ -207,6 +243,33 @@ type TrackDetail {
   lessons: [LessonSummary!]!
   slug: ID!
   title: String!
+}
+
+"""Resumo do progresso do aluno em uma trilha"""
+type TrackProgressSummary {
+  """Quantidade de aulas concluídas pelo aluno"""
+  completedLessons: Int!
+
+  """Slug da aula atual/próxima"""
+  currentLessonSlug: ID
+
+  """Título da aula atual/próxima"""
+  currentLessonTitle: String
+
+  """Percentual de conclusão (0..100)"""
+  progressPercentage: Int!
+
+  """Quantidade total de aulas da trilha"""
+  totalLessons: Int!
+
+  """ID numérico da trilha"""
+  trackId: Int!
+
+  """Slug identificador da trilha"""
+  trackSlug: ID!
+
+  """Título da trilha"""
+  trackTitle: String!
 }
 
 input UpdateTrackInput {
@@ -247,6 +310,39 @@ type User {
   roles: [String!]!
 }
 
+"""Perfil consolidado do aluno com XP, estatísticas e atividades"""
+type UserProfile {
+  """Trilhas em andamento com percentual de conclusão"""
+  inProgressTracks: [TrackProgressSummary!]!
+
+  """Histórico das últimas lições concluídas"""
+  recentActivities: [RecentActivityEntry!]!
+
+  """Métricas consolidadas de progresso pedagógico"""
+  stats: UserProfileStats!
+
+  """Sequência de ofensiva diária (dias consecutivos)"""
+  streak: StreakInfo!
+
+  """Dados cadastrais do usuário"""
+  user: User!
+
+  """Histórico semanal de XP (Segunda a Domingo)"""
+  weeklyXp: WeeklyXpSummary!
+
+  """Pontuação de XP, nível e ranking"""
+  xp: UserXp!
+}
+
+"""Estatísticas agregadas de progresso do aluno"""
+type UserProfileStats {
+  """Quantidade de trilhas concluídas integralmente"""
+  completedTracksCount: Int!
+
+  """Total de lições concluídas pelo aluno"""
+  totalCompletedLessons: Int!
+}
+
 """Perfil de acesso do usuário"""
 enum UserRole {
   ADMIN
@@ -270,4 +366,25 @@ type UserXp {
 
   """XP restante para alcançar o próximo nível"""
   xpToNextLevel: Int!
+}
+
+"""XP ganho em um dia da semana"""
+type WeeklyXpDay {
+  """Data civil no formato YYYY-MM-DD"""
+  date: String!
+
+  """Rótulo do dia (ex.: Seg, Ter...)"""
+  day: String!
+
+  """Total de XP acumulado no dia"""
+  xp: Int!
+}
+
+"""Resumo semanal de XP"""
+type WeeklyXpSummary {
+  """Distribuição diária de XP"""
+  days: [WeeklyXpDay!]!
+
+  """Total de XP acumulado na semana"""
+  totalWeeklyXp: Int!
 }

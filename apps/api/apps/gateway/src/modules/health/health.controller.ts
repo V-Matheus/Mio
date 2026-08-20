@@ -3,7 +3,7 @@ import type { ClientGrpc } from "@nestjs/microservices"
 import {
   HealthCheck,
   HealthCheckService,
-  HealthIndicatorResult,
+  type HealthIndicatorResult,
   HealthIndicatorService,
 } from "@nestjs/terminus"
 import { firstValueFrom, type Observable, timeout } from "rxjs"
@@ -15,7 +15,8 @@ interface GrpcHealthClient {
 @Controller("health")
 export class HealthController {
   constructor(
-    private readonly health: HealthCheckService,
+    @Inject(HealthCheckService) private readonly health: HealthCheckService,
+    @Inject(HealthIndicatorService)
     private readonly indicators: HealthIndicatorService,
     @Inject("CORE_PACKAGE") private readonly coreClient: ClientGrpc,
     @Inject("GAMIFICATION_PACKAGE")

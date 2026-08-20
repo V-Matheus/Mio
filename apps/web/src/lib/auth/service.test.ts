@@ -8,6 +8,7 @@ const { mockRequest, mockGetClient } = vi.hoisted(() => {
 
 vi.mock("@/lib/gateway/client", () => ({
   getGatewayClient: mockGetClient,
+  getPublicGatewayClient: () => ({ request: mockRequest }),
   gatewayError: (_error: unknown, fallback: string) => fallback,
 }))
 

@@ -1,15 +1,3 @@
 include:
   - apps/api/docker-compose.yml
-
-services:
-  web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - api-gateway
-    restart: unless-stopped
+  - apps/web/docker-compose.yml

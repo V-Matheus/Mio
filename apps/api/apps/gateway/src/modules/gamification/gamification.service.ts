@@ -65,4 +65,51 @@ export class GamificationGatewayService implements OnModuleInit {
       level: entry.level,
     }))
   }
+
+  async getUserGamificationProfile(userCode: string): Promise<{
+    userXp: UserXp
+    streak: {
+      streakCurrent: number
+      streakBest: number
+      lastStudyDate: string | null
+    }
+    weeklyXp: {
+      days: Array<{
+        day: string
+        date: string
+        xp: number
+      }>
+      totalWeeklyXp: number
+    }
+  }> {
+    const res = await this.caller.call(
+      this.gamificationService.getUserGamificationProfile({ userCode }),
+    )
+
+    const levelKey = res.level.toUpperCase() as keyof typeof Level
+    const levelEnum = Level[levelKey] ?? Level.LEIGO
+
+    return {
+      userXp: {
+        total: res.total,
+        level: levelEnum,
+        progressToNext: res.progressToNext,
+        xpToNextLevel: res.xpToNextLevel,
+        rank: res.rank,
+      },
+      streak: {
+        streakCurrent: res.streak.streakCurrent,
+        streakBest: res.streak.streakBest,
+        lastStudyDate: res.streak.lastStudyDate || null,
+      },
+      weeklyXp: {
+        days: res.weeklyXp.days.map((d) => ({
+          day: d.day,
+          date: d.date,
+          xp: d.xp,
+        })),
+        totalWeeklyXp: res.weeklyXp.totalWeeklyXp,
+      },
+    }
+  }
 }

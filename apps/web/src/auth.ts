@@ -157,6 +157,8 @@ const nextAuth = NextAuth({
         }
       }
 
+      token.accessToken = undefined
+      token.refreshToken = undefined
       token.error = "RefreshTokenError"
       return token
     },

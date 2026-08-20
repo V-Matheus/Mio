@@ -70,4 +70,34 @@ export class ProgressGatewayService implements OnModuleInit {
       viewedSectionIds: res.viewedSectionIds ?? [],
     }
   }
+
+  async getStudentProfileProgress(userCode: string) {
+    const res = await this.caller.call(
+      this.progressService.getStudentProfileProgress({ userCode }),
+    )
+    return {
+      stats: {
+        totalCompletedLessons: res.totalCompletedLessons ?? 0,
+        completedTracksCount: res.completedTracksCount ?? 0,
+      },
+      inProgressTracks: (res.inProgressTracks ?? []).map((t) => ({
+        trackId: t.trackId,
+        trackSlug: t.trackSlug,
+        trackTitle: t.trackTitle,
+        totalLessons: t.totalLessons,
+        completedLessons: t.completedLessons,
+        progressPercentage: t.progressPercentage,
+        currentLessonSlug: t.currentLessonSlug || null,
+        currentLessonTitle: t.currentLessonTitle || null,
+      })),
+      recentActivities: (res.recentActivities ?? []).map((a) => ({
+        lessonId: a.lessonId,
+        lessonSlug: a.lessonSlug,
+        lessonTitle: a.lessonTitle,
+        trackSlug: a.trackSlug,
+        trackTitle: a.trackTitle,
+        completedAt: a.completedAt,
+      })),
+    }
+  }
 }

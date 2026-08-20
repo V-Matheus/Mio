@@ -61,3 +61,39 @@ export class LeaderboardEntry {
   @Field(() => String, { description: "Nível atual do usuário" })
   level!: string
 }
+
+@ObjectType({ description: "Informações de ofensiva (streak) do usuário" })
+export class StreakInfo {
+  @Field(() => Int, { description: "Sequência atual de dias consecutivos" })
+  streakCurrent!: number
+
+  @Field(() => Int, { description: "Melhor sequência histórica alcançada" })
+  streakBest!: number
+
+  @Field(() => String, {
+    nullable: true,
+    description: "Data do último dia de estudo registrado (ISO-8601)",
+  })
+  lastStudyDate?: string | null
+}
+
+@ObjectType({ description: "XP ganho em um dia da semana" })
+export class WeeklyXpDay {
+  @Field(() => String, { description: "Rótulo do dia (ex.: Seg, Ter...)" })
+  day!: string
+
+  @Field(() => String, { description: "Data civil no formato YYYY-MM-DD" })
+  date!: string
+
+  @Field(() => Int, { description: "Total de XP acumulado no dia" })
+  xp!: number
+}
+
+@ObjectType({ description: "Resumo semanal de XP" })
+export class WeeklyXpSummary {
+  @Field(() => [WeeklyXpDay], { description: "Distribuição diária de XP" })
+  days!: WeeklyXpDay[]
+
+  @Field(() => Int, { description: "Total de XP acumulado na semana" })
+  totalWeeklyXp!: number
+}

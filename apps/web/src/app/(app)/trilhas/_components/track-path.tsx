@@ -33,6 +33,9 @@ export function TrackPath({
 }: TrackPathProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [modalMode, setModalMode] = useState<"ENROLL" | "LOCKED_LESSON">(
+    "ENROLL",
+  )
   const [showEnrollModal, setShowEnrollModal] = useState(
     () => autoOpenEnrollModal && !enrolled,
   )
@@ -41,6 +44,8 @@ export function TrackPath({
   const activeLessonIndex = lessons.findIndex((lesson) => !lesson.completed)
   const currentIndex =
     activeLessonIndex === -1 ? lessons.length - 1 : activeLessonIndex
+
+  const targetLesson = lessons.find((l) => l.slug === targetLessonSlug)
 
   const handleEnrollConfirm = () => {
     startTransition(async () => {
@@ -60,6 +65,7 @@ export function TrackPath({
     if (enrolled) {
       router.push(`/trilhas/${trackSlug}/aula/${lessonSlug}`)
     } else {
+      setModalMode("LOCKED_LESSON")
       setTargetLessonSlug(lessonSlug)
       setShowEnrollModal(true)
     }
@@ -91,6 +97,7 @@ export function TrackPath({
             <button
               type="button"
               onClick={() => {
+                setModalMode("ENROLL")
                 setTargetLessonSlug(lessons[0]?.slug ?? null)
                 setShowEnrollModal(true)
               }}
@@ -215,45 +222,123 @@ export function TrackPath({
         })}
       </div>
 
-      {/* Global Modal Component for Enrollment Prompt */}
+      {/* Global Modal Component for Enrollment / Locked Lesson Prompt */}
       <Modal
         isOpen={showEnrollModal}
         onClose={() => setShowEnrollModal(false)}
         closeOnOverlayClick={true}
         showCloseButton={true}
       >
-        <div className="flex size-20 items-center justify-center rounded-full bg-orange-100 text-primary shadow-inner">
-          <Icon icon="mdi:lock-alert" className="size-12 animate-pulse" />
-        </div>
+        {modalMode === "ENROLL" ? (
+          <>
+            <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-inner">
+              <Icon icon="lucide:graduation-cap" className="size-9" />
+            </div>
 
-        <h3 className="mt-4 font-display text-2xl font-extrabold text-foreground">
-          Matrícula Necessária
-        </h3>
+            <h3 className="mt-4 font-display text-2xl font-extrabold text-foreground">
+              Matricular-se na Trilha
+            </h3>
 
-        <p className="mt-2 text-sm text-foreground/70 leading-relaxed">
-          Você precisa estar matriculado na trilha{" "}
-          <strong className="text-foreground">{trackTitle}</strong> para acessar
-          as aulas, realizar os exercícios e registrar seu progresso!
-        </p>
+            <p className="mt-2 text-sm text-foreground/70 leading-relaxed text-center">
+              Você está prestes a iniciar a trilha{" "}
+              <strong className="text-foreground">{trackTitle}</strong>.
+            </p>
 
-        <div className="mt-6 flex w-full flex-col gap-3">
-          <button
-            type="button"
-            onClick={handleEnrollConfirm}
-            disabled={isPending}
-            className="w-full rounded-xl bg-primary py-3.5 text-sm font-bold text-white shadow-[0_4px_0_#CC3300] hover:bg-orange-600 active:translate-y-0.5 disabled:opacity-60 transition-all cursor-pointer"
-          >
-            {isPending ? "Matriculando..." : "Matricular-se e Continuar 🚀"}
-          </button>
+            <div className="mt-4 w-full space-y-2.5 rounded-2xl bg-amber-50/60 p-4 text-left border border-amber-200/60">
+              <div className="flex items-center gap-2.5 text-xs font-medium text-foreground">
+                <Icon
+                  icon="mdi:check-circle"
+                  className="size-4 text-emerald-600 shrink-0"
+                />
+                <span>
+                  Acesso liberado a todas as {lessons.length} aulas da trilha
+                </span>
+              </div>
+              <div className="flex items-center gap-2.5 text-xs font-medium text-foreground">
+                <Icon
+                  icon="lucide:zap"
+                  className="size-4 text-amber-600 shrink-0"
+                />
+                <span>Ganho de XP e subida de posições no ranking</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-xs font-medium text-foreground">
+                <Icon
+                  icon="lucide:target"
+                  className="size-4 text-primary shrink-0"
+                />
+                <span>
+                  Registro e acompanhamento de progresso no seu perfil
+                </span>
+              </div>
+            </div>
 
-          <button
-            type="button"
-            onClick={() => setShowEnrollModal(false)}
-            className="w-full rounded-xl border border-foreground/15 py-3 text-center text-sm font-bold text-foreground hover:bg-foreground/5 transition-colors cursor-pointer"
-          >
-            Cancelar
-          </button>
-        </div>
+            <div className="mt-6 flex w-full flex-col gap-3">
+              <button
+                type="button"
+                onClick={handleEnrollConfirm}
+                disabled={isPending}
+                className="w-full rounded-xl bg-primary py-3.5 text-sm font-bold text-white shadow-[0_4px_0_#CC3300] hover:bg-orange-600 active:translate-y-0.5 disabled:opacity-60 transition-all cursor-pointer"
+              >
+                {isPending
+                  ? "Matriculando..."
+                  : "Confirmar Matrícula e Começar 🚀"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowEnrollModal(false)}
+                className="w-full rounded-xl border border-foreground/15 py-3 text-center text-sm font-bold text-foreground hover:bg-foreground/5 transition-colors cursor-pointer"
+              >
+                Depois
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex size-16 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-600 shadow-inner">
+              <Icon icon="mdi:lock-alert" className="size-9" />
+            </div>
+
+            <h3 className="mt-4 font-display text-2xl font-extrabold text-foreground">
+              Aula Bloqueada
+            </h3>
+
+            <p className="mt-2 text-sm text-foreground/70 leading-relaxed text-center">
+              A aula{" "}
+              <strong className="text-foreground">
+                {targetLesson?.title ?? "selecionada"}
+              </strong>{" "}
+              está disponível para alunos matriculados na trilha{" "}
+              <strong className="text-foreground">{trackTitle}</strong>.
+            </p>
+
+            <p className="mt-1 text-xs text-foreground/50 text-center">
+              Matricule-se para desbloquear todas as aulas e registrar seus
+              pontos de XP!
+            </p>
+
+            <div className="mt-6 flex w-full flex-col gap-3">
+              <button
+                type="button"
+                onClick={handleEnrollConfirm}
+                disabled={isPending}
+                className="w-full rounded-xl bg-primary py-3.5 text-sm font-bold text-white shadow-[0_4px_0_#CC3300] hover:bg-orange-600 active:translate-y-0.5 disabled:opacity-60 transition-all cursor-pointer"
+              >
+                {isPending
+                  ? "Matriculando..."
+                  : "Matricular-se para Desbloquear 🔓"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowEnrollModal(false)}
+                className="w-full rounded-xl border border-foreground/15 py-3 text-center text-sm font-bold text-foreground hover:bg-foreground/5 transition-colors cursor-pointer"
+              >
+                Voltar
+              </button>
+            </div>
+          </>
+        )}
       </Modal>
     </div>
   )

@@ -47,6 +47,8 @@ services:
 
   rabbitmq:
     image: rabbitmq:4-management-alpine
+    env_file:
+      - .env
     ports:
       - "${RABBITMQ_PORT}:5672"
       - "${RABBITMQ_MANAGEMENT_PORT}:15672"
@@ -63,6 +65,8 @@ services:
     command: yarn workspace @mio/api dev:gateway
     env_file:
       - .env
+    environment:
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?INTERNAL_API_SECRET must be set and non-empty}
     ports:
       - "${GATEWAY_PORT}:${GATEWAY_PORT}"
     volumes:
@@ -77,7 +81,7 @@ services:
     env_file:
       - .env
     expose:
-      - "5001"
+      - "${CORE_GRPC_PORT}"
     volumes:
       - ../../:/app
     depends_on:
@@ -90,7 +94,7 @@ services:
     env_file:
       - .env
     expose:
-      - "5002"
+      - "${GAMIFICATION_GRPC_PORT}"
     volumes:
       - ../../:/app
     depends_on:
@@ -103,7 +107,7 @@ services:
     env_file:
       - .env
     expose:
-      - "5003"
+      - "${ACHIEVEMENTS_GRPC_PORT}"
     volumes:
       - ../../:/app
     depends_on:
@@ -116,7 +120,7 @@ services:
     env_file:
       - .env
     expose:
-      - "5004"
+      - "${MESSENGER_GRPC_PORT}"
     volumes:
       - ../../:/app
     depends_on:
@@ -128,7 +132,7 @@ services:
     env_file:
       - .env
     expose:
-      - "5005"
+      - "${NOTIFICATIONS_GRPC_PORT}"
     volumes:
       - ../../:/app
     depends_on:

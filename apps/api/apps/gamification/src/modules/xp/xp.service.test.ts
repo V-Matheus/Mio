@@ -9,9 +9,14 @@ describe("XpService", () => {
   let prismaMock: {
     xpTransaction: {
       findUnique: ReturnType<typeof vi.fn>
+      findMany: ReturnType<typeof vi.fn>
       create: ReturnType<typeof vi.fn>
     }
     userXp: {
+      findUnique: ReturnType<typeof vi.fn>
+      upsert: ReturnType<typeof vi.fn>
+    }
+    userStreak: {
       findUnique: ReturnType<typeof vi.fn>
       upsert: ReturnType<typeof vi.fn>
     }
@@ -33,10 +38,15 @@ describe("XpService", () => {
     prismaMock = {
       xpTransaction: {
         findUnique: vi.fn(),
+        findMany: vi.fn().mockResolvedValue([]),
         create: vi.fn(),
       },
       userXp: {
         findUnique: vi.fn(),
+        upsert: vi.fn(),
+      },
+      userStreak: {
+        findUnique: vi.fn().mockResolvedValue(null),
         upsert: vi.fn(),
       },
       $transaction: vi.fn(async (cb) => cb(prismaMock)),
@@ -77,8 +87,19 @@ describe("XpService", () => {
           amount: 50,
           reason: "lesson.completed",
           sourceId: "lesson:42",
+          createdAt: expect.any(Date),
         },
       })
+      expect(prismaMock.userStreak.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userCode: "usr1" },
+          create: expect.objectContaining({
+            userCode: "usr1",
+            streakCurrent: 1,
+            streakBest: 1,
+          }),
+        }),
+      )
       expect(prismaMock.userXp.upsert).toHaveBeenCalledWith({
         where: { userCode: "usr1" },
         create: { userCode: "usr1", total: 50 },
@@ -183,6 +204,71 @@ describe("XpService", () => {
 
     it("lança USER_NOT_FOUND se o userCode for vazio", async () => {
       await expect(service.getUserXp("")).rejects.toThrow()
+    })
+  })
+
+  describe("getWeeklyXp", () => {
+    it("retorna array com os 7 dias da semana e total calculado", async () => {
+      const fixedWednesday = new Date("2026-08-19T14:00:00.000Z")
+      prismaMock.xpTransaction.findMany.mockResolvedValue([
+        {
+          amount: 50,
+          createdAt: new Date("2026-08-17T10:00:00.000Z"), // Seg
+        },
+        {
+          amount: 100,
+          createdAt: new Date("2026-08-17T18:00:00.000Z"), // Seg
+        },
+        {
+          amount: 50,
+          createdAt: new Date("2026-08-19T11:00:00.000Z"), // Qua
+        },
+      ])
+
+      const result = await service.getWeeklyXp("usr1", fixedWednesday)
+
+      expect(result.days).toHaveLength(7)
+      expect(result.days[0]).toEqual({
+        day: "Seg",
+        date: "2026-08-17",
+        xp: 150,
+      })
+      expect(result.days[1]).toEqual({
+        day: "Ter",
+        date: "2026-08-18",
+        xp: 0,
+      })
+      expect(result.days[2]).toEqual({
+        day: "Qua",
+        date: "2026-08-19",
+        xp: 50,
+      })
+      expect(result.totalWeeklyXp).toBe(200)
+    })
+  })
+
+  describe("getUserGamificationProfile", () => {
+    it("agrega XP, rank, streak efetivo e weekly XP", async () => {
+      prismaMock.userXp.findUnique.mockResolvedValue({
+        userCode: "usr1",
+        total: 1200,
+      })
+      leaderboardMock.getUserRank.mockResolvedValue(3)
+      prismaMock.userStreak.findUnique.mockResolvedValue({
+        userCode: "usr1",
+        streakCurrent: 5,
+        streakBest: 10,
+        lastStudyDate: new Date(),
+      })
+
+      const profile = await service.getUserGamificationProfile("usr1")
+
+      expect(profile.total).toBe(1200)
+      expect(profile.level).toBe("JUNIOR")
+      expect(profile.rank).toBe(3)
+      expect(profile.streak.streakCurrent).toBe(5)
+      expect(profile.streak.streakBest).toBe(10)
+      expect(profile.weeklyXp.days).toHaveLength(7)
     })
   })
 })

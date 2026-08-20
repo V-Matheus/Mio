@@ -5,6 +5,11 @@ import { gamificationError } from "./errors/gamification.errors"
 import { XpEventsPublisher } from "./events/xp-events.publisher"
 import { levelFor } from "./level"
 import { XpRuleKey, XpRulesService } from "./rules/xp-rules.service"
+import {
+  calculateNextStreak,
+  type EffectiveStreak,
+  getEffectiveStreak,
+} from "./streak"
 
 export type UserXpDetail = {
   total: number
@@ -12,6 +17,20 @@ export type UserXpDetail = {
   progressToNext: number
   xpToNextLevel: number
   rank: number
+}
+
+export type WeeklyXpSummary = {
+  days: Array<{
+    day: string
+    date: string
+    xp: number
+  }>
+  totalWeeklyXp: number
+}
+
+export type GamificationProfileDetail = UserXpDetail & {
+  streak: EffectiveStreak
+  weeklyXp: WeeklyXpSummary
 }
 
 @Injectable()
@@ -24,7 +43,8 @@ export class XpService {
   ) {}
 
   /**
-   * Credita XP pela conclusão de lição de forma estritamente idempotente.
+   * Credita XP pela conclusão de lição de forma estritamente idempotente
+   * e atualiza o streak de dias consecutivos do aluno.
    */
   async rewardLessonCompleted(
     userCode: string,
@@ -36,6 +56,7 @@ export class XpService {
 
     const sourceId = `lesson:${lessonId}`
     const rewardAmount = await this.rules.getAmount(XpRuleKey.LESSON_COMPLETED)
+    const now = new Date()
 
     const result = await this.prisma.$transaction(async (tx) => {
       // 1. Checa se essa recompensa já foi atribuída (idempotência)
@@ -72,10 +93,32 @@ export class XpService {
           amount: rewardAmount,
           reason: "lesson.completed",
           sourceId,
+          createdAt: now,
         },
       })
 
-      // 4. Publica o evento xp.rewarded na mesma transação
+      // 4. Atualiza o streak do aluno
+      const currentStreakRecord = await tx.userStreak.findUnique({
+        where: { userCode },
+      })
+      const nextStreak = calculateNextStreak(currentStreakRecord, now)
+
+      await tx.userStreak.upsert({
+        where: { userCode },
+        create: {
+          userCode,
+          streakCurrent: nextStreak.streakCurrent,
+          streakBest: nextStreak.streakBest,
+          lastStudyDate: nextStreak.lastStudyDate,
+        },
+        update: {
+          streakCurrent: nextStreak.streakCurrent,
+          streakBest: nextStreak.streakBest,
+          lastStudyDate: nextStreak.lastStudyDate,
+        },
+      })
+
+      // 5. Publica o evento xp.rewarded na mesma transação
       const levelInfo = levelFor(userXp.total)
       await this.events.xpRewarded(
         {
@@ -85,7 +128,7 @@ export class XpService {
           sourceId,
           totalAfter: userXp.total,
           level: levelInfo.level,
-          awardedAt: new Date().toISOString(),
+          awardedAt: now.toISOString(),
         },
         { client: tx },
       )
@@ -123,6 +166,101 @@ export class XpService {
       progressToNext: levelInfo.progressToNext,
       xpToNextLevel: levelInfo.xpToNextLevel,
       rank,
+    }
+  }
+
+  /**
+   * Consulta o histórico de XP da semana corrente (Segunda a Domingo) em UTC.
+   */
+  async getWeeklyXp(
+    userCode: string,
+    now: Date = new Date(),
+  ): Promise<WeeklyXpSummary> {
+    const dayOfWeek = now.getUTCDay() // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+    const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+
+    const mondayUtc = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + diffToMonday,
+        0,
+        0,
+        0,
+        0,
+      ),
+    )
+
+    const sundayUtc = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + diffToMonday + 6,
+        23,
+        59,
+        59,
+        999,
+      ),
+    )
+
+    const transactions = await this.prisma.xpTransaction.findMany({
+      where: {
+        userCode,
+        createdAt: {
+          gte: mondayUtc,
+          lte: sundayUtc,
+        },
+      },
+    })
+
+    const dayLabels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+    const days = dayLabels.map((day, index) => {
+      const dayDate = new Date(
+        Date.UTC(
+          mondayUtc.getUTCFullYear(),
+          mondayUtc.getUTCMonth(),
+          mondayUtc.getUTCDate() + index,
+        ),
+      )
+      const dateString = dayDate.toISOString().slice(0, 10)
+
+      const xp = transactions
+        .filter((t) => t.createdAt.toISOString().slice(0, 10) === dateString)
+        .reduce((sum, t) => sum + t.amount, 0)
+
+      return {
+        day,
+        date: dateString,
+        xp,
+      }
+    })
+
+    const totalWeeklyXp = days.reduce((sum, d) => sum + d.xp, 0)
+
+    return {
+      days,
+      totalWeeklyXp,
+    }
+  }
+
+  /**
+   * Consulta o perfil consolidado de gamificação (XP, nível, ranking, streak e atividade semanal).
+   */
+  async getUserGamificationProfile(
+    userCode: string,
+  ): Promise<GamificationProfileDetail> {
+    const [xpDetail, streakRecord, weeklyXp] = await Promise.all([
+      this.getUserXp(userCode),
+      this.prisma.userStreak.findUnique({ where: { userCode } }),
+      this.getWeeklyXp(userCode),
+    ])
+
+    const streak = getEffectiveStreak(streakRecord)
+
+    return {
+      ...xpDetail,
+      streak,
+      weeklyXp,
     }
   }
 }

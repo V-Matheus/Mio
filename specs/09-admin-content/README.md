@@ -388,6 +388,11 @@ Toda a área de administração deve ficar sob `/admin` e utilizar um layout esp
 - [x] Implementar listagem de trilhas e telas de edição no Estúdio (`/studio`, `/studio/[slug]`).
 - [x] Implementar o editor de markdown com split screen (Preview).
 
+### Fase 5: Métricas & Analytics (Recharts)
+- [ ] Implementar gráficos no Painel Geral (`/painel`): novos cadastros e usuários ativos diários (DAU) ao longo do tempo (`AreaChart`).
+- [ ] Implementar métricas no Estúdio (`/estudio`): taxa de retenção/conclusão de alunos por aula de cada trilha (`BarChart` / `ComposedChart`).
+- [ ] Gráfico de distribuição de trilhas e aulas por categoria (`PieChart` / `DonutChart`).
+
 ---
 
 ## Critérios de Aceite

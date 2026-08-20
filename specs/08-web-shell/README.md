@@ -147,6 +147,7 @@ src/app/                               # código da app vive em src/
 - ✅ `components/avatar/` — `AvatarWrapper`, `AvatarImage` (com fallback de iniciais via `getInitials`), `AvatarFallback`. Stories + testes unitários.
 - ✅ `components/layout/` — `app-shell.tsx`, `sidebar.tsx`, `sidebar-user.tsx`, `nav-items.ts`. **Não há `topbar.tsx`/`UserMenu`** — o bloco do usuário (Perfil/Sair) fica no rodapé do sidebar (ver decisão). _Faltam stories + testes destes._
 - ✅ `components/icon/` — componente `Icon` central que registra ícones offline (Iconify) e renderiza no SSR sem "piscar". Usar sempre este, não `@iconify/react` direto.
+- ⏳ `components/charts/` — biblioteca de visualização de dados baseada em **Recharts** (`AreaChart` para Atividade Semanal, `RadarChart` para Tecnologias dominadas, `BarChart` para consistência).
 - ❌ `components/streak/streak-badge.tsx` — pendente (depende do backend de streak).
 - ❌ `components/activity/activity-list.tsx` — pendente.
 
@@ -161,7 +162,7 @@ Para os novos: stories em `stories/` + testes unitários.
 
 ### Gateway
 - [ ] Resolver `home` que faz fan-out paralelo: Core + Gamification + Achievements.
-- [ ] Resolver `profile` idem.
+- [x] Resolver `profile` com fan-out paralelo para Auth + Gamification + Progress.
 - [ ] Cache leve (request-scoped DataLoader) para evitar refazer query nas mesmas chamadas.
 
 ### Web
@@ -169,11 +170,13 @@ Para os novos: stories em `stories/` + testes unitários.
 - [x] `AppShell` (`components/layout/app-shell.tsx`) com sidebar fixa (drawer no mobile). _Sem header sticky — ver decisão._
 - [x] Componentes `Sidebar`, `SidebarUser` (substitui `Topbar`/`UserMenu`), `AvatarWrapper`/`AvatarImage`/`AvatarFallback`.
 - [x] Página `/home` (placeholder com saudação). _Falta consumir `query { home }`._
-- [x] Página `/perfil` mínima (avatar + nome + e-mail de `/me`). _Falta consumir `query { profile }` e os cards de gamificação._
+- [x] Página `/perfil` com `ProfileHeader`, `QuickStats`, `InProgressTracks`, `RecentActivityList`, `NextGoals` e `WeeklyActivity`.
+- [x] Implementação de gráfico com Recharts: `WeeklyActivity` (Spline Area Chart com gradiente).
+- [ ] Implementação de gráfico `RadarChart` de Tecnologias (pendente: aguardando introdução do modelo de Tecnologias).
 - [x] Menu do usuário com "Sair" (`signOutAction` → `signOut()` do NextAuth), no rodapé do sidebar.
-- [x] `proxy.ts` — sem mudança: a lógica atual "tudo que não é auth/portal é protegido" já cobre `/home` e `/perfil`.
+- [x] `proxy.ts` — validação de autenticação e proteção de rotas privadas.
 - [ ] `/home` consumindo `query { home }` (dashboard completo: cards de progresso, mascote, próximas aulas).
-- [ ] `/perfil` consumindo `query { profile }` (XP/nível, conquistas, tecnologias, histórico) + `/perfil/[userCode]`.
+- [x] `/perfil` consumindo `query { profile }` (XP/nível, ofensiva, estatísticas, trilhas em andamento, atividades recentes e atividades semanais).
 - [ ] `StreakBadge` exibindo `streakCurrent` com ícone de chama.
 - [ ] Integrar `RealtimeProvider` (spec 06) dentro do layout autenticado.
 - [ ] Stories + testes unitários para os componentes de layout (`Sidebar`, `SidebarUser`, `AppShell`). _Avatar já tem._

@@ -14,6 +14,17 @@ model UserXp {
   updatedAt DateTime @updatedAt
 
   transactions XpTransaction[]
+  streak       UserStreak?
+}
+
+model UserStreak {
+  userCode      String    @id
+  streakCurrent Int       @default(0)
+  streakBest    Int       @default(0)
+  lastStudyDate DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  user UserXp @relation(fields: [userCode], references: [userCode], onDelete: Cascade)
 }
 
 model XpTransaction {

@@ -1,28 +1,51 @@
-import { AvatarImage, AvatarWrapper } from "@/components/avatar"
-import { CardWrapper } from "@/components/card"
-import { getSessionUser } from "@/lib/auth/utils/getSessionUser"
+import { getProfileQuery } from "@/lib/profile/queries"
+import {
+  InProgressTracks,
+  NextGoals,
+  ProfileHeader,
+  QuickStats,
+  RecentActivityList,
+  WeeklyActivity,
+} from "./_components"
 
 export default async function PerfilPage() {
-  const user = await getSessionUser()
+  const profile = await getProfileQuery()
+
+  if (!profile) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center">
+        <p className="font-semibold text-foreground text-lg">
+          Não foi possível carregar as informações do seu perfil.
+        </p>
+        <p className="text-foreground/50 text-sm mt-1">
+          Tente recarregar a página ou faça login novamente.
+        </p>
+      </div>
+    )
+  }
 
   return (
-    <section className="space-y-6">
-      <CardWrapper className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:gap-6 sm:text-left">
-        <AvatarWrapper size="xl">
-          <AvatarImage src={user.image} name={user.name} />
-        </AvatarWrapper>
+    <div className="space-y-6 pb-12">
+      {/* Cabeçalho do Perfil (Avatar, Nível, XP, Mascote) */}
+      <ProfileHeader profile={profile} />
 
-        <div className="min-w-0">
-          <h1 className="font-display font-bold text-2xl text-foreground">
-            {user.name ?? "Usuário"}
-          </h1>
-          <p className="truncate text-foreground/60">{user.email}</p>
+      {/* Métricas Rápidas (Streak, Cursos, Lições) */}
+      <QuickStats profile={profile} />
+
+      {/* Grid Principal de Conteúdo */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Coluna Principal (2/3) */}
+        <div className="space-y-6 lg:col-span-2">
+          <WeeklyActivity weeklyXp={profile.weeklyXp} />
+          <InProgressTracks tracks={profile.inProgressTracks} />
+          <RecentActivityList activities={profile.recentActivities} />
         </div>
-      </CardWrapper>
 
-      <CardWrapper className="text-foreground/60 text-sm">
-        Estatísticas, conquistas e histórico de atividades chegam em breve.
-      </CardWrapper>
-    </section>
+        {/* Coluna Lateral (1/3) */}
+        <div className="space-y-6">
+          <NextGoals profile={profile} />
+        </div>
+      </div>
+    </div>
   )
 }
