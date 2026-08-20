@@ -162,7 +162,7 @@ Para os novos: stories em `stories/` + testes unitários.
 
 ### Gateway
 - [ ] Resolver `home` que faz fan-out paralelo: Core + Gamification + Achievements.
-- [ ] Resolver `profile` idem.
+- [x] Resolver `profile` com fan-out paralelo para Auth + Gamification + Progress.
 - [ ] Cache leve (request-scoped DataLoader) para evitar refazer query nas mesmas chamadas.
 
 ### Web
@@ -171,11 +171,12 @@ Para os novos: stories em `stories/` + testes unitários.
 - [x] Componentes `Sidebar`, `SidebarUser` (substitui `Topbar`/`UserMenu`), `AvatarWrapper`/`AvatarImage`/`AvatarFallback`.
 - [x] Página `/home` (placeholder com saudação). _Falta consumir `query { home }`._
 - [x] Página `/perfil` com `ProfileHeader`, `QuickStats`, `InProgressTracks`, `RecentActivityList`, `NextGoals` e `WeeklyActivity`.
-- [ ] Implementação de gráficos com Recharts: `WeeklyActivity` (Spline Area Chart com gradiente) e `RadarChart` de Tecnologias.
+- [x] Implementação de gráfico com Recharts: `WeeklyActivity` (Spline Area Chart com gradiente).
+- [ ] Implementação de gráfico `RadarChart` de Tecnologias (pendente: aguardando introdução do modelo de Tecnologias).
 - [x] Menu do usuário com "Sair" (`signOutAction` → `signOut()` do NextAuth), no rodapé do sidebar.
-- [x] `proxy.ts` — sem mudança: a lógica atual "tudo que não é auth/portal é protegido" já cobre `/home` e `/perfil`.
+- [x] `proxy.ts` — validação de autenticação e proteção de rotas privadas.
 - [ ] `/home` consumindo `query { home }` (dashboard completo: cards de progresso, mascote, próximas aulas).
-- [ ] `/perfil` consumindo `query { profile }` (XP/nível, conquistas, tecnologias, histórico) + `/perfil/[userCode]`.
+- [x] `/perfil` consumindo `query { profile }` (XP/nível, ofensiva, estatísticas, trilhas em andamento, atividades recentes e atividades semanais).
 - [ ] `StreakBadge` exibindo `streakCurrent` com ícone de chama.
 - [ ] Integrar `RealtimeProvider` (spec 06) dentro do layout autenticado.
 - [ ] Stories + testes unitários para os componentes de layout (`Sidebar`, `SidebarUser`, `AppShell`). _Avatar já tem._

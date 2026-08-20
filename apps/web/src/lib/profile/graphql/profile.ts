@@ -1,8 +1,8 @@
 import { graphql } from "@/lib/gql/generated"
 
 export const GET_PROFILE_QUERY = graphql(`
-  query GetProfile($userCode: ID) {
-    profile(userCode: $userCode) {
+  query GetProfile {
+    profile {
       user {
         code
         name

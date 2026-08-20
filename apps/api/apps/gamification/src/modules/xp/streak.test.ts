@@ -62,6 +62,23 @@ describe("streak calculation logic", () => {
       expect(result.streakBest).toBe(20)
       expect(result.lastStudyDate).toEqual(today)
     })
+
+    it("não altera streakCurrent, streakBest e lastStudyDate quando lastStudyDate é posterior a now (registro de evento obsoleto)", () => {
+      const futureLastStudyDate = new Date("2026-08-18T15:00:00.000Z")
+      const olderNow = new Date("2026-08-16T10:00:00.000Z")
+
+      const initial = {
+        streakCurrent: 7,
+        streakBest: 15,
+        lastStudyDate: futureLastStudyDate,
+      }
+
+      const result = calculateNextStreak(initial, olderNow)
+
+      expect(result.streakCurrent).toBe(7)
+      expect(result.streakBest).toBe(15)
+      expect(result.lastStudyDate).toEqual(futureLastStudyDate)
+    })
   })
 
   describe("getEffectiveStreak", () => {

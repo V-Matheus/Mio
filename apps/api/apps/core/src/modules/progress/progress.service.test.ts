@@ -276,5 +276,44 @@ describe("ProgressService", () => {
         completedAt: "2026-08-17T12:00:00.000Z",
       })
     })
+
+    it("incrementa completedTracksCount e não inclui a trilha em inProgressTracks quando todas as lições estiverem concluídas", async () => {
+      prismaMock.user.findUnique.mockResolvedValue({ id: 1, code: "usr1" })
+      prismaMock.lessonProgress.count.mockResolvedValue(2)
+      prismaMock.enrollment.findMany.mockResolvedValue([
+        {
+          track: {
+            id: 20,
+            slug: "html-css",
+            title: "HTML & CSS",
+            lessons: [
+              { id: 201, slug: "tags", title: "Tags Básicas", position: 1 },
+              { id: 202, slug: "flexbox", title: "Flexbox", position: 2 },
+            ],
+          },
+        },
+      ])
+      prismaMock.lessonProgress.findMany
+        .mockResolvedValueOnce([{ lessonId: 201 }, { lessonId: 202 }]) // lessonProgresses: todas completadas
+        .mockResolvedValueOnce([
+          {
+            lesson: {
+              id: 202,
+              slug: "flexbox",
+              title: "Flexbox",
+              track: { slug: "html-css", title: "HTML & CSS" },
+            },
+            completedAt: new Date("2026-08-18T10:00:00.000Z"),
+          },
+        ]) // recentProgresses
+
+      const res = await service.getStudentProfileProgress("usr1")
+
+      expect(res.totalCompletedLessons).toBe(2)
+      expect(res.completedTracksCount).toBe(1)
+      expect(res.inProgressTracks).toHaveLength(0)
+      expect(res.recentActivities).toHaveLength(1)
+      expect(res.recentActivities[0]?.lessonSlug).toBe("flexbox")
+    })
   })
 })

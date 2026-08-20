@@ -19,17 +19,10 @@ describe("ProfileResolver", () => {
     )
   })
 
-  it("chama profileService com currentUserCode se userCode não for fornecido", async () => {
-    const res = await resolver.profile(undefined, "usr1")
+  it("chama profileService com currentUserCode do usuário autenticado", async () => {
+    const res = await resolver.profile("usr1")
 
     expect(profileServiceMock.getProfile).toHaveBeenCalledWith("usr1")
-    expect(res.user.name).toBe("Alice")
-  })
-
-  it("chama profileService com userCode específico se fornecido", async () => {
-    const res = await resolver.profile("target-usr", "usr1")
-
-    expect(profileServiceMock.getProfile).toHaveBeenCalledWith("target-usr")
     expect(res.user.name).toBe("Alice")
   })
 })

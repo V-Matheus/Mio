@@ -372,6 +372,7 @@ export class ProgressService {
 
       if (completedCount === totalLessons) {
         completedTracksCount += 1
+        continue
       }
 
       const currentLesson =

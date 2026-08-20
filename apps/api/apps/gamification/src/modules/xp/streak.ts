@@ -29,6 +29,16 @@ export function calculateNextStreak(
 
   const diffDays = getDiffInDaysUtc(now, current.lastStudyDate)
 
+  // Evento obsoleto / no passado em relação ao último estudo registrado:
+  // streakCurrent, streakBest e lastStudyDate permanecem inalterados
+  if (diffDays < 0) {
+    return {
+      streakCurrent: current.streakCurrent,
+      streakBest: current.streakBest,
+      lastStudyDate: current.lastStudyDate,
+    }
+  }
+
   // Mesmo dia: não incrementa, mantém o valor atual
   if (diffDays === 0) {
     return {

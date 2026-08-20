@@ -65,6 +65,8 @@ services:
     command: yarn workspace @mio/api dev:gateway
     env_file:
       - .env
+    environment:
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?INTERNAL_API_SECRET must be set and non-empty}
     ports:
       - "${GATEWAY_PORT}:${GATEWAY_PORT}"
     volumes:

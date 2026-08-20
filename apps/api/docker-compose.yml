@@ -72,6 +72,7 @@ services:
       - .env
     environment:
       SERVICE: gateway
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?INTERNAL_API_SECRET must be set and non-empty}
     ports:
       - "${GATEWAY_PORT}:${GATEWAY_PORT}"
     depends_on:

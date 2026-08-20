@@ -4,12 +4,10 @@ import { gatewayError, getGatewayClient } from "@/lib/gateway/client"
 import { GET_PROFILE_QUERY } from "./graphql"
 import type { UserProfile } from "./types"
 
-export async function getProfile(
-  userCode?: string,
-): Promise<UserProfile | null> {
+export async function getProfile(): Promise<UserProfile | null> {
   try {
     const client = await getGatewayClient()
-    const data = await client.request(GET_PROFILE_QUERY, { userCode })
+    const data = await client.request(GET_PROFILE_QUERY)
     if (!data.profile) return null
 
     return {

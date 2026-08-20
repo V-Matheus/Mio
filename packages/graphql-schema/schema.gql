@@ -156,8 +156,8 @@ type Query {
   """Consulta informações de XP, nível e ranking do usuário logado"""
   myXp: UserXp!
 
-  """Consulta o perfil consolidado do aluno (próprio ou por userCode)"""
-  profile(userCode: ID): UserProfile!
+  """Consulta o perfil consolidado do aluno autenticado"""
+  profile: UserProfile!
   section(lessonSlug: ID!, sectionSlug: ID!, trackSlug: ID!): SectionDetail
   track(slug: ID!): TrackDetail
   tracks: [Track!]!

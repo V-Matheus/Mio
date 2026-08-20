@@ -57,13 +57,9 @@ export function RecentActivityList({ activities }: RecentActivityListProps) {
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-3 pl-3">
+              <div className="flex shrink-0 items-center pl-3">
                 <span className="text-foreground/40 text-xs whitespace-nowrap">
                   {formatRelativeTime(activity.completedAt)}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5 font-bold font-mono text-[11px] text-amber-700 dark:text-amber-400">
-                  <Icon icon="lucide:zap" width={10} height={10} />
-                  +50 XP
                 </span>
               </div>
             </div>

@@ -78,7 +78,7 @@ describe("profile service", () => {
         },
       })
 
-      const result = await getProfile("usr-1")
+      const result = await getProfile()
 
       expect(result).not.toBeNull()
       expect(result?.user.name).toBe("Alice")

@@ -38,7 +38,11 @@ describe("getGatewayClient", () => {
   })
 
   afterEach(() => {
-    process.env.INTERNAL_API_SECRET = original
+    if (original === undefined) {
+      delete process.env.INTERNAL_API_SECRET
+    } else {
+      process.env.INTERNAL_API_SECRET = original
+    }
   })
 
   it("always sends the internal secret header", async () => {
@@ -82,7 +86,11 @@ describe("getPublicGatewayClient", () => {
   })
 
   afterEach(() => {
-    process.env.INTERNAL_API_SECRET = original
+    if (original === undefined) {
+      delete process.env.INTERNAL_API_SECRET
+    } else {
+      process.env.INTERNAL_API_SECRET = original
+    }
   })
 
   it("creates a client with internal secret and without authorization header", () => {

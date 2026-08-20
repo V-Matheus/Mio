@@ -4,18 +4,18 @@ import { getProfileQuery } from "./profile"
 const mockGetProfile = vi.fn()
 
 vi.mock("../service", () => ({
-  getProfile: (code?: string) => mockGetProfile(code),
+  getProfile: () => mockGetProfile(),
 }))
 
 describe("profile queries", () => {
-  it("chama getProfile repassando userCode", async () => {
+  it("chama getProfile para obter perfil do usuário autenticado", async () => {
     mockGetProfile.mockResolvedValueOnce({
       user: { code: "usr-1", name: "Alice" },
     })
 
-    const result = await getProfileQuery("usr-1")
+    const result = await getProfileQuery()
 
-    expect(mockGetProfile).toHaveBeenCalledWith("usr-1")
+    expect(mockGetProfile).toHaveBeenCalled()
     expect(result).toEqual({ user: { code: "usr-1", name: "Alice" } })
   })
 })
