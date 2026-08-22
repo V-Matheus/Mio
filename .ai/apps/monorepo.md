@@ -12,7 +12,7 @@ O repositório está estruturado da seguinte forma:
 
 - **`apps/`** (Aplicações Principais)
   - **`api/`**: Gateway API e microsserviços NestJS 11 gerenciados em monorepo interno (Nest CLI).
-  - **`web/`**: Frontend web desenvolvido em Next.js 16 (App Router) e React 19.
+  - **`web/`**: Frontend web desenvolvido em Next.js 16 (App Router), React 19 e Tailwind CSS v4.
 - **`packages/`** (Bibliotecas e Configurações Compartilhadas)
   - **`graphql-schema/`**: Schema GraphQL gerado e exportado a partir do Gateway NestJS.
   - **`grpc-contracts/`**: Definições e compilador dos contratos gRPC para comunicação interna de microsserviços.
@@ -44,6 +44,30 @@ yarn docker:dev:down  # Desliga a stack local do Docker Compose de dev
 # Configuração de IA
 yarn setup:ai         # Script interativo de configuração local de IAs (Claude, Antigravity, etc.)
 ```
+
+## Arquitetura do Frontend (`apps/web`) — Regras Obrigatórias
+
+O frontend adota o padrão **Modular / Domain-Driven Design (DDD)** dividido em `src/modules/` e `src/shared/`:
+
+### 1. Estrutura de Módulos (`src/modules/<dominio>/`)
+- **Único arquivo na raiz do módulo:** Apenas `index.ts` pode existir na raiz de cada pasta de módulo.
+- **Subpastas padronizadas:** `actions/`, `components/`, `graphql/`, `queries/`, `schemas/`, `services/`, `types/`, `utils/`, `views/`.
+- **Encapsulamento de Componentes:** Componentes dentro de `components/` de um módulo são **privados e exclusivos** das suas `views/`. O `index.ts` do módulo **NUNCA deve exportar `components/`**.
+- **Componentes Compartilhados:** Se um componente visual for consumido por mais de um módulo (ex.: `Badge`, `ProgressBar`), ele obrigatoriamente pertence a `src/shared/components/`.
+
+### 2. Camada de Roteamento (`src/app/`)
+- **Thin Routing Layer:** `src/app/` serve apenas para mapear rotas, injetar parâmetros e definir metadados.
+- **Zero `_components` em `app/`:** Não crie pastas de componentes dentro do roteador. As páginas (`page.tsx`) devem apenas chamar a `View` correspondente exportada pelo módulo (ex: `return await ProfileView()`).
+- **Tag `<main>` única:** Pertence exclusivamente ao layout base (`AppShell`). `page.tsx` e `views` nunca devem renderizar `<main>`.
+
+### 3. Fluxo de Dados e Tratamento de Erros
+- **Componentes nunca importam `services/`:** Componentes usam `queries/` para leitura e `actions/` para escrita.
+- **`try/catch` exclusivo em `services/`:** Serviços concentram o tratamento de erro e chamadas GraphQL. Server Actions cuidam de validações Zod e revalidações sem blocos `try/catch` manuais.
+
+### 4. Aliases e Imports (Biome Linter)
+- Use `@/modules/<dominio>/...` ou `@modules/...` para código de domínio.
+- Use `@/shared/...` ou `@shared/...` para código compartilhado.
+- Caminhos relativos (`./`) são permitidos **apenas** para arquivos na mesma pasta. Imports que cruzam pastas devem usar aliases.
 
 ## Controle de Qualidade e Convenções
 

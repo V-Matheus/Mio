@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
-import { LoginForm } from "./_components/login-form"
-import { LoginSidePanel } from "./_components/login-side-panel"
+import { LoginView } from "@/modules/auth"
 
 export const metadata: Metadata = {
   title: "Login | Mio",
@@ -8,10 +7,5 @@ export const metadata: Metadata = {
 }
 
 export default function LoginPage() {
-  return (
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
-      <LoginSidePanel />
-      <LoginForm />
-    </div>
-  )
+  return <LoginView />
 }

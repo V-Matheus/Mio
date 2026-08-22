@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import RankingPage from "./page"
 
-vi.mock("@/lib/auth/utils/getSessionUser", () => ({
+vi.mock("@/modules/auth/utils/getSessionUser", () => ({
   getSessionUser: vi.fn().mockResolvedValue({
     id: "u123",
     name: "Victor Matheus",
@@ -11,7 +11,7 @@ vi.mock("@/lib/auth/utils/getSessionUser", () => ({
   }),
 }))
 
-vi.mock("@/lib/gamification/queries", () => ({
+vi.mock("@/modules/gamification/queries", () => ({
   getMyXpQuery: vi.fn().mockResolvedValue({
     total: 1250,
     level: "JUNIOR",

@@ -8,6 +8,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
+      "@modules": resolve(__dirname, "./src/modules"),
+      "@shared": resolve(__dirname, "./src/shared"),
+      "next/server": resolve(__dirname, "../../node_modules/next/server.js"),
     },
   },
   test: {

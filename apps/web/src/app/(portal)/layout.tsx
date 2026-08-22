@@ -1,5 +1,4 @@
-import { Footer } from "./_components/footer"
-import { Header } from "./_components/header"
+import { Footer, Header } from "@/modules/portal"
 
 export default function PortalLayout({
   children,

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite"
-import { CardIcon } from "@/components/card"
-import { Icon } from "@/components/icon"
+import { CardIcon } from "@/shared/components/card"
+import { Icon } from "@/shared/components/icon"
 
 const meta: Meta<typeof CardIcon> = {
   title: "Components/Card/CardIcon",

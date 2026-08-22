@@ -3,9 +3,12 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import GitHub from "next-auth/providers/github"
 import Google from "next-auth/providers/google"
 
-import { loginCredentialsAction, upsertOAuthAction } from "@/lib/auth/actions"
-import { meQuery } from "@/lib/auth/queries"
-import { authService } from "@/lib/auth/service"
+import {
+  loginCredentialsAction,
+  upsertOAuthAction,
+} from "@/modules/auth/actions"
+import { meQuery } from "@/modules/auth/queries"
+import { authService } from "@/modules/auth/services"
 
 function getJwtExpiry(token: string): number | null {
   try {

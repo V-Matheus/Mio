@@ -12,10 +12,10 @@ import type { CodegenConfig } from "@graphql-codegen/cli"
  */
 const config: CodegenConfig = {
   schema: "../../packages/graphql-schema/schema.gql",
-  documents: ["src/**/*.{ts,tsx}", "!src/lib/gql/generated/**"],
+  documents: ["src/**/*.{ts,tsx}", "!src/shared/gql/generated/**"],
   ignoreNoDocuments: true,
   generates: {
-    "src/lib/gql/generated/": {
+    "src/shared/gql/generated/": {
       preset: "client",
       config: {
         fragmentMasking: false,
