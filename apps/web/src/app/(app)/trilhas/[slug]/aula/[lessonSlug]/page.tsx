@@ -1,42 +1,27 @@
-import { redirect } from "next/navigation"
-import { LessonPlayer } from "@/app/(app)/trilhas/_components/lesson-player"
-import { getLessonQuery, getSectionQuery } from "@/lib/catalog/queries"
+import { LessonView } from "@/modules/progress"
 
-interface LessonPageProps {
-  params: Promise<{ slug: string; lessonSlug: string }>
-  searchParams: Promise<{ section?: string }>
+interface LessonDetailPageProps {
+  params: Promise<{
+    slug: string
+    lessonSlug: string
+  }>
+  searchParams: Promise<{
+    section?: string
+  }>
 }
 
 export default async function LessonDetailPage({
   params,
   searchParams,
-}: LessonPageProps) {
+}: LessonDetailPageProps) {
   const { slug: trackSlug, lessonSlug } = await params
-  const { section: sectionSlugParam } = await searchParams
-
-  const lesson = await getLessonQuery(trackSlug, lessonSlug)
-
-  if (!lesson) {
-    redirect(`/trilhas/${trackSlug}?enroll=true`)
-  }
-
-  const activeSectionSlug = sectionSlugParam ?? lesson.sections[0]?.slug ?? ""
-
-  const section = activeSectionSlug
-    ? await getSectionQuery(trackSlug, lessonSlug, activeSectionSlug).catch(
-        () => null,
-      )
-    : null
+  const { section: sectionSlug } = await searchParams
 
   return (
-    <div className="w-full pt-4">
-      <LessonPlayer
-        trackSlug={trackSlug}
-        lessonSlug={lessonSlug}
-        lessonTitle={lesson.title}
-        sections={lesson.sections}
-        currentSection={section}
-      />
-    </div>
+    <LessonView
+      trackSlug={trackSlug}
+      lessonSlug={lessonSlug}
+      sectionSlug={sectionSlug}
+    />
   )
 }

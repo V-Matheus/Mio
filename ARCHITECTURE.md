@@ -109,6 +109,12 @@ A solução adota uma **Arquitetura Orientada a Eventos (EDA)** baseada em **mic
 - **Tecnologia:** Redis (BullMQ).
 - **Responsabilidades:** Processamento em segundo plano de e-mails transacionais (boas-vindas, recuperação de senha) e rotinas agendadas de engajamento, isolando o restante da aplicação de lentidões em provedores externos.
 
+### 3.7 Aplicação Web Frontend (Modular DDD)
+- **Tecnologia:** Next.js 16 (App Router), React 19, Tailwind CSS v4.
+- **Padrão Arquitetural:** Vertical Slices / Modular DDD (`apps/web/src/modules/<dominio>`) e camada compartilhada (`apps/web/src/shared`).
+- **Thin Routing Layer:** `apps/web/src/app` atua estritamente como roteamento fino que delega para `views` de módulos, sem componentes de rota (`_components`).
+- **Encapsulamento Estrito:** Apenas o arquivo `index.ts` reside na raiz do módulo; componentes internos de domínio são 100% privados a suas `views`. Componentes transversais reutilizados residem no Design System compartilhado (`shared/components`).
+
 ---
 
 ## 4. Padrões de Projeto e Decisões de Arquitetura

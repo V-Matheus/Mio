@@ -4,7 +4,7 @@ import {
   InputField,
   InputLabel,
   InputWrapper,
-} from "@/components/input"
+} from "@/shared/components/input"
 
 const meta: Meta<typeof InputWrapper> = {
   title: "Components/Input/InputWrapper",

@@ -1,11 +1,11 @@
 import { render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { UserProfile } from "@/lib/profile/types"
+import type { UserProfile } from "@/modules/profile"
 import PerfilPage from "./page"
 
 const mockGetProfileQuery = vi.fn()
 
-vi.mock("@/lib/profile/queries", () => ({
+vi.mock("@/modules/profile/queries/profile", () => ({
   getProfileQuery: () => mockGetProfileQuery(),
 }))
 

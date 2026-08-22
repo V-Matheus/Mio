@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
-import { RegisterForm } from "./_components/register-form"
-import { RegisterSidePanel } from "./_components/register-side-panel"
+import { RegisterView } from "@/modules/auth"
 
 export const metadata: Metadata = {
   title: "Cadastro | Mio",
@@ -8,10 +7,5 @@ export const metadata: Metadata = {
 }
 
 export default function RegisterPage() {
-  return (
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
-      <RegisterSidePanel />
-      <RegisterForm />
-    </div>
-  )
+  return <RegisterView />
 }

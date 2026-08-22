@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
-import { AppShell } from "@/components/layout"
-import { getSessionUser } from "@/lib/auth/utils/getSessionUser"
+import { getSessionUser } from "@/modules/auth/utils/getSessionUser"
+import { AppShell } from "@/shared/components/layout"
 
 export default async function AppLayout({
   children,

@@ -1,22 +1,12 @@
-import { getSessionUser } from "@/lib/auth/utils"
-import { getCategoriesQuery } from "@/lib/catalog/queries"
-import { listStudioTracksQuery } from "@/lib/studio/queries"
-import { StudioTracksClient } from "./_components/studio-tracks-client"
+import type { Metadata } from "next"
+import { StudioTracksView } from "@/modules/studio"
 
-export default async function StudioTracksPage() {
-  const user = await getSessionUser()
+export const metadata: Metadata = {
+  title: "Studio de Criação | Mio",
+  description:
+    "Gerencie e crie novas trilhas, aulas e conteúdos da plataforma.",
+}
 
-  const [tracksResult, categories] = await Promise.all([
-    listStudioTracksQuery(),
-    getCategoriesQuery(),
-  ])
-  const initialTracks = tracksResult.ok ? tracksResult.tracks : []
-
-  return (
-    <StudioTracksClient
-      initialTracks={initialTracks}
-      categories={categories}
-      userRoles={user.roles}
-    />
-  )
+export default function StudioTracksPage() {
+  return <StudioTracksView />
 }

@@ -1,11 +1,12 @@
-import { getCategoriesQuery, getTracksQuery } from "@/lib/catalog/queries"
-import { TrilhasClient } from "./_components/trilhas-client"
+import type { Metadata } from "next"
+import { CatalogView } from "@/modules/catalog"
 
-export default async function TrilhasPage() {
-  const [tracks, categories] = await Promise.all([
-    getTracksQuery(),
-    getCategoriesQuery(),
-  ])
+export const metadata: Metadata = {
+  title: "Trilhas | Mio",
+  description:
+    "Explore as trilhas de conhecimento e aprenda programação do zero.",
+}
 
-  return <TrilhasClient initialTracks={tracks} categories={categories} />
+export default function TrilhasPage() {
+  return <CatalogView />
 }
