@@ -1,17 +1,56 @@
-import { getSessionUser } from "@/modules/auth/utils/getSessionUser"
+import {
+  HomeHeader,
+  HomeStats,
+  InProgressTracks,
+  NextSteps,
+  RecentActivities,
+} from "@/modules/home/components"
+import { getHomeQuery } from "@/modules/home/queries"
 
 export async function HomeView() {
-  const user = await getSessionUser()
-  const firstName = user.name?.split(/\s+/)[0] ?? "dev"
+  const homeData = await getHomeQuery()
+
+  if (!homeData) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center">
+        <p className="font-semibold text-foreground text-lg">
+          Não foi possível carregar as informações do seu painel.
+        </p>
+        <p className="text-foreground/50 text-sm mt-1">
+          Tente recarregar a página ou faça login novamente.
+        </p>
+      </div>
+    )
+  }
 
   return (
-    <section>
-      <h1 className="font-display font-bold text-2xl text-foreground md:text-3xl">
-        Olá, {firstName}! 👋
-      </h1>
-      <p className="mt-2 text-foreground/60">
-        Seu painel está a caminho. Por enquanto, explore seu perfil.
-      </p>
-    </section>
+    <div className="space-y-8 pb-12">
+      {/* 1. Saudação do Usuário */}
+      <HomeHeader user={homeData.user} />
+
+      {/* 2. Cards de Estatísticas Rápidas (Sequência, XP Total, Aulas) */}
+      <HomeStats
+        streak={homeData.streak}
+        xp={homeData.xp}
+        stats={homeData.stats}
+      />
+
+      {/* 3. Cursos em Andamento */}
+      <InProgressTracks tracks={homeData.inProgressTracks} />
+
+      {/* 4. Grid Inferior com Atividades Recentes e Próximos Passos */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <RecentActivities
+            activities={homeData.recentActivities}
+            streak={homeData.streak}
+          />
+        </div>
+
+        <div className="lg:col-span-1">
+          <NextSteps inProgressTracks={homeData.inProgressTracks} />
+        </div>
+      </div>
+    </div>
   )
 }

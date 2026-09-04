@@ -12,10 +12,9 @@ Layout, navegação e telas pessoais do usuário logado: `/home`, `/perfil`, str
 - ✅ Route group `app/(app)/` para rotas autenticadas, com `layout.tsx` (`AppShell`).
 - ✅ `AppShell` baseado em **sidebar** (sem topbar — ver decisão): logo + navegação + bloco do usuário no rodapé; vira drawer no mobile.
 - ✅ Componentes de layout: `Sidebar`, `SidebarUser` (avatar + menu Perfil/Sair). Avatar no design system (`AvatarWrapper`, `AvatarImage` com fallback de iniciais).
-- ✅ Rota `/home` (placeholder com saudação — **não** é o dashboard completo ainda).
-- ✅ Rota `/perfil` mínima (avatar + nome + e-mail de `/me`; cards de gamificação ainda não).
-- ❌ Nenhuma exibição de streak (depende do backend).
-- ❌ Dashboard `/home` completo, cards de progresso, conquistas, tecnologias (dependem dos resolvers `home`/`profile`).
+- ✅ Rota `/home` integrada com dashboard completo (`HomeHeader`, `HomeStats`, `InProgressTracks`, `RecentActivities`, `NextSteps`).
+- ✅ Rota `/perfil` completa (avatar, nível, XP, streak, histórico, gráficos com Recharts).
+- ✅ Exibição de streak (ofensiva) nos cards e nas atividades.
 - ❌ `RealtimeProvider` (spec 06) ainda não integrado ao layout.
 
 ### Designs disponíveis
@@ -169,13 +168,13 @@ Para os novos: stories em `stories/` + testes unitários.
 - [x] Criar `app/(app)/layout.tsx` com `<AppShell>`.
 - [x] `AppShell` (`components/layout/app-shell.tsx`) com sidebar fixa (drawer no mobile). _Sem header sticky — ver decisão._
 - [x] Componentes `Sidebar`, `SidebarUser` (substitui `Topbar`/`UserMenu`), `AvatarWrapper`/`AvatarImage`/`AvatarFallback`.
-- [x] Página `/home` (placeholder com saudação). _Falta consumir `query { home }`._
+- [x] Página `/home` com dashboard completo (`HomeHeader`, `HomeStats`, `InProgressTracks`, `RecentActivities`, `NextSteps`).
 - [x] Página `/perfil` com `ProfileHeader`, `QuickStats`, `InProgressTracks`, `RecentActivityList`, `NextGoals` e `WeeklyActivity`.
 - [x] Implementação de gráfico com Recharts: `WeeklyActivity` (Spline Area Chart com gradiente).
 - [ ] Implementação de gráfico `RadarChart` de Tecnologias (pendente: aguardando introdução do modelo de Tecnologias).
 - [x] Menu do usuário com "Sair" (`signOutAction` → `signOut()` do NextAuth), no rodapé do sidebar.
 - [x] `proxy.ts` — validação de autenticação e proteção de rotas privadas.
-- [ ] `/home` consumindo `query { home }` (dashboard completo: cards de progresso, mascote, próximas aulas).
+- [x] `/home` consumindo dados reais agregados do usuário (`HomeView`).
 - [x] `/perfil` consumindo `query { profile }` (XP/nível, ofensiva, estatísticas, trilhas em andamento, atividades recentes e atividades semanais).
 - [ ] `StreakBadge` exibindo `streakCurrent` com ícone de chama.
 - [ ] Integrar `RealtimeProvider` (spec 06) dentro do layout autenticado.
