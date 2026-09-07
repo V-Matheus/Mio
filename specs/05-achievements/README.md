@@ -2,6 +2,11 @@
 
 Validador de regras de troféus. Escuta `lesson.completed` e `xp.rewarded`, avalia regras e publica `achievement.unlocked`.
 
+> [!NOTE]
+> **Dependência Artística e Decisão de Roadmap**:
+> O valor pedagógico e o apelo emocional das conquistas dependem substancialmente de sua identidade visual (ilustrações exclusivas, insígnias temáticas e medalhas customizadas). Sem artes dedicadas, o módulo se limitaria a ícones genéricos em grayscale, enfraquecendo o fator de engajamento do aluno.  
+> **Status de Execução:** Mapeado na arquitetura, porém **postergado temporariamente** até que as ilustrações das medalhas estejam disponíveis, priorizando entregas com alto impacto funcional imediato (como o Messenger SSE para XP em tempo real).
+
 ## Status atual
 
 ### Backend (`apps/api/apps/achievements`)
@@ -199,3 +204,4 @@ extend type Query {
   - **Decisão sugerida: B**. Achievements não emite XP, apenas a conquista.
 - **Idempotência do counter `UserCounter`**: pré-condição é que `lesson.completed` não chegue duplicado. Outbox cuida disso. Para defesa extra: armazenar `processedEventIds` (set Redis com TTL).
 - **Regras compostas** (ex.: "complete 5 lições em 3 dias seguidos"): fora do MVP. `ruleType` é extensível.
+- **Limitação artística e timing de lançamento**: a entrega visual depende de assets gráficos dedicados (ilustrações das medalhas). O desenvolvimento do serviço foi deixado em espera ativa para não criar uma experiência puramente baseada em ícones neutros, direcionando a capacidade técnica atual para o feedback de XP em tempo real (SSE).

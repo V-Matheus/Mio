@@ -88,7 +88,12 @@ export function RecentActivities({
                   <p className="text-xs text-foreground/60 truncate">
                     Continue assim para manter sua sequência
                   </p>
-                  <p className="text-[11px] text-foreground/40 mt-0.5">Hoje</p>
+                  <p className="text-[11px] text-foreground/40 mt-0.5">
+                    {streak.lastStudyDate
+                      ? formatRelativeTime(streak.lastStudyDate) ||
+                        "Recentemente"
+                      : "Recentemente"}
+                  </p>
                 </div>
               </div>
 

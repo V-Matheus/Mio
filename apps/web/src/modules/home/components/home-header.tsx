@@ -5,7 +5,8 @@ interface HomeHeaderProps {
 }
 
 export function HomeHeader({ user }: HomeHeaderProps) {
-  const firstName = user.name?.trim() ? user.name.split(/\s+/)[0] : "Dev"
+  const trimmedName = user.name?.trim()
+  const firstName = trimmedName ? trimmedName.split(/\s+/)[0] : "Dev"
 
   return (
     <div className="space-y-1">

@@ -39,4 +39,20 @@ describe("HomeHeader", () => {
 
     expect(screen.getByText(/Olá, Dev! 👋/i)).toBeInTheDocument()
   })
+
+  it("deve renderizar o primeiro nome corretamente quando houver espaços no início", () => {
+    render(
+      <HomeHeader
+        user={{
+          code: "123",
+          name: "  Júnior Dev",
+          email: "junior@mio.dev",
+          avatarUrl: null,
+          roles: ["STUDENT"],
+        }}
+      />,
+    )
+
+    expect(screen.getByText(/Olá, Júnior! 👋/i)).toBeInTheDocument()
+  })
 })

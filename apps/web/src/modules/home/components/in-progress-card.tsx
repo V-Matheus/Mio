@@ -94,14 +94,12 @@ export function InProgressCard({ track, index = 0 }: InProgressCardProps) {
         </div>
 
         {/* Botão de Ação */}
-        <Link href={targetUrl} className="block pt-1">
-          <button
-            type="button"
-            className={`w-full cursor-pointer rounded-xl py-2.5 font-display font-bold text-sm transition-all text-center flex items-center justify-center gap-2 ${theme.button}`}
-          >
-            Continuar Aprendendo
-            <Icon icon="lucide:arrow-right" width={16} height={16} />
-          </button>
+        <Link
+          href={targetUrl}
+          className={`mt-1 w-full cursor-pointer rounded-xl py-2.5 font-display font-bold text-sm transition-all text-center flex items-center justify-center gap-2 ${theme.button}`}
+        >
+          Continuar Aprendendo
+          <Icon icon="lucide:arrow-right" width={16} height={16} />
         </Link>
       </div>
     </CardWrapper>
