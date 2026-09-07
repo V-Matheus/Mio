@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package mio.achievements.v1;
+
+service AchievementsService {
+  rpc ListAchievements(ListAchievementsRequest) returns (AchievementsResponse);
+  rpc GetUserAchievements(GetUserAchievementsRequest) returns (UserAchievementsResponse);
+}
+
+message ListAchievementsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message Achievement {
+  string slug = 1;
+  string title = 2;
+  string description = 3;
+  string icon_url = 4;
+  string rule_type = 5;
+  int32 threshold = 6;
+}
+
+message AchievementsResponse {
+  repeated Achievement achievements = 1;
+  int32 total = 2;
+}
+
+message GetUserAchievementsRequest {
+  string user_code = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message UserAchievementEntry {
+  string slug = 1;
+  string title = 2;
+  string description = 3;
+  string icon_url = 4;
+  bool unlocked = 5;
+  string unlocked_at = 6;  // ISO 8601, vazio quando ainda não desbloqueada
+  int32 progress = 7;      // 0..threshold
+  int32 threshold = 8;
+}
+
+message UserAchievementsResponse {
+  repeated UserAchievementEntry entries = 1;
+  int32 total = 2;
+  int32 unlocked_total = 3;
+}

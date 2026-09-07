@@ -75,6 +75,32 @@ export class UserPasswordResetRequestedEvent
   ) {}
 }
 
+export class AchievementUnlockedEvent
+  implements
+    DomainEvent<{
+      userCode: string
+      achievementSlug: string
+      title: string
+      iconUrl: string
+      unlockedAt: string
+      xpReward: number
+    }>
+{
+  readonly routingKey = "achievement.unlocked"
+  readonly version = 1
+
+  constructor(
+    readonly payload: {
+      userCode: string
+      achievementSlug: string
+      title: string
+      iconUrl: string
+      unlockedAt: string
+      xpReward: number
+    },
+  ) {}
+}
+
 export class XpRewardedEvent
   implements
     DomainEvent<{
@@ -84,6 +110,7 @@ export class XpRewardedEvent
       sourceId?: string
       totalAfter: number
       level: string
+      streakCurrent: number
       awardedAt: string
     }>
 {
@@ -98,6 +125,7 @@ export class XpRewardedEvent
       sourceId?: string
       totalAfter: number
       level: string
+      streakCurrent: number
       awardedAt: string
     },
   ) {}

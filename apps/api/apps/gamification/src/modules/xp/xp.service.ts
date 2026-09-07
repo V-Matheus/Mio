@@ -128,6 +128,7 @@ export class XpService {
           sourceId,
           totalAfter: userXp.total,
           level: levelInfo.level,
+          streakCurrent: nextStreak.streakCurrent,
           awardedAt: now.toISOString(),
         },
         { client: tx },
@@ -137,6 +138,93 @@ export class XpService {
     })
 
     // Atualiza/repara o Sorted Set no Redis fora da transação
+    if (result.total > 0) {
+      await this.leaderboard.updateScore(userCode, result.total)
+    }
+
+    return result
+  }
+
+  /**
+   * Credita o XP bônus de uma conquista desbloqueada (achievement.unlocked),
+   * de forma idempotente por `achievementSlug` — reentregas do mesmo evento
+   * não creditam XP duas vezes.
+   */
+  async rewardAchievementUnlocked(
+    userCode: string,
+    achievementSlug: string,
+    amount: number,
+  ): Promise<{ total: number; newlyAwarded: boolean }> {
+    if (!userCode?.trim()) {
+      throw gamificationError("USER_NOT_FOUND")
+    }
+
+    if (amount <= 0) {
+      const user = await this.prisma.userXp.findUnique({ where: { userCode } })
+      return { total: user?.total ?? 0, newlyAwarded: false }
+    }
+
+    const sourceId = `achievement:${achievementSlug}`
+    const now = new Date()
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.xpTransaction.findUnique({
+        where: {
+          userCode_sourceId: {
+            userCode,
+            sourceId,
+          },
+        },
+      })
+
+      if (existing) {
+        const user = await tx.userXp.findUnique({ where: { userCode } })
+        return { total: user?.total ?? 0, newlyAwarded: false }
+      }
+
+      const userXp = await tx.userXp.upsert({
+        where: { userCode },
+        create: {
+          userCode,
+          total: amount,
+        },
+        update: {
+          total: { increment: amount },
+        },
+      })
+
+      await tx.xpTransaction.create({
+        data: {
+          userCode,
+          amount,
+          reason: "achievement.unlocked",
+          sourceId,
+          createdAt: now,
+        },
+      })
+
+      const streakRecord = await tx.userStreak.findUnique({
+        where: { userCode },
+      })
+
+      const levelInfo = levelFor(userXp.total)
+      await this.events.xpRewarded(
+        {
+          userCode,
+          amount,
+          reason: "achievement.unlocked",
+          sourceId,
+          totalAfter: userXp.total,
+          streakCurrent: streakRecord?.streakCurrent ?? 0,
+          level: levelInfo.level,
+          awardedAt: now.toISOString(),
+        },
+        { client: tx },
+      )
+
+      return { total: userXp.total, newlyAwarded: true }
+    })
+
     if (result.total > 0) {
       await this.leaderboard.updateScore(userCode, result.total)
     }

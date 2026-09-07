@@ -1,3 +1,5 @@
+import { AchievementsSection } from "@/modules/achievements/components"
+import { getMyAchievementsQuery } from "@/modules/achievements/queries"
 import {
   InProgressTracks,
   NextGoals,
@@ -9,7 +11,10 @@ import {
 import { getProfileQuery } from "@/modules/profile/queries/profile"
 
 export async function ProfileView() {
-  const profile = await getProfileQuery()
+  const [profile, achievementsPage] = await Promise.all([
+    getProfileQuery(),
+    getMyAchievementsQuery(),
+  ])
 
   if (!profile) {
     return (
@@ -44,6 +49,7 @@ export async function ProfileView() {
         {/* Coluna Lateral (1/3) */}
         <div className="space-y-6">
           <NextGoals profile={profile} />
+          <AchievementsSection initialPage={achievementsPage} />
         </div>
       </div>
     </div>

@@ -4,9 +4,18 @@ import type { UserProfile } from "@/modules/profile/types"
 import { ProfileView } from "./profile-view"
 
 const mockGetProfileQuery = vi.fn()
+const mockGetMyAchievementsQuery = vi.fn()
 
 vi.mock("../queries/profile", () => ({
   getProfileQuery: () => mockGetProfileQuery(),
+}))
+
+vi.mock("@/modules/achievements/queries", () => ({
+  getMyAchievementsQuery: () => mockGetMyAchievementsQuery(),
+}))
+
+vi.mock("@/modules/achievements/components", () => ({
+  AchievementsSection: () => null,
 }))
 
 const mockProfileData: UserProfile = {
@@ -72,6 +81,12 @@ const mockProfileData: UserProfile = {
 describe("ProfileView", () => {
   beforeEach(() => {
     mockGetProfileQuery.mockReset()
+    mockGetMyAchievementsQuery.mockReset()
+    mockGetMyAchievementsQuery.mockResolvedValue({
+      items: [],
+      total: 0,
+      unlockedTotal: 0,
+    })
   })
 
   it("renderiza os dados completos do perfil do aluno", async () => {

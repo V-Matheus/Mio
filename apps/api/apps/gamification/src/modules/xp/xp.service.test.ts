@@ -168,6 +168,84 @@ describe("XpService", () => {
     })
   })
 
+  describe("rewardAchievementUnlocked", () => {
+    it("credita o XP bônus, registra a transação com sourceId por conquista, lê o streak atual e publica xp.rewarded", async () => {
+      prismaMock.xpTransaction.findUnique.mockResolvedValue(null)
+      prismaMock.userXp.upsert.mockResolvedValue({
+        userCode: "usr1",
+        total: 125,
+      })
+      prismaMock.userStreak.findUnique.mockResolvedValue({
+        userCode: "usr1",
+        streakCurrent: 4,
+      })
+
+      const result = await service.rewardAchievementUnlocked(
+        "usr1",
+        "first-lesson",
+        25,
+      )
+
+      expect(result).toEqual({ total: 125, newlyAwarded: true })
+      expect(prismaMock.xpTransaction.create).toHaveBeenCalledWith({
+        data: {
+          userCode: "usr1",
+          amount: 25,
+          reason: "achievement.unlocked",
+          sourceId: "achievement:first-lesson",
+          createdAt: expect.any(Date),
+        },
+      })
+      expect(eventsMock.xpRewarded).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userCode: "usr1",
+          amount: 25,
+          sourceId: "achievement:first-lesson",
+          totalAfter: 125,
+          streakCurrent: 4,
+        }),
+        expect.anything(),
+      )
+      expect(leaderboardMock.updateScore).toHaveBeenCalledWith("usr1", 125)
+    })
+
+    it("idempotência: não credita XP duas vezes para a mesma conquista (sourceId já existente)", async () => {
+      prismaMock.xpTransaction.findUnique.mockResolvedValue({ id: 1n })
+      prismaMock.userXp.findUnique.mockResolvedValue({
+        userCode: "usr1",
+        total: 100,
+      })
+
+      const result = await service.rewardAchievementUnlocked(
+        "usr1",
+        "first-lesson",
+        25,
+      )
+
+      expect(result).toEqual({ total: 100, newlyAwarded: false })
+      expect(prismaMock.userXp.upsert).not.toHaveBeenCalled()
+      expect(eventsMock.xpRewarded).not.toHaveBeenCalled()
+    })
+
+    it("não credita nem publica evento quando o xpReward da conquista é 0", async () => {
+      prismaMock.userXp.findUnique.mockResolvedValue({
+        userCode: "usr1",
+        total: 50,
+      })
+
+      const result = await service.rewardAchievementUnlocked(
+        "usr1",
+        "no-reward-achievement",
+        0,
+      )
+
+      expect(result).toEqual({ total: 50, newlyAwarded: false })
+      expect(prismaMock.xpTransaction.findUnique).not.toHaveBeenCalled()
+      expect(eventsMock.xpRewarded).not.toHaveBeenCalled()
+      expect(leaderboardMock.updateScore).not.toHaveBeenCalled()
+    })
+  })
+
   describe("getUserXp", () => {
     it("retorna detalhes de XP, nível e rank", async () => {
       prismaMock.userXp.findUnique.mockResolvedValue({

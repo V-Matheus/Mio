@@ -12,6 +12,7 @@ export type XpRewardedPayload = {
   sourceId?: string
   totalAfter: number
   level: string
+  streakCurrent: number
   awardedAt: string
 }
 
