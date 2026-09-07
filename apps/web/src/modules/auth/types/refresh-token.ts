@@ -7,4 +7,4 @@ export type RefreshTokenResult =
       refreshToken: string
       user: MeUser
     }
-  | { ok: false; error: string }
+  | { ok: false; error: string; unauthenticated: boolean }

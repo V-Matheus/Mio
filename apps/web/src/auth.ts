@@ -118,11 +118,19 @@ const nextAuth = NextAuth({
         token.email = meResult.user.email
         token.picture = meResult.user.avatarUrl
         token.roles = meResult.user.roles
+        token.error = undefined
         return token
       }
 
-      // O backend rejeitou o accessToken (expirado ou inválido): tenta renovar
-      // usando o refresh token.
+      // Falha indeterminada (rede, timeout, backend indisponível): não é uma
+      // rejeição de autenticação. Preserva a sessão atual e tenta de novo na
+      // próxima requisição, em vez de derrubar um usuário autenticado.
+      if (!meResult.unauthenticated) {
+        return token
+      }
+
+      // O backend rejeitou explicitamente o accessToken (UNAUTHENTICATED):
+      // tenta renovar usando o refresh token.
       if (token.refreshToken) {
         const refreshResult = await authService.refreshToken(
           token.refreshToken as string,
@@ -136,18 +144,29 @@ const nextAuth = NextAuth({
           token.roles = refreshResult.user.roles
           token.accessToken = refreshResult.accessToken
           token.refreshToken = refreshResult.refreshToken
+          token.error = undefined
+          return token
+        }
+
+        // Falha indeterminada ao renovar: preserva a sessão e tenta de novo
+        // depois, em vez de assumir que o refresh token é inválido.
+        if (!refreshResult.unauthenticated) {
           return token
         }
       }
 
-      // O backend também rejeitou o refresh token (ou ele não existe): a sessão
-      // não pode ser renovada. Limpa os tokens retornando null para que o
-      // NextAuth/Auth.js remova completamente os cookies de sessão — o próximo
-      // login gerará um novo par de tokens.
-      return null
+      // O backend rejeitou explicitamente o accessToken e o refresh token (ou
+      // não há refresh token). A sessão não pode ser renovada, mas o cookie
+      // real só pode ser limpo em um contexto que permita Set-Cookie (Server
+      // Action / Route Handler) — o render atual não consegue persistir isso.
+      // Sinaliza a invalidação para que o chamador force o logout através de
+      // `/api/auth/force-signout`.
+      token.error = "RefreshAccessTokenError"
+      return token
     },
     async session({ session, token }) {
       session.accessToken = token?.accessToken
+      session.error = token?.error
 
       if (session.user) {
         session.user.id = (token.id as string) || (token.sub as string)
