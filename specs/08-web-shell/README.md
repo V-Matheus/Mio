@@ -130,14 +130,12 @@ src/app/                               # código da app vive em src/
     │       └── aula/[lessonSlug]/page.tsx
     ├── ranking/                       # ❌ (overlap com spec 04)
     │   └── page.tsx
-    ├── conquistas/                    # ❌ (overlap com spec 05)
-    │   └── page.tsx
     └── perfil/
-        ├── page.tsx                   # ✅ mínima (avatar + nome + e-mail)
+        ├── page.tsx                   # ✅ dashboard completo (spec 05: seção de conquistas com modal)
         └── [userCode]/page.tsx        # ❌ perfil público de outro usuário
 ```
 
-> Apenas `Home` e `Trilhas` aparecem na navegação do sidebar por enquanto; as demais rotas serão adicionadas conforme as specs 02/04/05 avançam (links inexistentes caem em 404 de propósito).
+> **Conquistas (spec 05) não ganharam rota própria** — por decisão de produto, são exibidas dentro de `/perfil` (`AchievementsSection`, `src/modules/achievements/components/`), com um resumo em badges e um modal (grid de 2 colunas + scroll infinito) para a listagem completa. Ver `docs/RELEASE_07-09-2026.md`.
 
 > **Server Actions** do shell autenticado **não** ficam em `_actions/` dentro de `(app)` — ficam por domínio em `src/lib/<dominio>/actions/` (ex.: `signOutAction` em `src/lib/auth/actions/session.ts`). O helper de sessão é `getSessionUser()` em `src/lib/auth/utils/getSessionUser.ts` (por padrão redireciona para `/login`; `{ require: false }` para versão anulável). Ver `apps/web/CLAUDE.md`.
 

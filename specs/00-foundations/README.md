@@ -56,8 +56,8 @@ Base técnica compartilhada por todas as features. Nada de regra de negócio aqu
 | Evento | Routing key | Producer | Consumers | Payload |
 |---|---|---|---|---|
 | `lesson.completed` | `lesson.completed` | Core | Gamification, Achievements | `{ userCode, lessonId, trackId, completedAt }` |
-| `xp.rewarded` | `xp.rewarded` | Gamification | Achievements, Messenger | `{ userCode, amount, reason, totalAfter, awardedAt }` |
-| `achievement.unlocked` | `achievement.unlocked` | Achievements | Messenger, Notifications | `{ userCode, achievementSlug, unlockedAt }` |
+| `xp.rewarded` | `xp.rewarded` | Gamification | Achievements, Messenger | `{ userCode, amount, reason, sourceId?, totalAfter, level, streakCurrent, awardedAt }` |
+| `achievement.unlocked` | `achievement.unlocked` | Achievements | Gamification, Messenger, Notifications | `{ userCode, achievementSlug, title, iconUrl, unlockedAt, xpReward }` |
 | `user.registered` | `user.registered` | Core | Notifications | `{ userCode, email, name, registeredAt }` |
 | `user.password_reset_requested` | `user.password_reset_requested` | Core | Notifications | `{ userCode, email, resetToken, expiresAt }` |
 

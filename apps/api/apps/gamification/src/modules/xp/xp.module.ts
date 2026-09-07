@@ -5,6 +5,7 @@ import { CoreClientModule } from "../core-client/core-client.module"
 import { LeaderboardService } from "../leaderboard/leaderboard.service"
 import { PrismaModule } from "../prisma/prisma.module"
 import { PrismaService } from "../prisma/prisma.service"
+import { AchievementUnlockedConsumer } from "./consumers/achievement-unlocked.consumer"
 import { LessonCompletedConsumer } from "./consumers/lesson-completed.consumer"
 import { XpEventsPublisher } from "./events/xp-events.publisher"
 import { XpRulesService } from "./rules/xp-rules.service"
@@ -20,6 +21,7 @@ import { XpService } from "./xp.service"
     XpRulesService,
     XpEventsPublisher,
     LessonCompletedConsumer,
+    AchievementUnlockedConsumer,
   ],
   exports: [XpService, LeaderboardService, XpRulesService],
 })

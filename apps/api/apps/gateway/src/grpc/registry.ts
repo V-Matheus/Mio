@@ -1,4 +1,5 @@
 import {
+  achievementsContract,
   catalogAdminContract,
   catalogContract,
   type GrpcContract,
@@ -32,6 +33,11 @@ const targets: GrpcTarget[] = [
     host: "api-gamification",
     portEnv: "GAMIFICATION_GRPC_PORT",
   },
+  {
+    contract: achievementsContract,
+    host: "api-achievements",
+    portEnv: "ACHIEVEMENTS_GRPC_PORT",
+  },
 ]
 
 function requireClientToken(contract: GrpcContract): string {
@@ -48,6 +54,8 @@ export const CATALOG_ADMIN_PACKAGE_TOKEN =
 export const PROGRESS_PACKAGE_TOKEN = requireClientToken(progressContract)
 export const GAMIFICATION_PACKAGE_TOKEN =
   requireClientToken(gamificationContract)
+export const ACHIEVEMENTS_PACKAGE_TOKEN =
+  requireClientToken(achievementsContract)
 
 export const gatewayGrpcClients: ClientProviderOptions[] = targets.map(
   ({ contract, host, portEnv }) => ({

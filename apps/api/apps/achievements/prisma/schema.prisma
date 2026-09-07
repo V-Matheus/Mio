@@ -16,6 +16,7 @@ model Achievement {
   iconUrl     String?
   ruleType    String
   threshold   Int
+  xpReward    Int      @default(0)
   createdAt   DateTime @default(now())
 
   unlocks UserAchievement[]
@@ -31,4 +32,18 @@ model UserAchievement {
 
   @@unique([userCode, achievementId])
   @@index([userCode])
+}
+
+model OutboxEvent {
+  id          BigInt    @id @default(autoincrement())
+  routingKey  String
+  payload     Json
+  headers     Json?
+  retryCount  Int       @default(0)
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  publishedAt DateTime?
+
+  @@index([publishedAt])
+  @@index([publishedAt, retryCount])
 }

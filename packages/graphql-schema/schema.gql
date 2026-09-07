@@ -2,6 +2,38 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+"""Conquista disponível na plataforma"""
+type Achievement {
+  """Descrição de como desbloqueá-la"""
+  description: String!
+
+  """URL da ilustração/insígnia da conquista"""
+  iconUrl: String
+
+  """
+  Tipo de regra que rege o desbloqueio (ex.: LESSONS_COMPLETED, TOTAL_XP)
+  """
+  ruleType: String!
+
+  """Identificador único da conquista"""
+  slug: ID!
+
+  """Valor limite necessário para desbloquear"""
+  threshold: Int!
+
+  """Título de exibição da conquista"""
+  title: String!
+}
+
+"""Página paginada do catálogo de conquistas"""
+type AchievementsPage {
+  """Conquistas da página atual"""
+  items: [Achievement!]!
+
+  """Total de conquistas disponíveis"""
+  total: Int!
+}
+
 type AdminLessonSummary {
   id: Int!
   position: Int!
@@ -142,6 +174,10 @@ type Mutation {
 }
 
 type Query {
+  """
+  Lista, de forma paginada, todas as conquistas disponíveis na plataforma
+  """
+  achievements(limit: Int = 10, offset: Int = 0): AchievementsPage!
   adminTrack(slug: ID!): AdminTrackDetail
   adminTracks: [AdminTrack!]!
   categories: [Category!]!
@@ -152,6 +188,11 @@ type Query {
   lessonProgress(lessonId: Int!): LessonProgress!
   listUsers(search: String): [User!]!
   me: User!
+
+  """
+  Lista, de forma paginada, as conquistas com o progresso do usuário logado
+  """
+  myAchievements(limit: Int = 10, offset: Int = 0): UserAchievementsPage!
 
   """Consulta informações de XP, nível e ranking do usuário logado"""
   myXp: UserXp!
@@ -308,6 +349,45 @@ type User {
   email: String!
   name: String!
   roles: [String!]!
+}
+
+"""Conquista com o progresso do usuário logado"""
+type UserAchievement {
+  """Descrição de como desbloqueá-la"""
+  description: String!
+
+  """URL da ilustração/insígnia da conquista"""
+  iconUrl: String
+
+  """Progresso atual do usuário (0..threshold)"""
+  progress: Int!
+
+  """Identificador único da conquista"""
+  slug: ID!
+
+  """Valor limite necessário para desbloquear"""
+  threshold: Int!
+
+  """Título de exibição da conquista"""
+  title: String!
+
+  """Indica se o usuário já desbloqueou esta conquista"""
+  unlocked: Boolean!
+
+  """Data (ISO-8601) em que a conquista foi desbloqueada"""
+  unlockedAt: String
+}
+
+"""Página paginada de conquistas com o progresso do usuário"""
+type UserAchievementsPage {
+  """Conquistas da página atual"""
+  items: [UserAchievement!]!
+
+  """Total de conquistas disponíveis"""
+  total: Int!
+
+  """Total de conquistas já desbloqueadas pelo usuário"""
+  unlockedTotal: Int!
 }
 
 """Perfil consolidado do aluno com XP, estatísticas e atividades"""

@@ -30,7 +30,7 @@ E-mails transacionais (boas-vindas, recuperação de senha, inatividade) e jobs 
 |---|---|
 | `user.registered` | Enviar e-mail de boas-vindas para `email` com link para `/home`. |
 | `user.password_reset_requested` | Enviar e-mail com link `/redefinir-senha/<token>` (token bruto vem no payload do evento — não persistido fora dele). |
-| `achievement.unlocked` | Adicionar a um digest diário para o usuário (não envia 1 e-mail por conquista). |
+| `achievement.unlocked` | Adicionar a um digest diário para o usuário (não envia 1 e-mail por conquista). Payload real (spec 05) já traz `title`, `iconUrl` e `xpReward` prontos para o template — não é necessário buscar a conquista de volta no serviço Achievements. |
 
 ### Estrutura
 

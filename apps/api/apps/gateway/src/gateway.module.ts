@@ -5,6 +5,7 @@ import { APP_GUARD } from "@nestjs/core"
 import { GraphQLModule } from "@nestjs/graphql"
 import type { Request } from "express"
 import { InternalSecretGuard } from "./common/guards/internal-secret.guard"
+import { AchievementsModule } from "./modules/achievements/achievements.module"
 import { AuthModule } from "./modules/auth/auth.module"
 import { CatalogModule } from "./modules/catalog/catalog.module"
 import { GamificationModule } from "./modules/gamification/gamification.module"
@@ -37,6 +38,7 @@ const autoSchemaFile = isProduction
     CatalogModule,
     ProgressModule,
     GamificationModule,
+    AchievementsModule,
     ProfileModule,
   ],
   controllers: [],

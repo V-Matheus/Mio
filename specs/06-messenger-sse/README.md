@@ -50,9 +50,9 @@ Por que Redis Pub/Sub no meio? Múltiplas instâncias de Messenger não sabem em
   data: <json>
 
   ```
-- Tipos:
-  - `xp.rewarded` → `{ amount, totalAfter, level, reason }`
-  - `achievement.unlocked` → `{ slug, title, iconUrl }`
+- Tipos (payload real publicado pela Gamification/Achievements — ver `@mio/events` `domain-event.ts`, atualizado na entrega da spec 05):
+  - `xp.rewarded` → `{ userCode, amount, reason, sourceId?, totalAfter, level, streakCurrent, awardedAt }`
+  - `achievement.unlocked` → `{ userCode, achievementSlug, title, iconUrl, unlockedAt, xpReward }`
   - `ping` → `{ ts }` a cada 25s (heartbeat).
 
 ### Redis Pub/Sub
@@ -65,8 +65,8 @@ Por que Redis Pub/Sub no meio? Múltiplas instâncias de Messenger não sabem em
 ```ts
 // apps/web/lib/realtime/client.ts
 export type RealtimeEvent =
-  | { type: "xp.rewarded"; payload: { amount: number; totalAfter: number; level: string; reason: string } }
-  | { type: "achievement.unlocked"; payload: { slug: string; title: string; iconUrl: string | null } }
+  | { type: "xp.rewarded"; payload: { amount: number; totalAfter: number; level: string; reason: string; streakCurrent: number } }
+  | { type: "achievement.unlocked"; payload: { achievementSlug: string; title: string; iconUrl: string | null; xpReward: number } }
   | { type: "ping"; payload: { ts: number } }
 ```
 
