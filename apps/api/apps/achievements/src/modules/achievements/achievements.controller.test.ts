@@ -55,6 +55,20 @@ describe("AchievementsController", () => {
         0,
       )
     })
+
+    it("limit negativo ou zero cai no padrão (10), nunca é repassado como está", async () => {
+      await controller.listAchievements({ limit: -100, offset: 0 })
+      expect(achievementsServiceMock.listAchievements).toHaveBeenCalledWith(
+        10,
+        0,
+      )
+
+      await controller.listAchievements({ limit: 0, offset: 0 })
+      expect(achievementsServiceMock.listAchievements).toHaveBeenCalledWith(
+        10,
+        0,
+      )
+    })
   })
 
   it("ListAchievements mapeia a página do service para a resposta gRPC", async () => {

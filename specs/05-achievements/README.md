@@ -3,22 +3,25 @@
 Validador de regras de troféus. Escuta `lesson.completed` e `xp.rewarded`, avalia regras e publica `achievement.unlocked`.
 
 > [!NOTE]
-> **Dependência Artística e Decisão de Roadmap**:
-> O valor pedagógico e o apelo emocional das conquistas dependem substancialmente de sua identidade visual (ilustrações exclusivas, insígnias temáticas e medalhas customizadas). Sem artes dedicadas, o módulo se limitaria a ícones genéricos em grayscale, enfraquecendo o fator de engajamento do aluno.  
-> **Status de Execução:** Mapeado na arquitetura, porém **postergado temporariamente** até que as ilustrações das medalhas estejam disponíveis, priorizando entregas com alto impacto funcional imediato (como o Messenger SSE para XP em tempo real).
+> **Dependência Artística**:
+> O valor pedagógico e o apelo emocional das conquistas dependem substancialmente de sua identidade visual (ilustrações exclusivas, insígnias temáticas e medalhas customizadas). Sem artes dedicadas, o módulo usa um ícone genérico (medalha) em grayscale quando a conquista está bloqueada — funcional, mas sem o fator de engajamento pleno até que as ilustrações estejam disponíveis.
+> **Status de Execução:** Implementado (ver release [`docs/RELEASE_07-09-2026.md`](../../docs/RELEASE_07-09-2026.md)). Identidade visual definitiva permanece como pendência artística.
 
 ## Status atual
 
 ### Backend (`apps/api/apps/achievements`)
 - ✅ App NestJS provisionado com gRPC server + PrismaModule.
-- ✅ Schema Prisma: `Achievement(slug, title, description, iconUrl, ruleType, threshold)`, `UserAchievement(userCode, achievementId, unlockedAt)`.
-- ❌ Nenhum consumer AMQP.
-- ❌ Nenhum motor de regras.
-- ❌ Nenhum seed de conquistas iniciais.
+- ✅ Schema Prisma: `Achievement(slug, title, description, iconUrl, ruleType, threshold, xpReward)`, `UserAchievement(userCode, achievementId, unlockedAt)`, `UserCounter`, `OutboxEvent`.
+- ✅ Consumers AMQP: `LessonCompletedConsumer` (`lesson.completed`) e `XpRewardedConsumer` (`xp.rewarded`).
+- ✅ Motor de regras (`RulesEngineService`) com `LESSONS_COMPLETED`, `TOTAL_XP` e `STREAK_DAYS`, idempotente via `@@unique([userCode, achievementId])`.
+- ✅ Seed inicial de conquistas (`scripts/seed-achievements.ts`), incluindo as de sequência (streak).
+- ✅ gRPC `ListAchievements`/`GetUserAchievements` paginados (`limit`/`offset`, `total`/`unlockedTotal`).
+- ✅ Gamification credita o `xpReward` via `AchievementUnlockedConsumer` (decisão B do spec), idempotente por `sourceId`.
 
 ### Frontend (`apps/web`)
-- ❌ Nenhuma página de conquistas.
-- ❌ Nenhum modal de "Conquista desbloqueada!".
+- ✅ Conquistas integradas ao perfil do aluno (`AchievementsSection`), sem rota dedicada — por decisão de produto.
+- ✅ Modal com listagem completa em grid de 2 colunas e scroll infinito (`IntersectionObserver` + Server Action).
+- ❌ Nenhum modal de "Conquista desbloqueada!" em tempo real (depende do Messenger SSE, spec 06).
 
 ## Escopo
 

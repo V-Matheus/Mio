@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common"
+import { CoreClientService } from "../core-client/core-client.service"
 import { GamificationClientService } from "../gamification-client/gamification-client.service"
 import { PrismaService } from "../prisma/prisma.service"
 import { achievementsError } from "./errors/achievements.errors"
@@ -29,13 +30,12 @@ export type UserAchievementsPage = {
   unlockedTotal: number
 }
 
-const LESSONS_COMPLETED_COUNTER = "lessons_completed"
-
 @Injectable()
 export class AchievementsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gamificationClient: GamificationClientService,
+    private readonly coreClient: CoreClientService,
   ) {}
 
   async listAchievements(
@@ -77,7 +77,7 @@ export class AchievementsService {
       pageAchievements,
       total,
       unlockedTotal,
-      counter,
+      totalCompletedLessons,
       totalXp,
       streakCurrent,
     ] = await Promise.all([
@@ -88,14 +88,7 @@ export class AchievementsService {
       }),
       this.prisma.achievement.count(),
       this.prisma.userAchievement.count({ where: { userCode } }),
-      this.prisma.userCounter.findUnique({
-        where: {
-          userCode_counter: {
-            userCode,
-            counter: LESSONS_COMPLETED_COUNTER,
-          },
-        },
-      }),
+      this.coreClient.getTotalCompletedLessons(userCode),
       this.gamificationClient.getTotalXp(userCode),
       this.gamificationClient.getStreakCurrent(userCode),
     ])
@@ -112,7 +105,7 @@ export class AchievementsService {
     )
 
     const currentValueByRuleType: Record<string, number> = {
-      LESSONS_COMPLETED: counter?.value ?? 0,
+      LESSONS_COMPLETED: totalCompletedLessons,
       TOTAL_XP: totalXp,
       STREAK_DAYS: streakCurrent,
     }

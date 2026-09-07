@@ -1,5 +1,6 @@
 import { AmqpConsumerService } from "@mio/events"
 import { Injectable } from "@nestjs/common"
+import { CoreClientService } from "../../core-client/core-client.service"
 import { RulesEngineService } from "../rules-engine.service"
 
 export const LESSON_COMPLETED_QUEUE = "achievements.lesson.completed"
@@ -14,9 +15,18 @@ export interface LessonCompletedMessagePayload {
   lessonId: string | number
 }
 
+/**
+ * Não mantém contador local: busca o total de lições concluídas direto no
+ * Core (fonte da verdade) a cada evento. Reentrega do broker é inofensiva
+ * por construção — reprocessar só refaz a mesma pergunta e recebe a mesma
+ * resposta, sem risco de contagem duplicada.
+ */
 @Injectable()
 export class LessonCompletedConsumer extends AmqpConsumerService<LessonCompletedMessagePayload> {
-  constructor(private readonly rules: RulesEngineService) {
+  constructor(
+    private readonly rules: RulesEngineService,
+    private readonly coreClient: CoreClientService,
+  ) {
     super({
       queue: LESSON_COMPLETED_QUEUE,
       routingKey: LESSON_COMPLETED_ROUTING_KEY,
@@ -35,6 +45,11 @@ export class LessonCompletedConsumer extends AmqpConsumerService<LessonCompleted
       return
     }
 
-    await this.rules.evaluateLessonsCompleted(payload.userCode)
+    const totalCompletedLessons =
+      await this.coreClient.getTotalCompletedLessons(payload.userCode)
+    await this.rules.evaluateLessonsCompleted(
+      payload.userCode,
+      totalCompletedLessons,
+    )
   }
 }

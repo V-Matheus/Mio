@@ -13,6 +13,7 @@ Traduz ações em recompensas. Escuta `lesson.completed`, calcula XP de forma di
 - ✅ Regra de desempate por timestamp (*Score Packing*): $\text{Score} = \text{totalXp} + (1 - \text{timestamp}/10^{13})$.
 - ✅ Tabela de regras de XP dinâmicas (`XpRule`) com serviço gerenciador `XpRulesService`.
 - ✅ Endpoints gRPC `GetUserXp` e `GetLeaderboard` (com enriquecimento cadastral via `BatchGetUsers` do Core).
+- ✅ (spec 05) Consumer AMQP `AchievementUnlockedConsumer` + `XpService.rewardAchievementUnlocked`: credita o `xpReward` de conquistas desbloqueadas pelo Achievements, idempotente por `sourceId = "achievement:<slug>"`. Gamification é quem credita XP — Achievements nunca publica `xp.rewarded` diretamente (decisão B do spec 05). `xp.rewarded` passou a carregar também `streakCurrent`.
 
 ### Gateway (`apps/api/apps/gateway`)
 - ✅ `GamificationModule` com cliente gRPC `gamificationContract`.

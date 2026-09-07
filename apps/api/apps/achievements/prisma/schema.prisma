@@ -34,15 +34,6 @@ model UserAchievement {
   @@index([userCode])
 }
 
-model UserCounter {
-  userCode  String
-  counter   String
-  value     Int      @default(0)
-  updatedAt DateTime @updatedAt
-
-  @@id([userCode, counter])
-}
-
 model OutboxEvent {
   id          BigInt    @id @default(autoincrement())
   routingKey  String

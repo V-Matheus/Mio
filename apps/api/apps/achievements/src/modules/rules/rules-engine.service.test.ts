@@ -5,7 +5,6 @@ import { AchievementRuleType, RulesEngineService } from "./rules-engine.service"
 
 describe("RulesEngineService", () => {
   let prismaMock: {
-    userCounter: { upsert: ReturnType<typeof vi.fn> }
     achievement: { findMany: ReturnType<typeof vi.fn> }
     userAchievement: { create: ReturnType<typeof vi.fn> }
     $transaction: ReturnType<typeof vi.fn>
@@ -15,7 +14,6 @@ describe("RulesEngineService", () => {
 
   beforeEach(() => {
     prismaMock = {
-      userCounter: { upsert: vi.fn() },
       achievement: { findMany: vi.fn().mockResolvedValue([]) },
       userAchievement: { create: vi.fn().mockResolvedValue({}) },
       $transaction: vi.fn(async (cb) => cb(prismaMock)),
@@ -28,8 +26,7 @@ describe("RulesEngineService", () => {
   })
 
   describe("evaluateLessonsCompleted", () => {
-    it("incrementa o contador e desbloqueia todas as conquistas elegíveis, publicando um achievement.unlocked por conquista", async () => {
-      prismaMock.userCounter.upsert.mockResolvedValue({ value: 10 })
+    it("desbloqueia todas as conquistas elegíveis pro total de lições concluídas informado, publicando um achievement.unlocked por conquista", async () => {
       prismaMock.achievement.findMany.mockResolvedValue([
         {
           id: 1n,
@@ -47,15 +44,8 @@ describe("RulesEngineService", () => {
         },
       ])
 
-      await service.evaluateLessonsCompleted("usr1")
+      await service.evaluateLessonsCompleted("usr1", 10)
 
-      expect(prismaMock.userCounter.upsert).toHaveBeenCalledWith({
-        where: {
-          userCode_counter: { userCode: "usr1", counter: "lessons_completed" },
-        },
-        create: { userCode: "usr1", counter: "lessons_completed", value: 1 },
-        update: { value: { increment: 1 } },
-      })
       expect(prismaMock.achievement.findMany).toHaveBeenCalledWith({
         where: {
           ruleType: AchievementRuleType.LESSONS_COMPLETED,
@@ -88,8 +78,19 @@ describe("RulesEngineService", () => {
       )
     })
 
+    it("reprocessar o mesmo total de lições (reentrega do broker) é inofensivo: não duplica desbloqueios já existentes", async () => {
+      // a conquista já não é retornada como elegível porque `unlocks: { none }` a exclui —
+      // simula o estado real após o primeiro processamento bem-sucedido.
+      prismaMock.achievement.findMany.mockResolvedValue([])
+
+      await service.evaluateLessonsCompleted("usr1", 10)
+      await service.evaluateLessonsCompleted("usr1", 10)
+
+      expect(prismaMock.userAchievement.create).not.toHaveBeenCalled()
+      expect(eventsMock.achievementUnlocked).not.toHaveBeenCalled()
+    })
+
     it("idempotência: reentrega concorrente que colide no @@unique([userCode, achievementId]) (P2002) é ignorada silenciosamente, sem publicar evento", async () => {
-      prismaMock.userCounter.upsert.mockResolvedValue({ value: 1 })
       prismaMock.achievement.findMany.mockResolvedValue([
         {
           id: 1n,
@@ -102,14 +103,13 @@ describe("RulesEngineService", () => {
       prismaMock.userAchievement.create.mockRejectedValue({ code: "P2002" })
 
       await expect(
-        service.evaluateLessonsCompleted("usr1"),
+        service.evaluateLessonsCompleted("usr1", 1),
       ).resolves.toBeUndefined()
 
       expect(eventsMock.achievementUnlocked).not.toHaveBeenCalled()
     })
 
-    it("propaga erros inesperados (não P2002) sem publicar o evento", async () => {
-      prismaMock.userCounter.upsert.mockResolvedValue({ value: 1 })
+    it("propaga erros inesperados (não P2002) do desbloqueio sem publicar o evento", async () => {
       prismaMock.achievement.findMany.mockResolvedValue([
         {
           id: 1n,
@@ -123,7 +123,7 @@ describe("RulesEngineService", () => {
         new Error("connection lost"),
       )
 
-      await expect(service.evaluateLessonsCompleted("usr1")).rejects.toThrow(
+      await expect(service.evaluateLessonsCompleted("usr1", 1)).rejects.toThrow(
         "connection lost",
       )
       expect(eventsMock.achievementUnlocked).not.toHaveBeenCalled()

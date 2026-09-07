@@ -1,5 +1,6 @@
 import { EventsModule, OutboxPublisherService } from "@mio/events"
 import { Module, type OnModuleInit } from "@nestjs/common"
+import { CoreClientModule } from "../core-client/core-client.module"
 import { PrismaModule } from "../prisma/prisma.module"
 import { PrismaService } from "../prisma/prisma.service"
 import { LessonCompletedConsumer } from "./consumers/lesson-completed.consumer"
@@ -8,7 +9,7 @@ import { AchievementEventsPublisher } from "./events/achievement-events.publishe
 import { RulesEngineService } from "./rules-engine.service"
 
 @Module({
-  imports: [PrismaModule, EventsModule],
+  imports: [PrismaModule, EventsModule, CoreClientModule],
   providers: [
     RulesEngineService,
     AchievementEventsPublisher,

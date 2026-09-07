@@ -2,16 +2,6 @@
 ALTER TABLE "Achievement" ADD COLUMN     "xpReward" INTEGER NOT NULL DEFAULT 0;
 
 -- CreateTable
-CREATE TABLE "UserCounter" (
-    "userCode" TEXT NOT NULL,
-    "counter" TEXT NOT NULL,
-    "value" INTEGER NOT NULL DEFAULT 0,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "UserCounter_pkey" PRIMARY KEY ("userCode","counter")
-);
-
--- CreateTable
 CREATE TABLE "OutboxEvent" (
     "id" BIGSERIAL NOT NULL,
     "routingKey" TEXT NOT NULL,

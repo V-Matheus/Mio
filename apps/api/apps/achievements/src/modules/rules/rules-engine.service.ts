@@ -12,13 +12,15 @@ export const AchievementRuleType = {
 export type AchievementRuleType =
   (typeof AchievementRuleType)[keyof typeof AchievementRuleType]
 
-const LESSONS_COMPLETED_COUNTER = "lessons_completed"
-
 /**
- * Resolve e desbloqueia conquistas dado o valor atual de um contador
- * (lições concluídas ou XP total). Idempotente por construção: a inserção
- * em `UserAchievement` respeita `@@unique([userCode, achievementId])`, então
- * reentregas do mesmo evento não duplicam o desbloqueio nem o publish.
+ * Resolve e desbloqueia conquistas dado o valor atual de cada regra (lições
+ * concluídas, XP total ou streak). O valor sempre vem da fonte da verdade —
+ * Core (`GetStudentProfileProgress`) ou Gamification, nunca de um contador
+ * espelhado localmente — então reprocessar o mesmo evento é inofensivo por
+ * construção (mesma pergunta, mesma resposta). O desbloqueio em si é
+ * idempotente pela inserção em `UserAchievement` respeitar
+ * `@@unique([userCode, achievementId])`: reentregas do mesmo evento não
+ * duplicam o desbloqueio nem o publish.
  */
 @Injectable()
 export class RulesEngineService {
@@ -27,21 +29,16 @@ export class RulesEngineService {
     private readonly events: AchievementEventsPublisher,
   ) {}
 
-  async evaluateLessonsCompleted(userCode: string): Promise<void> {
+  async evaluateLessonsCompleted(
+    userCode: string,
+    totalCompletedLessons: number,
+  ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      const counter = await tx.userCounter.upsert({
-        where: {
-          userCode_counter: { userCode, counter: LESSONS_COMPLETED_COUNTER },
-        },
-        create: { userCode, counter: LESSONS_COMPLETED_COUNTER, value: 1 },
-        update: { value: { increment: 1 } },
-      })
-
       await this.unlockEligible(
         tx,
         userCode,
         AchievementRuleType.LESSONS_COMPLETED,
-        counter.value,
+        totalCompletedLessons,
       )
     })
   }

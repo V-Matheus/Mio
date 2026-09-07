@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import type { CoreClientService } from "../../core-client/core-client.service"
 import type { RulesEngineService } from "../rules-engine.service"
 import {
   LESSON_COMPLETED_DEAD_ROUTING_KEY,
@@ -12,14 +13,19 @@ import {
 
 describe("LessonCompletedConsumer", () => {
   let rulesMock: { evaluateLessonsCompleted: ReturnType<typeof vi.fn> }
+  let coreClientMock: { getTotalCompletedLessons: ReturnType<typeof vi.fn> }
   let consumer: LessonCompletedConsumer
 
   beforeEach(() => {
     rulesMock = {
       evaluateLessonsCompleted: vi.fn().mockResolvedValue(undefined),
     }
+    coreClientMock = {
+      getTotalCompletedLessons: vi.fn().mockResolvedValue(10),
+    }
     consumer = new LessonCompletedConsumer(
       rulesMock as unknown as RulesEngineService,
+      coreClientMock as unknown as CoreClientService,
     )
   })
 
@@ -36,7 +42,8 @@ describe("LessonCompletedConsumer", () => {
     expect(options.maxRetries).toBe(3)
   })
 
-  it("processa mensagem válida delegando para RulesEngineService.evaluateLessonsCompleted", async () => {
+  it("busca o total real de lições concluídas no Core e delega para RulesEngineService.evaluateLessonsCompleted", async () => {
+    coreClientMock.getTotalCompletedLessons.mockResolvedValue(7)
     const payload: LessonCompletedMessagePayload = {
       userCode: "usr123",
       lessonId: "42",
@@ -44,10 +51,13 @@ describe("LessonCompletedConsumer", () => {
 
     await consumer.handleMessage(payload)
 
-    expect(rulesMock.evaluateLessonsCompleted).toHaveBeenCalledWith("usr123")
+    expect(coreClientMock.getTotalCompletedLessons).toHaveBeenCalledWith(
+      "usr123",
+    )
+    expect(rulesMock.evaluateLessonsCompleted).toHaveBeenCalledWith("usr123", 7)
   })
 
-  it("descarta payload sem userCode sem chamar o motor de regras", async () => {
+  it("descarta payload sem userCode sem consultar o Core nem chamar o motor de regras", async () => {
     const payload = {
       userCode: "",
       lessonId: "42",
@@ -55,6 +65,7 @@ describe("LessonCompletedConsumer", () => {
 
     await consumer.handleMessage(payload)
 
+    expect(coreClientMock.getTotalCompletedLessons).not.toHaveBeenCalled()
     expect(rulesMock.evaluateLessonsCompleted).not.toHaveBeenCalled()
   })
 })

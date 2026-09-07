@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import type { CoreClientService } from "../core-client/core-client.service"
 import type { GamificationClientService } from "../gamification-client/gamification-client.service"
 import type { PrismaService } from "../prisma/prisma.service"
 import { AchievementsService } from "./achievements.service"
@@ -13,12 +14,12 @@ describe("AchievementsService", () => {
       findMany: ReturnType<typeof vi.fn>
       count: ReturnType<typeof vi.fn>
     }
-    userCounter: { findUnique: ReturnType<typeof vi.fn> }
   }
   let gamificationClientMock: {
     getTotalXp: ReturnType<typeof vi.fn>
     getStreakCurrent: ReturnType<typeof vi.fn>
   }
+  let coreClientMock: { getTotalCompletedLessons: ReturnType<typeof vi.fn> }
   let service: AchievementsService
 
   beforeEach(() => {
@@ -31,15 +32,18 @@ describe("AchievementsService", () => {
         findMany: vi.fn().mockResolvedValue([]),
         count: vi.fn().mockResolvedValue(0),
       },
-      userCounter: { findUnique: vi.fn().mockResolvedValue(null) },
     }
     gamificationClientMock = {
       getTotalXp: vi.fn().mockResolvedValue(0),
       getStreakCurrent: vi.fn().mockResolvedValue(0),
     }
+    coreClientMock = {
+      getTotalCompletedLessons: vi.fn().mockResolvedValue(0),
+    }
     service = new AchievementsService(
       prismaMock as unknown as PrismaService,
       gamificationClientMock as unknown as GamificationClientService,
+      coreClientMock as unknown as CoreClientService,
     )
   })
 
@@ -86,7 +90,7 @@ describe("AchievementsService", () => {
       expect(prismaMock.achievement.findMany).not.toHaveBeenCalled()
     })
 
-    it("calcula progresso/unlocked por ruleType (LESSONS_COMPLETED, TOTAL_XP, STREAK_DAYS), limita ao threshold e propaga total/unlockedTotal", async () => {
+    it("calcula progresso/unlocked por ruleType (LESSONS_COMPLETED via Core, TOTAL_XP e STREAK_DAYS via Gamification), limita ao threshold e propaga total/unlockedTotal", async () => {
       const unlockedAt = new Date("2026-05-11T20:30:06.000Z")
       prismaMock.achievement.findMany.mockResolvedValue([
         {
@@ -128,7 +132,7 @@ describe("AchievementsService", () => {
       ])
       prismaMock.achievement.count.mockResolvedValue(4)
       prismaMock.userAchievement.count.mockResolvedValue(1)
-      prismaMock.userCounter.findUnique.mockResolvedValue({ value: 1 })
+      coreClientMock.getTotalCompletedLessons.mockResolvedValue(1)
       gamificationClientMock.getTotalXp.mockResolvedValue(500)
       gamificationClientMock.getStreakCurrent.mockResolvedValue(3)
       prismaMock.userAchievement.findMany.mockResolvedValue([
@@ -137,6 +141,9 @@ describe("AchievementsService", () => {
 
       const page = await service.getUserAchievements("usr1", 10, 0)
 
+      expect(coreClientMock.getTotalCompletedLessons).toHaveBeenCalledWith(
+        "usr1",
+      )
       expect(prismaMock.userAchievement.findMany).toHaveBeenCalledWith({
         where: { userCode: "usr1", achievementId: { in: [1n, 2n, 3n, 4n] } },
       })
@@ -147,13 +154,13 @@ describe("AchievementsService", () => {
           slug: "first-lesson",
           unlocked: true,
           unlockedAt: unlockedAt.toISOString(),
-          progress: 1, // contador=1, capado no threshold=1
+          progress: 1, // total real de lições concluídas (Core)=1, capado no threshold=1
         }),
         expect.objectContaining({
           slug: "ten-lessons",
           unlocked: false,
           unlockedAt: "",
-          progress: 1, // mesmo contador (1), abaixo do threshold=10
+          progress: 1, // mesmo total (1), abaixo do threshold=10
         }),
         expect.objectContaining({
           slug: "xp-100",

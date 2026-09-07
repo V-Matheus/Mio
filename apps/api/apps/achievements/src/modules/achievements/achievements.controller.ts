@@ -8,7 +8,8 @@ const DEFAULT_LIMIT = 10
 const MAX_LIMIT = 50
 
 function resolvePagination(limit?: number, offset?: number) {
-  const resolvedLimit = Math.min(limit || DEFAULT_LIMIT, MAX_LIMIT)
+  const resolvedLimit =
+    limit && limit > 0 ? Math.min(limit, MAX_LIMIT) : DEFAULT_LIMIT
   const resolvedOffset = offset && offset > 0 ? offset : 0
   return { limit: resolvedLimit, offset: resolvedOffset }
 }
