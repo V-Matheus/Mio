@@ -27,6 +27,7 @@ import {
   gatewayError,
   getGatewayClient,
   getPublicGatewayClient,
+  isUnauthenticatedError,
 } from "@/shared/gateway/client"
 import type { UserRole } from "@/shared/gql/generated/graphql"
 
@@ -97,6 +98,7 @@ export const authService = {
     } catch (error) {
       return {
         ok: false,
+        unauthenticated: isUnauthenticatedError(error),
         error: await gatewayError(error, "Falha ao renovar sessão"),
       }
     }
@@ -127,6 +129,7 @@ export const authService = {
     } catch (error) {
       return {
         ok: false,
+        unauthenticated: isUnauthenticatedError(error),
         error: await gatewayError(error, "Falha ao carregar usuário"),
       }
     }

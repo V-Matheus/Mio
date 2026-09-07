@@ -6,4 +6,6 @@ export type MeUser = {
   roles: string[]
 }
 
-export type MeResult = { ok: true; user: MeUser } | { ok: false; error: string }
+export type MeResult =
+  | { ok: true; user: MeUser }
+  | { ok: false; error: string; unauthenticated: boolean }

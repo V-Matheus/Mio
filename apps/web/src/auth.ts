@@ -10,19 +10,6 @@ import {
 import { meQuery } from "@/modules/auth/queries"
 import { authService } from "@/modules/auth/services"
 
-function getJwtExpiry(token: string): number | null {
-  try {
-    const parts = token.split(".")
-    if (parts.length !== 3 || !parts[1]) return null
-    const payload = JSON.parse(
-      Buffer.from(parts[1], "base64").toString("utf-8"),
-    )
-    return typeof payload.exp === "number" ? payload.exp * 1000 : null
-  } catch {
-    return null
-  }
-}
-
 const nextAuth = NextAuth({
   providers: [
     Google,
@@ -103,71 +90,83 @@ const nextAuth = NextAuth({
 
       return true
     },
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.accessToken = user.accessToken
-        token.refreshToken = user.refreshToken
-        token.accessTokenExpires = user.accessToken
-          ? (getJwtExpiry(user.accessToken) ?? Date.now() + 60 * 60 * 1000)
-          : Date.now() + 60 * 60 * 1000
-        token.id = user.id
-        token.name = user.name
-        token.email = user.email
-        token.picture = user.image
-        token.roles = user.roles
+        return {
+          sub: user.id,
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          picture: user.image,
+          roles: user.roles,
+          accessToken: user.accessToken,
+          refreshToken: user.refreshToken,
+        }
+      }
+
+      if (!token.accessToken) {
+        return token
+      }
+
+      // A validade do accessToken é decidida pelo backend, não por tempo calculado
+      // no front. Se o backend aceitar o token, apenas sincroniza os dados do usuário.
+      const meResult = await meQuery(token.accessToken as string)
+      if (meResult.ok) {
+        token.sub = meResult.user.code
+        token.id = meResult.user.code
+        token.name = meResult.user.name
+        token.email = meResult.user.email
+        token.picture = meResult.user.avatarUrl
+        token.roles = meResult.user.roles
         token.error = undefined
         return token
       }
 
-      if (trigger === "update" && token.accessToken) {
-        const meResult = await meQuery(token.accessToken as string)
-        if (meResult.ok) {
-          token.id = meResult.user.code
-          token.name = meResult.user.name
-          token.email = meResult.user.email
-          token.picture = meResult.user.avatarUrl
-          token.roles = meResult.user.roles
-        }
-      }
-
-      const expiresAt =
-        (token.accessTokenExpires as number) ??
-        (token.accessToken ? getJwtExpiry(token.accessToken as string) : null)
-
-      // Se o accessToken ainda é válido com margem de segurança de 60 segundos
-      if (expiresAt && Date.now() < expiresAt - 60_000) {
+      // Falha indeterminada (rede, timeout, backend indisponível): não é uma
+      // rejeição de autenticação. Preserva a sessão atual e tenta de novo na
+      // próxima requisição, em vez de derrubar um usuário autenticado.
+      if (!meResult.unauthenticated) {
         return token
       }
 
-      // Se expirou ou está para expirar, tenta renovar usando o refresh token
+      // O backend rejeitou explicitamente o accessToken (UNAUTHENTICATED):
+      // tenta renovar usando o refresh token.
       if (token.refreshToken) {
         const refreshResult = await authService.refreshToken(
           token.refreshToken as string,
         )
         if (refreshResult.ok) {
-          token.accessToken = refreshResult.accessToken
-          token.refreshToken = refreshResult.refreshToken
-          token.accessTokenExpires =
-            getJwtExpiry(refreshResult.accessToken) ??
-            Date.now() + 60 * 60 * 1000
+          token.sub = refreshResult.user.code
           token.id = refreshResult.user.code
           token.name = refreshResult.user.name
           token.email = refreshResult.user.email
           token.picture = refreshResult.user.avatarUrl
           token.roles = refreshResult.user.roles
+          token.accessToken = refreshResult.accessToken
+          token.refreshToken = refreshResult.refreshToken
           token.error = undefined
+          return token
+        }
+
+        // Falha indeterminada ao renovar: preserva a sessão e tenta de novo
+        // depois, em vez de assumir que o refresh token é inválido.
+        if (!refreshResult.unauthenticated) {
           return token
         }
       }
 
-      token.accessToken = undefined
-      token.refreshToken = undefined
-      token.error = "RefreshTokenError"
+      // O backend rejeitou explicitamente o accessToken e o refresh token (ou
+      // não há refresh token). A sessão não pode ser renovada, mas o cookie
+      // real só pode ser limpo em um contexto que permita Set-Cookie (Server
+      // Action / Route Handler) — o render atual não consegue persistir isso.
+      // Sinaliza a invalidação para que o chamador force o logout através de
+      // `/api/auth/force-signout`.
+      token.error = "RefreshAccessTokenError"
       return token
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken
-      session.error = token.error as string | undefined
+      session.accessToken = token?.accessToken
+      session.error = token?.error
 
       if (session.user) {
         session.user.id = (token.id as string) || (token.sub as string)

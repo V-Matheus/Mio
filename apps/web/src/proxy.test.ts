@@ -42,16 +42,25 @@ describe("proxy middleware", () => {
     expect(res?.headers.get("location")).toBe("http://localhost:3000/home")
   })
 
-  it("should allow access to /login when token is expired", async () => {
+  it("should redirect to /home when token is present, even if expired (backend validates expiry)", async () => {
     vi.mocked(getToken).mockResolvedValue({
       sub: "user-1",
       accessToken: "expired-token",
-      accessTokenExpires: Date.now() - 10000,
       roles: ["STUDENT"],
     })
     const req = makeRequest("/login")
     const res = await proxy(req)
-    expect(res).toBeUndefined()
+    expect(res?.headers.get("location")).toBe("http://localhost:3000/home")
+  })
+
+  it("should redirect unauthenticated access to private route when accessToken is missing", async () => {
+    vi.mocked(getToken).mockResolvedValue({
+      sub: "user-1",
+      roles: ["STUDENT"],
+    })
+    const req = makeRequest("/home")
+    const res = await proxy(req)
+    expect(res?.headers.get("location")).toBe("http://localhost:3000/login")
   })
 
   it("should allow STUDENT to access /home", async () => {
@@ -131,13 +140,8 @@ describe("proxy middleware", () => {
     expect(res).toBeUndefined()
   })
 
-  it("should redirect when token has RefreshTokenError to /login", async () => {
-    vi.mocked(getToken).mockResolvedValue({
-      sub: "user-1",
-      accessToken: "token",
-      roles: ["STUDENT"],
-      error: "RefreshTokenError",
-    })
+  it("should redirect when there is no token (e.g. expired refresh) to /login", async () => {
+    vi.mocked(getToken).mockResolvedValue(null)
     const req = makeRequest("/home")
     const res = await proxy(req)
     expect(res).toBeInstanceOf(NextResponse)

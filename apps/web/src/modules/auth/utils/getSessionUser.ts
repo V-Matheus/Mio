@@ -54,11 +54,15 @@ export async function getSessionUser(options?: {
       }
     : null
 
-  if (
-    (!user?.accessToken || session?.error === "RefreshTokenError") &&
-    (options?.require ?? true)
-  ) {
-    redirect("/login")
+  if ((!user?.accessToken || session?.error) && (options?.require ?? true)) {
+    // Quando o backend rejeitou access e refresh token, a sessão ainda não
+    // foi encerrada de fato: renderização não persiste Set-Cookie (ver
+    // auth.ts). Passa pelo Route Handler, que consegue.
+    redirect(
+      session?.error === "RefreshAccessTokenError"
+        ? "/api/auth/force-signout"
+        : "/login",
+    )
   }
 
   return user

@@ -37,11 +37,6 @@ export async function signOutAction() {
 }
 
 export async function signInWithProvider(formData: FormData) {
-  const session = await auth()
-  if (session) {
-    redirect("/home")
-  }
-
   const provider = formData.get("provider")
 
   if (typeof provider !== "string") {
@@ -55,11 +50,6 @@ export async function loginAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<LoginActionResponse> {
-  const session = await auth()
-  if (session) {
-    redirect("/home")
-  }
-
   const values = Object.fromEntries(formData) as Record<string, string>
   const parsed = loginSchema.safeParse(values)
 
@@ -98,11 +88,6 @@ export async function registerAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const session = await auth()
-  if (session) {
-    redirect("/home")
-  }
-
   const values = Object.fromEntries(formData) as Record<string, string>
   const parsed = registerSchema.safeParse(Object.fromEntries(formData))
 

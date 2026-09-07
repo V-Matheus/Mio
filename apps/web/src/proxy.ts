@@ -18,20 +18,14 @@ const TEACHER_ALLOWED_PREFIXES = [...STUDENT_ALLOWED_PREFIXES, "/studio"]
 
 const ADMIN_ALLOWED_PREFIXES = [...TEACHER_ALLOWED_PREFIXES, "/painel"]
 
+// A validade do token é responsabilidade exclusiva do backend: aqui checamos
+// apenas a presença do accessToken para decidir o roteamento. Um accessToken
+// expirado é rejeitado pelo backend na primeira requisição autenticada, que
+// dispara a renovação (ou limpeza da sessão) em `auth.ts`.
 function isTokenValid(token: unknown): boolean {
   if (!token || typeof token !== "object") return false
   const t = token as Record<string, unknown>
-  if (t.error === "RefreshTokenError") return false
-  if (!t.accessToken || typeof t.accessToken !== "string") return false
-
-  // Se possuir data de expiração, verifica se ainda está dentro do prazo de validade
-  if (typeof t.accessTokenExpires === "number") {
-    if (Date.now() >= t.accessTokenExpires) {
-      return false
-    }
-  }
-
-  return true
+  return typeof t.accessToken === "string" && t.accessToken.length > 0
 }
 
 export async function proxy(req: NextRequest) {

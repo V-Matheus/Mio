@@ -10,6 +10,7 @@ vi.mock("@/shared/gateway/client", () => ({
   getGatewayClient: mockGetClient,
   getPublicGatewayClient: () => ({ request: mockRequest }),
   gatewayError: (_error: unknown, fallback: string) => fallback,
+  isUnauthenticatedError: () => false,
 }))
 
 describe("authService", () => {
@@ -134,7 +135,11 @@ describe("authService", () => {
 
       const result = await authService.refreshToken("invalid-token")
 
-      expect(result).toEqual({ ok: false, error: expect.any(String) })
+      expect(result).toEqual({
+        ok: false,
+        error: expect.any(String),
+        unauthenticated: false,
+      })
     })
   })
 
@@ -195,7 +200,11 @@ describe("authService", () => {
 
       const result = await authService.me("expired-token")
 
-      expect(result).toEqual({ ok: false, error: expect.any(String) })
+      expect(result).toEqual({
+        ok: false,
+        error: expect.any(String),
+        unauthenticated: false,
+      })
     })
   })
 

@@ -56,3 +56,19 @@ export async function gatewayError(
   }
   return fallback
 }
+
+/**
+ * Indica se o erro é uma rejeição explícita de autenticação do Gateway
+ * (`extensions.code === "UNAUTHENTICATED"`), e não uma falha indeterminada
+ * (rede, timeout, backend indisponível, etc). Só uma rejeição explícita deve
+ * disparar renovação/invalidação de sessão.
+ */
+export function isUnauthenticatedError(error: unknown): boolean {
+  return (
+    error instanceof ClientError &&
+    (error.response.errors?.some(
+      (e) => e.extensions?.code === "UNAUTHENTICATED",
+    ) ??
+      false)
+  )
+}
