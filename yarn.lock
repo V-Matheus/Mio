@@ -671,12 +671,12 @@
     css-tree "^3.0.0"
 
 "@chromatic-com/storybook@^5.0.1":
-  version "5.2.1"
-  resolved "https://registry.yarnpkg.com/@chromatic-com/storybook/-/storybook-5.2.1.tgz#ecfbcb93e19b7e3f995dfea8313c9357171ffc7a"
-  integrity sha512-z6I7NJk/0VngA64y5TNYaB4Hc2X8+90n4op6lBt9PvWk5TmIlFLDqdX33rlrwbNRkkYijVgA/wO04rVYXi5Mlg==
+  version "5.3.1"
+  resolved "https://registry.yarnpkg.com/@chromatic-com/storybook/-/storybook-5.3.1.tgz#6123fbe67bf5e42b5810705d0b578cc17db71bae"
+  integrity sha512-eUcbR9CddVmKAnjOiBCOz5rNdT096jiXIjR+qaWbUuTlgRdpc9yjTrk4/hiPAAykZrPYVNJN11p6rJgW9KNpKg==
   dependencies:
     "@neoconfetti/react" "^1.0.0"
-    chromatic "16.10.0"
+    chromatic "^18.0.1"
     jsonfile "^6.1.0"
     strip-ansi "^7.1.0"
 
@@ -4534,10 +4534,10 @@ chokidar@4.0.3, chokidar@^4.0.1, chokidar@^4.0.3:
   dependencies:
     readdirp "^4.0.1"
 
-chromatic@16.10.0:
-  version "16.10.0"
-  resolved "https://registry.yarnpkg.com/chromatic/-/chromatic-16.10.0.tgz#30891067d703d767e554e7e1d0bc375d88fcbdcd"
-  integrity sha512-nFsztmnu7rFiGafUJgXvLUNpqmRylz92eNvzBoJNTKKQj4EQUyxznwnfpf1dTs7hXtWD8JwcH92jADydaHA1sw==
+chromatic@^18.0.1:
+  version "18.7.2"
+  resolved "https://registry.yarnpkg.com/chromatic/-/chromatic-18.7.2.tgz#43c633198abe856103ee0cf64248ae77f7fffba4"
+  integrity sha512-e6YsVD1c97hF2Fz/IxmHiLSK6Di8PV6edc6lKql20Wp5ZUWxluBXC8ZHKgpqJMr6u3vhn708BqOEnZntOgiTOA==
   dependencies:
     semver "^7.3.5"
 
