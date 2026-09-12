@@ -1588,9 +1588,9 @@
     yargs "^17.7.2"
 
 "@iconify-icons/devicon@^1.2.17":
-  version "1.2.17"
-  resolved "https://registry.yarnpkg.com/@iconify-icons/devicon/-/devicon-1.2.17.tgz#d5abe2a09227cca2bad2667f8133a8195f4ac346"
-  integrity sha512-p471pxnBUbk5VTF6aqPqF8htTyqHO+BjOArE9WDmJdFt9POsb7yIShH9GElO1lk9OBU9KZV9PLUGWBzH9gqH6A==
+  version "1.2.18"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/devicon/-/devicon-1.2.18.tgz#d6613b78e77e12ec46aec73438ac3c815efb3dff"
+  integrity sha512-9FXIhpoKF0pVvm8rw/elvbbHAgkPqGqatQd+OEmkYHY7kHo+DXUhRpQawde+3KO8b89lJDVoccTOjivtIqnO4g==
   dependencies:
     "@iconify/types" "*"
 
