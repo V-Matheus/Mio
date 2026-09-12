@@ -1602,9 +1602,9 @@
     "@iconify/types" "*"
 
 "@iconify-icons/lucide@^1.2.135":
-  version "1.2.135"
-  resolved "https://registry.yarnpkg.com/@iconify-icons/lucide/-/lucide-1.2.135.tgz#bbcbe6983dfa1f59140560d7614483802b913441"
-  integrity sha512-t2Dya1a+PInBmHScbbGyseze7rrGHRW/dYF4GTR6f51N08sCg6KrtE4zmplnZE1ul2NyC+sxKpXRCv48hEgaQw==
+  version "1.2.136"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/lucide/-/lucide-1.2.136.tgz#3858b8db825e1054b3bf3d312e16335b3bfb4cbb"
+  integrity sha512-g4ZLG+MioyIGnt7x+4AIxY4Dh+vEvRx+wrdi92gd5MzM/zpXWLi727/fiYnU+Qqqq05LFWq7IlCc0OSKXBBv2w==
   dependencies:
     "@iconify/types" "*"
 
