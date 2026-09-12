@@ -1595,9 +1595,9 @@
     "@iconify/types" "*"
 
 "@iconify-icons/logos@^1.2.36":
-  version "1.2.36"
-  resolved "https://registry.yarnpkg.com/@iconify-icons/logos/-/logos-1.2.36.tgz#a8fa9674cf92b20d797d04c3d0f404a1c80277a5"
-  integrity sha512-VzF299ubR4SKCZzLJoAawxeSjszJV1Q6y+4chCIPQuAafqfjtDjZxagZxL3ILKCsRLNN/z3zmCOOAL83tC8kLw==
+  version "1.2.37"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/logos/-/logos-1.2.37.tgz#7403e427386fbb88d491aac329fd9dc05bb05c32"
+  integrity sha512-AAh0X+3wDATSzSV1NWOI+G9K2WTTVU+BsCkcQ2gDwZ1MHbRg+d+VmGfXcpFuqCm2/9prUJwVA6moAswQ9MoNzQ==
   dependencies:
     "@iconify/types" "*"
 
