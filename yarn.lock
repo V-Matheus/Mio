@@ -1609,9 +1609,9 @@
     "@iconify/types" "*"
 
 "@iconify-icons/mdi@^1.2.48":
-  version "1.2.48"
-  resolved "https://registry.yarnpkg.com/@iconify-icons/mdi/-/mdi-1.2.48.tgz#5610701160239614db6be99104d9d477fef7cd67"
-  integrity sha512-51bfNoRLhYDfxSu0Nyi/uRVq6q/tP4TyEc0vvuNwImrXpxrRJUAWJF2A36CfBkXm3hO9IBlph/CD/XNDJKgG6w==
+  version "1.2.49"
+  resolved "https://registry.yarnpkg.com/@iconify-icons/mdi/-/mdi-1.2.49.tgz#c812864925d530234af1ea4aaac332ac7601fddd"
+  integrity sha512-DtbMqILsqYD8icxrqvmp3h/Ub6a6EiidwEd9NGuQ3O1m/rwIayNG9TfISfeUm+c8DW3e4h3dkSoLNx9y6cOYlA==
   dependencies:
     "@iconify/types" "*"
 
