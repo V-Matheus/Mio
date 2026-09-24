@@ -1,6 +1,7 @@
 import { AmqpConsumerService } from "@mio/events"
 import { Injectable } from "@nestjs/common"
 import { render } from "@react-email/render"
+import type { ConsumeMessage } from "amqplib"
 import React from "react"
 import { EmailService } from "../email/email.service"
 import { PasswordResetEmail } from "../email/templates/password-reset.email"
@@ -27,6 +28,7 @@ export class PasswordResetConsumer extends AmqpConsumerService<UserPasswordReset
 
   async handleMessage(
     payload: UserPasswordResetRequestedPayload,
+    rawMessage: ConsumeMessage,
   ): Promise<void> {
     this.logger.log(
       `[user.password_reset_requested] Recebido evento para ${payload.email}`,
@@ -50,13 +52,21 @@ export class PasswordResetConsumer extends AmqpConsumerService<UserPasswordReset
       { plainText: true },
     )
 
-    await this.emailService.enqueue({
-      to: payload.email,
-      subject: "Redefinição de Senha - Mio",
-      html,
-      text,
-      template: "password-reset",
-    })
+    const outboxId = rawMessage.properties.headers?.["x-outbox-id"]
+    if (typeof outboxId !== "string" && typeof outboxId !== "number") {
+      throw new Error("Evento de redefinição de senha sem x-outbox-id")
+    }
+
+    await this.emailService.enqueue(
+      {
+        to: payload.email,
+        subject: "Redefinição de Senha - Mio",
+        html,
+        text,
+        template: "password-reset",
+      },
+      String(outboxId),
+    )
 
     this.logger.log(
       `[user.password_reset_requested] Job de e-mail de redefinição de senha enfileirado para ${payload.email}`,

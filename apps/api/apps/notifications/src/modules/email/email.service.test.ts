@@ -7,8 +7,15 @@ describe("EmailService", () => {
     const mockQueue = {
       add: vi.fn().mockResolvedValue({ id: "job-123" }),
     } as unknown as Queue
+    const mockEmailEventRepository = {
+      claimForDispatch: vi.fn(),
+      releaseDispatchClaim: vi.fn(),
+    }
 
-    const service = new EmailService(mockQueue)
+    const service = new EmailService(
+      mockQueue,
+      mockEmailEventRepository as never,
+    )
 
     const jobData = {
       to: "test@example.com",
