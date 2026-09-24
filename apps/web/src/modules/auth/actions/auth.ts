@@ -9,6 +9,7 @@ import {
   type LoginInput,
   loginSchema,
   registerSchema,
+  resetPasswordSchema,
 } from "@/modules/auth/schemas"
 import { authService } from "@/modules/auth/services"
 import type { UpsertOAuthInput } from "@/modules/auth/types"
@@ -157,6 +158,38 @@ export async function forgotPasswordAction(
     ok: true,
     message:
       "Se o email estiver cadastrado, você receberá um link de recuperação em instantes.",
+  }
+}
+
+export async function resetPasswordAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const session = await auth()
+  if (session) {
+    redirect("/home")
+  }
+
+  const values = Object.fromEntries(formData) as Record<string, string>
+  const parsed = resetPasswordSchema.safeParse(Object.fromEntries(formData))
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+      values,
+    }
+  }
+
+  const result = await authService.resetPassword(parsed.data)
+
+  if (!result.ok) {
+    return { ok: false, message: result.error, values }
+  }
+
+  return {
+    ok: true,
+    message: "Senha redefinida com sucesso! Você já pode fazer login.",
   }
 }
 

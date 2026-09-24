@@ -5,6 +5,7 @@ import {
   REFRESH_TOKEN_MUTATION,
   REGISTER_MUTATION,
   REQUEST_PASSWORD_RESET_MUTATION,
+  RESET_PASSWORD_MUTATION,
   UPDATE_USER_ROLE_MUTATION,
   UPSERT_OAUTH_MUTATION,
 } from "@/modules/auth/graphql"
@@ -12,6 +13,7 @@ import type {
   ForgotPasswordInput,
   LoginInput,
   RegisterInput,
+  ResetPasswordInput,
 } from "@/modules/auth/schemas"
 import type {
   ForgotPasswordResult,
@@ -20,6 +22,7 @@ import type {
   MeUser,
   RefreshTokenResult,
   RegisterResult,
+  ResetPasswordResult,
   UpsertOAuthInput,
   UpsertOAuthResult,
 } from "@/modules/auth/types"
@@ -117,6 +120,22 @@ export const authService = {
       return {
         ok: false,
         error: await gatewayError(error, "Falha ao solicitar redefinição"),
+      }
+    }
+  },
+
+  async resetPassword(input: ResetPasswordInput): Promise<ResetPasswordResult> {
+    try {
+      const client = getPublicGatewayClient()
+      await client.request(RESET_PASSWORD_MUTATION, {
+        token: input.token,
+        newPassword: input.password,
+      })
+      return { ok: true }
+    } catch (error) {
+      return {
+        ok: false,
+        error: await gatewayError(error, "Falha ao redefinir senha"),
       }
     }
   },

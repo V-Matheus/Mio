@@ -1,7 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
 
-const AUTH_ROUTES = ["/login", "/cadastro", "/recuperar-senha"]
+const AUTH_ROUTES = [
+  "/login",
+  "/cadastro",
+  "/recuperar-senha",
+  "/redefinir-senha",
+]
 const PUBLIC_ROUTES = ["/"]
 
 /** Definição de prefixos de rotas permitidos por cada perfil de acesso */

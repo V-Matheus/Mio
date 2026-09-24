@@ -3,6 +3,7 @@ export {
   loginAction,
   loginCredentialsAction,
   registerAction,
+  resetPasswordAction,
   signInWithProvider,
   signOutAction,
   updateUserRoleAction,

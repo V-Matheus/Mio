@@ -57,7 +57,7 @@ apps/api/apps/notifications/
 
 ### Fila
 
-- Nome: `mio:emails`.
+- Nome: `mio-emails`.
 - Job: `{ to, subject, html, text }`.
 - Retry: 5 tentativas, backoff exponencial (1s, 5s, 30s, 5min, 30min).
 
