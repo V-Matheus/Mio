@@ -18,6 +18,7 @@ CREATE TABLE "OutboxEvent" (
     "lastError" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "publishedAt" TIMESTAMP(3),
+    "emailDispatchClaimedAt" TIMESTAMP(3),
 
     CONSTRAINT "OutboxEvent_pkey" PRIMARY KEY ("id")
 );

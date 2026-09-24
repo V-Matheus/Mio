@@ -23,6 +23,13 @@ describe("proxy middleware", () => {
     expect(res).toBeUndefined()
   })
 
+  it("should allow unauthenticated access to /redefinir-senha/:token", async () => {
+    vi.mocked(getToken).mockResolvedValue(null)
+    const req = makeRequest("/redefinir-senha/token-xyz")
+    const res = await proxy(req)
+    expect(res).toBeUndefined()
+  })
+
   it("should redirect unauthenticated access to private route (/studio) to /login", async () => {
     vi.mocked(getToken).mockResolvedValue(null)
     const req = makeRequest("/studio")

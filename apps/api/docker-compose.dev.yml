@@ -55,6 +55,12 @@ services:
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
 
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+
   # Only this service declares `build:`. The image is built once and reused
   # by the other 5 services via `image: mio-api-dev` below.
   api-gateway:
@@ -137,6 +143,8 @@ services:
       - ../../:/app
     depends_on:
       - api-gateway
+      - mailpit
+      - redis
 
 volumes:
   postgres-core-data:

@@ -1,7 +1,8 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/apps/notifications"
+    "outDir": "../../dist/apps/notifications",
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*"]
 }

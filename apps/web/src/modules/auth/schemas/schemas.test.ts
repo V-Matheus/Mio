@@ -2,6 +2,7 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resetPasswordSchema,
 } from "@/modules/auth/schemas"
 
 describe("loginSchema", () => {
@@ -181,5 +182,46 @@ describe("forgotPasswordSchema", () => {
     const result = forgotPasswordSchema.safeParse({})
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe("resetPasswordSchema", () => {
+  const validReset = {
+    token: "valid-token-123",
+    password: "NewPassword1",
+    confirmPassword: "NewPassword1",
+  }
+
+  it("should accept valid reset input", () => {
+    const result = resetPasswordSchema.safeParse(validReset)
+    expect(result.success).toBe(true)
+  })
+
+  it("should reject when token is empty", () => {
+    const result = resetPasswordSchema.safeParse({
+      ...validReset,
+      token: "",
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it("should reject when password is less than 8 characters", () => {
+    const result = resetPasswordSchema.safeParse({
+      ...validReset,
+      password: "Short1",
+      confirmPassword: "Short1",
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it("should reject when passwords do not match", () => {
+    const result = resetPasswordSchema.safeParse({
+      ...validReset,
+      confirmPassword: "DifferentPassword1",
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.path).toEqual(["confirmPassword"])
+    }
   })
 })

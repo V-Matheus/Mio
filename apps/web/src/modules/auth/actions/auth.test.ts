@@ -5,6 +5,7 @@ import {
   forgotPasswordAction,
   loginAction,
   registerAction,
+  resetPasswordAction,
   signInWithProvider,
 } from "@/modules/auth/actions/auth"
 import { authService } from "@/modules/auth/services"
@@ -32,6 +33,7 @@ vi.mock("@/modules/auth/services", () => ({
     login: vi.fn(),
     register: vi.fn(),
     requestPasswordReset: vi.fn(),
+    resetPassword: vi.fn(),
   },
 }))
 
@@ -320,5 +322,65 @@ describe("forgotPasswordAction", () => {
       message: "Service down",
       values: { email: "user@example.com" },
     })
+  })
+})
+
+describe("resetPasswordAction", () => {
+  it("should return errors when validation fails", async () => {
+    const formData = new FormData()
+    formData.set("token", "")
+    formData.set("password", "short")
+    formData.set("confirmPassword", "other")
+
+    const result = await resetPasswordAction(initialState, formData)
+
+    expect(result.ok).toBe(false)
+    expect(result.fieldErrors).toBeDefined()
+    expect(authService.resetPassword).not.toHaveBeenCalled()
+  })
+
+  it("should call authService.resetPassword with valid input", async () => {
+    vi.mocked(authService.resetPassword).mockResolvedValue({ ok: true })
+    const formData = new FormData()
+    formData.set("token", "token-123")
+    formData.set("password", "StrongPass1")
+    formData.set("confirmPassword", "StrongPass1")
+
+    await resetPasswordAction(initialState, formData)
+
+    expect(authService.resetPassword).toHaveBeenCalledWith({
+      token: "token-123",
+      password: "StrongPass1",
+      confirmPassword: "StrongPass1",
+    })
+  })
+
+  it("should return ok: true with success message", async () => {
+    vi.mocked(authService.resetPassword).mockResolvedValue({ ok: true })
+    const formData = new FormData()
+    formData.set("token", "token-123")
+    formData.set("password", "StrongPass1")
+    formData.set("confirmPassword", "StrongPass1")
+
+    const result = await resetPasswordAction(initialState, formData)
+
+    expect(result.ok).toBe(true)
+    expect(result.message).toContain("Senha redefinida com sucesso")
+  })
+
+  it("should return ok: false with error message when service fails", async () => {
+    vi.mocked(authService.resetPassword).mockResolvedValue({
+      ok: false,
+      error: "Token expirado",
+    })
+    const formData = new FormData()
+    formData.set("token", "token-123")
+    formData.set("password", "StrongPass1")
+    formData.set("confirmPassword", "StrongPass1")
+
+    const result = await resetPasswordAction(initialState, formData)
+
+    expect(result.ok).toBe(false)
+    expect(result.message).toBe("Token expirado")
   })
 })

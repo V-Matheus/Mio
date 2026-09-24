@@ -4,7 +4,9 @@ import { defineConfig } from "vitest/config"
 import { testAlias } from "./vitest.alias"
 
 export default defineConfig({
-  plugins: [swc.vite()],
+  plugins: [
+    swc.vite({ jsc: { transform: { react: { runtime: "automatic" } } } }),
+  ],
   resolve: { alias: testAlias },
   test: {
     ...sharedConfig,

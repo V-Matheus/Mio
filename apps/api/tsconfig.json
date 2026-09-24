@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "baseUrl": "./",
+    "jsx": "react-jsx",
     "types": ["vitest/globals"],
     "paths": {
       "@mio/events": ["libs/events/src"],
