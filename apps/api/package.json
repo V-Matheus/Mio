@@ -73,7 +73,7 @@
     "@react-email/render": "^2.1.0",
     "amqplib": "^2.0.1",
     "bullmq": "^6.3.4",
-    "graphql": "^16.14.0",
+    "graphql": "^17.0.0",
     "ioredis": "^6.0.0",
     "nanoid": "^5.0.9",
     "nodemailer": "^10.0.9",
