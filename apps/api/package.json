@@ -68,7 +68,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/terminus": "^11.0.0",
     "@node-rs/argon2": "^2.0.2",
-    "@prisma/client": "^6.2.0",
+    "@prisma/client": "^7.0.0",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.1.0",
     "amqplib": "^2.0.1",
