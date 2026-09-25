@@ -96,7 +96,7 @@
     "@types/nodemailer": "^8.0.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
-    "@types/supertest": "^6.0.2",
+    "@types/supertest": "^7.0.0",
     "dotenv-cli": "^11.0.0",
     "prisma": "^6.2.0",
     "source-map-support": "^0.5.21",
