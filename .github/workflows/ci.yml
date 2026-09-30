@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'turbo.json'
+      - '.dockerignore'
+      - 'docker-compose.yml'
+      - 'scripts/deploy-registry.sh'
+      - 'scripts/ops/**'
+      - 'scripts/deploy.sh'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'turbo.json'
+      - '.dockerignore'
+      - 'docker-compose.yml'
+      - 'scripts/deploy-registry.sh'
+      - 'scripts/ops/**'
+      - 'scripts/deploy.sh'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: API checks
+    uses: ./.github/workflows/ci-api.yml
+
+  web:
+    name: Web checks
+    uses: ./.github/workflows/ci-web.yml

@@ -1,6 +1,6 @@
 import { PrismaClient } from ".prisma/gamification"
 import Redis from "ioredis"
-import { calculateCompositeScore } from "../src/modules/leaderboard/leaderboard.service"
+import { calculateCompositeScore } from "../src/modules/leaderboard/leaderboard-score"
 
 export const INITIAL_XP_RULES = [
   {

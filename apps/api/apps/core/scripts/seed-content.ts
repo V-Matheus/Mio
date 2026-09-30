@@ -13,7 +13,7 @@ import { catalogFixtures, categoryFixtures } from "./seed-fixtures"
  * Entradas que existem no banco mas saíram das fixtures NÃO são apagadas
  * (preservam progresso/matrículas); o script apenas avisa sobre os órfãos.
  *
- * Uso: `yarn seed:content` (no container: `yarn docker:seed:content`).
+ * Uso local: `yarn seed:content:dev`; no container de produção: `yarn seed:content`.
  */
 
 export type CategoryEntry = {

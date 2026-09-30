@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "incremental": false
+  },
+  "include": [
+    "apps/core/scripts/seed-content.ts",
+    "apps/gamification/scripts/seed-gamification.ts",
+    "apps/achievements/scripts/seed-achievements.ts"
+  ],
+  "exclude": ["node_modules", "dist", "**/*spec.ts", "**/*.test.ts"]
+}
