@@ -4,13 +4,17 @@ services:
     env_file:
       - .env
     environment:
-      POSTGRES_USER: ${CORE_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${CORE_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${CORE_POSTGRES_DB}
-    ports:
-      - "${CORE_POSTGRES_PORT}:5432"
+      POSTGRES_USER: ${CORE_POSTGRES_USER:?CORE_POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${CORE_POSTGRES_PASSWORD:?CORE_POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${CORE_POSTGRES_DB:?CORE_POSTGRES_DB is required}
     volumes:
       - postgres-core-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   postgres-gamification:
@@ -18,13 +22,17 @@ services:
     env_file:
       - .env
     environment:
-      POSTGRES_USER: ${GAMIFICATION_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${GAMIFICATION_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${GAMIFICATION_POSTGRES_DB}
-    ports:
-      - "${GAMIFICATION_POSTGRES_PORT}:5432"
+      POSTGRES_USER: ${GAMIFICATION_POSTGRES_USER:?GAMIFICATION_POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${GAMIFICATION_POSTGRES_PASSWORD:?GAMIFICATION_POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${GAMIFICATION_POSTGRES_DB:?GAMIFICATION_POSTGRES_DB is required}
     volumes:
       - postgres-gamification-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   postgres-achievements:
@@ -32,56 +40,116 @@ services:
     env_file:
       - .env
     environment:
-      POSTGRES_USER: ${ACHIEVEMENTS_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${ACHIEVEMENTS_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${ACHIEVEMENTS_POSTGRES_DB}
-    ports:
-      - "${ACHIEVEMENTS_POSTGRES_PORT}:5432"
+      POSTGRES_USER: ${ACHIEVEMENTS_POSTGRES_USER:?ACHIEVEMENTS_POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${ACHIEVEMENTS_POSTGRES_PASSWORD:?ACHIEVEMENTS_POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${ACHIEVEMENTS_POSTGRES_DB:?ACHIEVEMENTS_POSTGRES_DB is required}
     volumes:
       - postgres-achievements-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   redis:
     image: redis:8-alpine
-    ports:
-      - "${REDIS_PORT}:6379"
     volumes:
       - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   rabbitmq:
     image: rabbitmq:4-management-alpine
     env_file:
       - .env
-    ports:
-      - "${RABBITMQ_PORT}:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:?RABBITMQ_DEFAULT_USER is required}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required}
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 30s
     restart: unless-stopped
 
   # Only this service declares `build:`. The image is built once and reused
-  # by the other 5 services via `image: mio-api` below — each picks its
+  # by the other API services via `MIO_API_IMAGE` below — each picks its
   # process via the `SERVICE` env var consumed by the Dockerfile CMD.
   api-gateway:
-    image: mio-api
+    image: ${MIO_API_IMAGE:-mio-api}
     build:
       context: ../../
       dockerfile: apps/api/Dockerfile
+      target: runner
     env_file:
       - .env
     environment:
       SERVICE: gateway
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?INTERNAL_API_SECRET must be set and non-empty}
-    ports:
-      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set and non-empty}
+    expose:
+      - "${GATEWAY_PORT}"
     depends_on:
-      - redis
-      - rabbitmq
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      api-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:' + (process.env.GATEWAY_PORT || 3333) + '/health/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     restart: unless-stopped
 
+  api-migrate:
+    image: ${MIO_API_IMAGE:-mio-api}
+    env_file:
+      - .env
+    working_dir: /app/apps/api
+    command:
+      - yarn
+      - prisma:migrate:deploy
+    depends_on:
+      postgres-core:
+        condition: service_healthy
+      postgres-gamification:
+        condition: service_healthy
+      postgres-achievements:
+        condition: service_healthy
+    restart: "no"
+
+  api-ops:
+    image: ${MIO_API_IMAGE:-mio-api}
+    profiles: ["ops"]
+    env_file:
+      - .env
+    working_dir: /app/apps/api
+    depends_on:
+      api-migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    command: ["yarn", "--help"]
+    restart: "no"
+
   api-core:
-    image: mio-api
+    image: ${MIO_API_IMAGE:-mio-api}
     env_file:
       - .env
     environment:
@@ -89,12 +157,14 @@ services:
     expose:
       - "${CORE_GRPC_PORT}"
     depends_on:
-      - api-gateway
-      - postgres-core
+      api-migrate:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
     restart: unless-stopped
 
   api-gamification:
-    image: mio-api
+    image: ${MIO_API_IMAGE:-mio-api}
     env_file:
       - .env
     environment:
@@ -102,12 +172,16 @@ services:
     expose:
       - "${GAMIFICATION_GRPC_PORT}"
     depends_on:
-      - api-gateway
-      - postgres-gamification
+      api-migrate:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   api-achievements:
-    image: mio-api
+    image: ${MIO_API_IMAGE:-mio-api}
     env_file:
       - .env
     environment:
@@ -115,24 +189,24 @@ services:
     expose:
       - "${ACHIEVEMENTS_GRPC_PORT}"
     depends_on:
-      - api-gateway
-      - postgres-achievements
+      api-migrate:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
     restart: unless-stopped
 
   api-messenger:
-    image: mio-api
+    image: ${MIO_API_IMAGE:-mio-api}
     env_file:
       - .env
     environment:
       SERVICE: messenger
     expose:
       - "${MESSENGER_GRPC_PORT}"
-    depends_on:
-      - api-gateway
     restart: unless-stopped
 
   api-notifications:
-    image: mio-api
+    image: ${MIO_API_IMAGE:-mio-api}
     env_file:
       - .env
     environment:
@@ -140,7 +214,10 @@ services:
     expose:
       - "${NOTIFICATIONS_GRPC_PORT}"
     depends_on:
-      - api-gateway
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

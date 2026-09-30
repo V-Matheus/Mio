@@ -1,15 +1,18 @@
 services:
   web:
+    image: ${MIO_WEB_IMAGE:-mio-web}
     build:
       context: ../../
       dockerfile: apps/web/Dockerfile
     env_file:
       - .env
     ports:
-      - "3000:3000"
+      - "${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_HOST_PORT:-3000}:3000"
     environment:
       - NODE_ENV=production
       - INTERNAL_API_SECRET=${INTERNAL_API_SECRET:?INTERNAL_API_SECRET must be set and non-empty}
+      - AUTH_SECRET=${AUTH_SECRET:?AUTH_SECRET must be set and non-empty}
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_healthy
     restart: unless-stopped
