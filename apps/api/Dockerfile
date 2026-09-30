@@ -19,6 +19,12 @@ RUN turbo prune @mio/api --docker
 # ================================
 FROM base AS installer
 COPY --from=pruner /app/out/json/ .
+# The API workspace postinstall runs Prisma generate, which needs the schemas
+# even in this dependency-only layer. Copy only schemas to preserve dependency
+# layer caching when application source files change.
+COPY --from=pruner /app/out/full/apps/api/apps/core/prisma/schema.prisma ./apps/api/apps/core/prisma/schema.prisma
+COPY --from=pruner /app/out/full/apps/api/apps/gamification/prisma/schema.prisma ./apps/api/apps/gamification/prisma/schema.prisma
+COPY --from=pruner /app/out/full/apps/api/apps/achievements/prisma/schema.prisma ./apps/api/apps/achievements/prisma/schema.prisma
 RUN yarn install --frozen-lockfile
 
 # ================================
