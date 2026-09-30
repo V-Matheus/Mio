@@ -26,6 +26,7 @@ RUN yarn install --frozen-lockfile
 # ================================
 FROM base AS builder
 COPY --from=installer /app/node_modules ./node_modules
+COPY --from=pruner /app/out/json/yarn.lock ./yarn.lock
 COPY --from=pruner /app/out/full/ .
 RUN yarn turbo build --filter=@mio/web
 

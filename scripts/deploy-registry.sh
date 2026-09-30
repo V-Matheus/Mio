@@ -39,6 +39,13 @@ export GHCR_NAMESPACE
 export MIO_API_IMAGE="ghcr.io/$GHCR_NAMESPACE/mio-api:$TAG"
 export MIO_WEB_IMAGE="ghcr.io/$GHCR_NAMESPACE/mio-web:$TAG"
 
+release_marker="ghcr.io/$GHCR_NAMESPACE/mio-api:ready-$TAG"
+log "Validando que o par de imagens $TAG foi publicado por completo."
+if ! docker pull "$release_marker" >/dev/null; then
+  echo "Release $TAG incompleto ou não publicado: marcador $release_marker ausente." >&2
+  exit 1
+fi
+
 log "Baixando imagens para o commit $TAG."
 compose pull
 compose --parallel 1 up --no-build -d --wait --wait-timeout 180

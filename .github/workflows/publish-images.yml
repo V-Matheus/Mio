@@ -11,7 +11,7 @@ permissions:
   packages: write
 
 concurrency:
-  group: publish-images-${{ github.ref }}
+  group: publish-images-${{ github.event.workflow_run.head_sha }}
   cancel-in-progress: false
 
 jobs:
@@ -44,7 +44,63 @@ jobs:
           REPOSITORY_OWNER: ${{ github.repository_owner }}
         run: echo "value=$(printf '%s' "$REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push API image
+      - name: Check whether this SHA is already published
+        id: release_check
+        env:
+          IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+          GHCR_NAMESPACE: ${{ steps.namespace.outputs.value }}
+        run: |
+          set -euo pipefail
+
+          tag_state() {
+            local image_ref="$1"
+            local output
+
+            if output="$(docker buildx imagetools inspect "$image_ref" 2>&1)"; then
+              return 0
+            fi
+
+            if grep -Eqi 'MANIFEST_UNKNOWN|manifest unknown|no such manifest|404 Not Found|status code: 404|: not found$' <<< "$output"; then
+              return 1
+            fi
+
+            printf '%s\n' "$output" >&2
+            return 2
+          }
+
+          ready_ref="ghcr.io/$GHCR_NAMESPACE/mio-api:ready-$IMAGE_TAG"
+          if tag_state "$ready_ref"; then
+            echo "Release $IMAGE_TAG já está completo; as tags imutáveis serão preservadas."
+            echo "already_ready=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          else
+            result=$?
+            if [[ "$result" -ne 1 ]]; then
+              echo "Não foi possível verificar o marcador $ready_ref; abortando para evitar sobrescrever uma release." >&2
+              exit 1
+            fi
+          fi
+
+          for image_ref in \
+            "ghcr.io/$GHCR_NAMESPACE/mio-api:$IMAGE_TAG" \
+            "ghcr.io/$GHCR_NAMESPACE/mio-web:$IMAGE_TAG"; do
+            if tag_state "$image_ref"; then
+              echo "Tag final existente sem marcador ready: $image_ref" >&2
+              echo "A publicação foi interrompida para preservar a imagem existente. Faça a recuperação desse SHA manualmente." >&2
+              exit 1
+            else
+              result=$?
+              if [[ "$result" -ne 1 ]]; then
+                echo "Não foi possível verificar $image_ref; abortando para evitar sobrescrever uma imagem." >&2
+                exit 1
+              fi
+            fi
+          done
+
+          echo "already_ready=false" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push API candidate image
+        if: steps.release_check.outputs.already_ready != 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -52,19 +108,44 @@ jobs:
           target: runner
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/${{ steps.namespace.outputs.value }}/mio-api:${{ github.event.workflow_run.head_sha }}
+          tags: ghcr.io/${{ steps.namespace.outputs.value }}/mio-api:candidate-${{ github.event.workflow_run.head_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha,scope=mio-api
           cache-to: type=gha,mode=max,scope=mio-api
 
-      - name: Build and push web image
+      - name: Build and push web candidate image
+        if: steps.release_check.outputs.already_ready != 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/web/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/${{ steps.namespace.outputs.value }}/mio-web:${{ github.event.workflow_run.head_sha }}
+          tags: ghcr.io/${{ steps.namespace.outputs.value }}/mio-web:candidate-${{ github.event.workflow_run.head_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha,scope=mio-web
           cache-to: type=gha,mode=max,scope=mio-web
+
+      - name: Promote both images to the commit tag
+        if: steps.release_check.outputs.already_ready != 'true'
+        env:
+          IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+          GHCR_NAMESPACE: ${{ steps.namespace.outputs.value }}
+          CANDIDATE_SUFFIX: ${{ github.event.workflow_run.head_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          docker buildx imagetools create \
+            --tag "ghcr.io/$GHCR_NAMESPACE/mio-api:$IMAGE_TAG" \
+            "ghcr.io/$GHCR_NAMESPACE/mio-api:candidate-$CANDIDATE_SUFFIX"
+          docker buildx imagetools create \
+            --tag "ghcr.io/$GHCR_NAMESPACE/mio-web:$IMAGE_TAG" \
+            "ghcr.io/$GHCR_NAMESPACE/mio-web:candidate-$CANDIDATE_SUFFIX"
+
+      - name: Mark the complete image set as deployable
+        if: steps.release_check.outputs.already_ready != 'true'
+        env:
+          IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+          GHCR_NAMESPACE: ${{ steps.namespace.outputs.value }}
+        run: |
+          docker buildx imagetools create \
+            --tag "ghcr.io/$GHCR_NAMESPACE/mio-api:ready-$IMAGE_TAG" \
+            "ghcr.io/$GHCR_NAMESPACE/mio-api:$IMAGE_TAG"
