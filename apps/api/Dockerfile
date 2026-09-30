@@ -53,6 +53,8 @@ RUN adduser --system --uid 1001 nestjs
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/package.json ./apps/api/package.json
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./apps/api/dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-contracts/package.json ./packages/grpc-contracts/package.json
+COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-contracts/dist ./packages/grpc-contracts/dist
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/apps/core/prisma ./apps/api/apps/core/prisma
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/apps/gamification/prisma ./apps/api/apps/gamification/prisma
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/apps/achievements/prisma ./apps/api/apps/achievements/prisma
