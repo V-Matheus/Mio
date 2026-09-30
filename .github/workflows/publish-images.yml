@@ -52,7 +52,7 @@ jobs:
           target: runner
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/${{ steps.namespace.outputs.value }}/mio-api:${{ github.event.workflow_run.head_sha }}
+          tags: ghcr.io/${{ steps.namespace.outputs.value }}/mio-api:candidate-${{ github.event.workflow_run.head_sha }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha,scope=mio-api
           cache-to: type=gha,mode=max,scope=mio-api
@@ -64,7 +64,28 @@ jobs:
           file: apps/web/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/${{ steps.namespace.outputs.value }}/mio-web:${{ github.event.workflow_run.head_sha }}
+          tags: ghcr.io/${{ steps.namespace.outputs.value }}/mio-web:candidate-${{ github.event.workflow_run.head_sha }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha,scope=mio-web
           cache-to: type=gha,mode=max,scope=mio-web
+
+      - name: Promote both images to the commit tag
+        env:
+          IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+          GHCR_NAMESPACE: ${{ steps.namespace.outputs.value }}
+        run: |
+          docker buildx imagetools create \
+            --tag "ghcr.io/$GHCR_NAMESPACE/mio-api:$IMAGE_TAG" \
+            "ghcr.io/$GHCR_NAMESPACE/mio-api:candidate-$IMAGE_TAG"
+          docker buildx imagetools create \
+            --tag "ghcr.io/$GHCR_NAMESPACE/mio-web:$IMAGE_TAG" \
+            "ghcr.io/$GHCR_NAMESPACE/mio-web:candidate-$IMAGE_TAG"
+
+      - name: Mark the complete image set as deployable
+        env:
+          IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+          GHCR_NAMESPACE: ${{ steps.namespace.outputs.value }}
+        run: |
+          docker buildx imagetools create \
+            --tag "ghcr.io/$GHCR_NAMESPACE/mio-api:ready-$IMAGE_TAG" \
+            "ghcr.io/$GHCR_NAMESPACE/mio-api:$IMAGE_TAG"
