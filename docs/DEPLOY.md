@@ -280,7 +280,15 @@ Substitua todos os valores `CHANGE_ME`. Gere segredos hexadecimais — seguros p
 
 O acesso público passa pelo Nginx em `https://<IP-PUBLICO>`; a porta 3000 fica somente no loopback. Login por Google/GitHub depende de URLs de callback públicas e cadastradas nos respectivos provedores; e-mail de recuperação depende de SMTP real. Sem essas configurações, mantenha esses fluxos fora do teste.
 
-O frontend é publicado pelo Compose somente em `127.0.0.1:3000`; não crie regra de entrada para a porta 3000 na OCI nem no firewall do host. O Nginx instalado no host é a única entrada web: permita TCP 80 e 443 na rede da OCI e no firewall do sistema. Primeiro instale [`infra/nginx/mio-http.conf`](../infra/nginx/mio-http.conf) para servir HTTP e permitir o desafio ACME. Depois que o certificado estiver emitido, troque pela configuração final [`infra/nginx/mio.conf`](../infra/nginx/mio.conf), que encaminha HTTPS para `127.0.0.1:3000` e redireciona HTTP para HTTPS.
+O frontend é publicado pelo Compose somente em `127.0.0.1:3000`; não crie regra de entrada para a porta 3000 na OCI nem no firewall do host. O Nginx instalado no host é a única entrada web: permita TCP 80 e 443 na rede da OCI e no firewall do sistema. Primeiro instale [`infra/nginx/mio-http.conf`](../infra/nginx/mio-http.conf) para servir HTTP e permitir o desafio ACME. Depois que o certificado estiver emitido, instale a configuração final [`infra/nginx/mio.conf`](../infra/nginx/mio.conf), que encaminha HTTPS para `127.0.0.1:3000` e redireciona HTTP para HTTPS.
+
+Antes de habilitar o site Mio, desative o site padrão do pacote Nginx para que ele não capture requisições destinadas ao IP público. No Ubuntu, confira `/etc/nginx/sites-enabled/` e remova o link simbólico `default` (mantenha o arquivo de referência em `sites-available`):
+
+```bash
+sudo unlink /etc/nginx/sites-enabled/default
+```
+
+Faça isso antes de habilitar o site HTTP temporário ou o final. A configuração temporária declara `default_server` na porta 80; a final declara `default_server` nas portas 80 e 443. Ao trocar a temporária pela final, desabilite também o link simbólico do site temporário (por exemplo, `sudo unlink /etc/nginx/sites-enabled/mio-http`) antes de habilitar `mio`, para não deixar dois servidores padrão na porta 80. Remova qualquer outra declaração `default_server` para esses endereços/portas. O `server_name _` sozinho não torna um bloco o servidor padrão. Depois, habilite o site desejado e valide com `sudo nginx -t` antes de recarregar o Nginx.
 
 Sem domínio, o certificado precisa ser emitido para um IP público estável; certificados IP do Let's Encrypt têm validade de 160 horas e exigem renovação automática. O Certbot 5.4+ suporta solicitação por webroot usando o perfil `shortlived`; a instalação no Nginx é manual. A configuração versionada `infra/nginx/mio.conf` usa caminhos estáveis (`/etc/nginx/tls/mio/fullchain.pem` e `privkey.pem`) sem fixar o IP nem o caminho específico do Certbot. No host, crie esses caminhos como links simbólicos para os arquivos `fullchain.pem` e `privkey.pem` da linhagem Certbot emitida para aquele IP. Assim, o caminho específico do certificado fica apenas na VM. Preserve o bloco `/.well-known/acme-challenge/` na porta 80 para permitir as renovações. Valide com `sudo nginx -t` e recarregue com `sudo systemctl reload nginx`. Configure um deploy hook do Certbot para recarregar o Nginx após uma renovação bem-sucedida e teste com `sudo certbot renew --dry-run --run-deploy-hooks`.
 
@@ -333,10 +341,18 @@ Compose aguarda healthchecks de Postgres, Redis e RabbitMQ. O gateway é conside
 | `rabbitmq-data` | Filas duráveis e mensagens pendentes | Média |
 | `redis-data` | Leaderboard, sessões, jobs de e-mail | Média (leaderboard reconstruível a partir do Postgres) |
 
-Backup lógico de um banco:
+Backup lógico de um banco. `POSTGRES_USER` e `POSTGRES_DB` são configurados dentro do container pelo Compose; eles não são automaticamente exportados para o shell do host. Execute `pg_dump` no shell do container e deixe o redirecionamento criar o arquivo temporário no host. O arquivo final só é substituído quando o dump termina com sucesso:
 
 ```bash
-docker compose exec postgres-core pg_dump -U "$CORE_POSTGRES_USER" "$CORE_POSTGRES_DB" > core.sql
+set -euo pipefail
+backup_tmp="$(mktemp ./core.sql.tmp.XXXXXX)"
+if docker compose exec -T postgres-core sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > "$backup_tmp"; then
+  mv -- "$backup_tmp" ./core.sql
+else
+  rm -f -- "$backup_tmp"
+  echo "Falha no backup; o arquivo core.sql existente foi preservado." >&2
+  exit 1
+fi
 ```
 
 `docker compose down` preserva os volumes; `docker compose down -v` **apaga todos os dados**.
