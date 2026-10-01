@@ -15,6 +15,7 @@ on:
       - 'scripts/deploy-registry.sh'
       - 'scripts/ops/**'
       - 'scripts/deploy.sh'
+      - 'release/**'
       - '.github/workflows/**'
   pull_request:
     branches: [main]
@@ -30,6 +31,7 @@ on:
       - 'scripts/deploy-registry.sh'
       - 'scripts/ops/**'
       - 'scripts/deploy.sh'
+      - 'release/**'
       - '.github/workflows/**'
   workflow_dispatch:
 

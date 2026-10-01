@@ -55,10 +55,14 @@ jobs:
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          GHCR_USERNAME: ${{ github.repository_owner }}
+          GHCR_USERNAME: ${{ vars.GHCR_USERNAME }}
           GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
         run: |
           GHCR_USERNAME="$(printf '%s' "$GHCR_USERNAME" | tr '[:upper:]' '[:lower:]')"
+          if ! printf '%s' "$GHCR_USERNAME" | grep -Eq '^[a-z0-9][a-z0-9-]*$'; then
+            echo "Configure the repository Actions variable GHCR_USERNAME as the user that owns GHCR_READ_TOKEN." >&2
+            exit 1
+          fi
           printf '%s' "$GHCR_READ_TOKEN" | ssh \
             -i "$RUNNER_TEMP/deploy-ssh/id_ed25519" \
             -o IdentitiesOnly=yes \
@@ -70,13 +74,13 @@ jobs:
       - name: Deploy selected image version
         env:
           IMAGE_TAG: ${{ inputs.image_tag }}
-          GHCR_NAMESPACE: ${{ github.repository_owner }}
+          GHCR_NAMESPACE: ${{ vars.GHCR_NAMESPACE }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
           GHCR_NAMESPACE="$(printf '%s' "$GHCR_NAMESPACE" | tr '[:upper:]' '[:lower:]')"
           if ! printf '%s' "$GHCR_NAMESPACE" | grep -Eq '^[a-z0-9][a-z0-9-]*$'; then
-            echo "GitHub repository owner is not a valid GHCR namespace" >&2
+            echo "Configure the repository Actions variable GHCR_NAMESPACE with the GHCR account or organization namespace." >&2
             exit 1
           fi
 
@@ -87,12 +91,12 @@ jobs:
             -o UserKnownHostsFile="$RUNNER_TEMP/deploy-ssh/known_hosts"
           )
 
-          tar -cf - docker-compose.yml apps/api/docker-compose.yml apps/web/docker-compose.yml scripts/deploy-registry.sh scripts/ops |
+          tar -cf - docker-compose.yml apps/api/docker-compose.yml apps/web/docker-compose.yml release scripts/ops |
           ssh "${ssh_args[@]}" "$DEPLOY_USER@$DEPLOY_HOST" \
-            "mkdir -p /opt/mio/apps/api /opt/mio/apps/web /opt/mio/scripts/ops/lib && \
+            "mkdir -p /opt/mio/apps/api /opt/mio/apps/web /opt/mio/release/environments/production/environment /opt/mio/release/scripts /opt/mio/scripts/ops/lib && \
                tar -xf - -C /opt/mio && \
                cd /opt/mio && \
-               bash scripts/deploy-registry.sh '$IMAGE_TAG' '$GHCR_NAMESPACE'"
+               bash release/scripts/release.sh production '$IMAGE_TAG' '$GHCR_NAMESPACE'"
 
       - name: Log out of GHCR on the VM
         if: always()

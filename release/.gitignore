@@ -1,0 +1,4 @@
+.state/
+environments/*/environment/.env
+environments/*/environment/.env.*
+!environments/*/environment/.env.*.example

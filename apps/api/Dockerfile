@@ -53,12 +53,10 @@ RUN adduser --system --uid 1001 nestjs
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/package.json ./apps/api/package.json
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./apps/api/dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+# Yarn scripts run from the API workspace and resolve Prisma through this local .bin directory.
+COPY --from=installer --chown=nestjs:nodejs /app/apps/api/node_modules/.bin ./apps/api/node_modules/.bin
 COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-contracts/package.json ./packages/grpc-contracts/package.json
 COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-contracts/dist ./packages/grpc-contracts/dist
-COPY --from=builder --chown=nestjs:nodejs /app/apps/api/apps/core/prisma ./apps/api/apps/core/prisma
-COPY --from=builder --chown=nestjs:nodejs /app/apps/api/apps/gamification/prisma ./apps/api/apps/gamification/prisma
-COPY --from=builder --chown=nestjs:nodejs /app/apps/api/apps/achievements/prisma ./apps/api/apps/achievements/prisma
-
 USER nestjs
 
 ARG SERVICE=gateway
@@ -66,4 +64,31 @@ ENV SERVICE=${SERVICE}
 
 EXPOSE 3333
 
-CMD ["sh", "-c", "node apps/api/dist/apps/${SERVICE}/main.js"]
+COPY --chown=nestjs:nodejs apps/api/healthcheck-grpc.cjs ./apps/api/healthcheck-grpc.cjs
+
+CMD ["sh", "-c", "exec node apps/api/dist/apps/${SERVICE}/main.js"]
+
+# ================================
+# One-shot Prisma migration image
+# ================================
+FROM node:24-alpine AS migrator
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV COREPACK_HOME=/opt/corepack
+
+RUN mkdir -p /opt/corepack && corepack enable && corepack prepare yarn@1.22.22 --activate
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 migrator
+
+COPY --from=installer --chown=migrator:nodejs /app/node_modules ./node_modules
+COPY --from=installer --chown=migrator:nodejs /app/apps/api/node_modules/.bin ./apps/api/node_modules/.bin
+COPY --from=pruner --chown=migrator:nodejs /app/out/full/apps/api/package.json ./apps/api/package.json
+COPY --from=pruner --chown=migrator:nodejs /app/out/full/apps/api/apps/core/prisma ./apps/api/apps/core/prisma
+COPY --from=pruner --chown=migrator:nodejs /app/out/full/apps/api/apps/gamification/prisma ./apps/api/apps/gamification/prisma
+COPY --from=pruner --chown=migrator:nodejs /app/out/full/apps/api/apps/achievements/prisma ./apps/api/apps/achievements/prisma
+
+USER migrator
+WORKDIR /app/apps/api
+
+CMD ["yarn", "prisma:migrate:deploy"]

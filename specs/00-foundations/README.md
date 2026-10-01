@@ -110,6 +110,14 @@ Estender para incluir:
 - [ ] Endpoint `/metrics` no gateway (`prom-client`).
 - [ ] Sentry SDK opcional configurado via env (`SENTRY_DSN`).
 
+#### Publicação dos painéis e configuração do Nginx
+
+Na VM de produção, o Nginx é instalado no host; ele não roda em container. O arquivo global `/etc/nginx/nginx.conf`, instalado pelo pacote do Ubuntu, controla o processo e inclui os sites habilitados. As configurações versionadas do Mio são arquivos de site com blocos `server { }`, atualmente em `release/environments/production/nginx/`; elas não substituem o arquivo global. O frontend é o único serviço publicado no host, em `127.0.0.1:3000`, e o Nginx encaminha para ele. Os serviços da API continuam acessíveis pela rede interna do Docker.
+
+Quando forem adicionados sites distintos — por exemplo, um portal separado ou painéis de Prometheus/Grafana — manter cada virtual host em um arquivo próprio dentro da configuração Nginx do ambiente, em vez de concentrar todos os `server { }` em um único arquivo. A divisão pode seguir nomes funcionais, como `app.conf` e `observability.conf`. O `nginx.conf` global só deve ser versionado/substituído se surgir uma necessidade global concreta (por exemplo, `map`, formato de logs ou limites comuns); nesse caso, preservar os includes e demais padrões exigidos pela instalação do host.
+
+Os painéis de observabilidade não devem ser publicados abertamente por padrão: restringir acesso com autenticação e/ou allowlist de IP, e publicar apenas as portas necessárias. Se futuramente o Nginx migrar para container, então o Compose poderá montar o arquivo global e a pasta de sites como volumes; esse modelo não se aplica à instalação atual no host.
+
 ### CI/CD extensões
 - [ ] Job `docker-build` no `ci-api.yml` que faz `docker build` por serviço (matriz) usando `apps/api/Dockerfile`.
 - [ ] Job `prisma-migrate` que roda `prisma migrate deploy` em ambiente de staging.

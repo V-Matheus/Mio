@@ -1,0 +1,22 @@
+x-log-rotation: &log-rotation
+  driver: local
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  api-migrate:
+    logging: *log-rotation
+    image: ${MIO_API_MIGRATOR_IMAGE:?MIO_API_MIGRATOR_IMAGE is required}
+    env_file:
+      - ../../../apps/api/.env
+    working_dir: /app/apps/api
+    command: ["yarn", "prisma:migrate:deploy"]
+    restart: "no"
+    networks:
+      - default
+
+networks:
+  default:
+    external: true
+    name: mio_default

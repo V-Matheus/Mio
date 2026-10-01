@@ -34,8 +34,8 @@ Descreve como a plataforma Mio roda em um ambiente de deploy que ofereça **Linu
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **12 containers em execução contínua**: 7 de aplicação + 5 de infraestrutura; `api-migrate` é um job one-shot obrigatório.
-- **2 imagens de aplicação**: `mio-api` (compartilhada pelos 6 serviços NestJS) e `mio-web`.
+- **12 containers em execução contínua**: 7 de aplicação + 5 de infraestrutura. A migration é um job one-shot executado separadamente durante o release.
+- **2 imagens de runtime**: `mio-api` (compartilhada pelos 6 serviços NestJS) e `mio-web`; há também a imagem one-shot `mio-api:<SHA>-migrator`.
 - **1 rede Docker** (a rede padrão do projeto Compose): todos os containers se enxergam pelo **nome do serviço** via DNS interno do Docker.
 - **5 volumes nomeados** para os dados persistentes.
 
@@ -61,7 +61,8 @@ Ambos os Dockerfiles seguem o mesmo pipeline multi-stage:
 | `pruner` | `turbo prune <app> --docker` isola do monorepo apenas o app e os pacotes internos dos quais ele depende. |
 | `installer` | Instala dependências a partir de `out/json/` (camada cacheável: só invalida quando `package.json`/`yarn.lock` mudam). O `postinstall` da API roda `prisma generate` para os 3 schemas. |
 | `builder` | Copia dependências e os clientes Prisma gerados, depois copia o código podado (`out/full/`) e roda `turbo build --filter=<app>`. |
-| `runner` | Imagem final `node:24-alpine`, usuário sem privilégios (UID 1001), artefatos compilados, dependências, clientes Prisma e migrations. |
+| `runner` | Imagem final `node:24-alpine`, usuário sem privilégios (UID 1001), artefatos compilados, dependências e clientes Prisma gerados. Não leva os arquivos-fonte dos schemas/migrations. |
+| `migrator` (API) | Imagem one-shot com Prisma CLI, schemas e migrations, sem os serviços compilados da API. Executa `yarn prisma:migrate:deploy` como usuário sem privilégios. |
 
 ### 2.1 Imagem `mio-api` — uma imagem, seis serviços
 
@@ -98,9 +99,8 @@ Next.js compilado em modo **standalone** (`.next/standalone` + `.next/static` + 
 | Container | Imagem | `SERVICE` | Porta | Protocolo | Depende de |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `web` | `mio-web` | — | 3000 | HTTP publicado somente em `127.0.0.1` | `api-gateway` saudável |
-| `api-gateway` | `mio-api` | `gateway` | 3333 | HTTP (GraphQL + `/health`), rede interna | `api-migrate`, `redis`, `rabbitmq` |
-| `api-migrate` | `mio-api` | job | — | Prisma CLI, execução única | Postgres saudáveis |
-| `api-ops` | `mio-api` | job sob demanda | — | Scripts operacionais compilados | `api-migrate`, Redis saudável |
+| `api-gateway` | `mio-api` | `gateway` | 3333 | HTTP (GraphQL + `/health`), rede interna | `redis`, `rabbitmq` |
+| `api-ops` | `mio-api` | job sob demanda | — | Scripts operacionais compilados | Postgres e Redis saudáveis |
 | `api-core` | `mio-api` | `core` | 5001 | gRPC | `postgres-core` |
 | `api-gamification` | `mio-api` | `gamification` | 5002 | gRPC | `postgres-gamification` |
 | `api-achievements` | `mio-api` | `achievements` | 5003 | gRPC | `postgres-achievements` |
@@ -244,10 +244,19 @@ bash scripts/deploy.sh
 
 O repositório também contém um fluxo alternativo para construir as imagens no GitHub Actions, publicá-las no GitHub Container Registry (GHCR) e atualizar a VM sem fazer build nela:
 
-1. O workflow `CI` executa as verificações da API e do frontend em pushes relevantes para `main` e em pull requests. Só quando o CI de um commit em `main` termina com sucesso, `Publish container images` inicia quatro builds independentes: API e web para `amd64` e `arm64`. Os builds `arm64` usam runners ARM nativos, sem emular a arquitetura com QEMU. Cada build envia uma tag candidata única por execução e arquitetura; quando os quatro terminam com sucesso, o workflow monta os manifests multi-plataforma, publica as tags finais `<SHA>` e cria `mio-api:ready-<SHA>` como marcador de que o par está completo. Se qualquer build falhar, a promoção e o marcador não são executados. A publicação é serializada por SHA; se a release já estiver pronta, novas execuções não alteram suas tags. Uma tag final existente sem marcador também interrompe a promoção para evitar sobrescrita e exige recuperação manual. Os Dockerfiles usam `turbo prune` para reduzir o monorepo ao workspace necessário e `turbo build --filter=...` para compilar a API ou o frontend. A imagem da API compila os scripts operacionais para `dist`.
-2. `Deploy to VM` é acionado manualmente em GitHub → Actions. Informe a tag SHA publicada e selecione o GitHub Environment de destino; o workflow envia os arquivos Compose e `scripts/` para `/opt/mio`, baixa as imagens e executa Compose com `--no-build`. O serviço `api-migrate` aplica migrations pendentes antes da atualização dos serviços da API. O workflow usa nomes de configuração independentes do provedor; hoje o destino é a VM Oracle.
+1. O workflow `CI` executa as verificações da API e do frontend em pushes relevantes para `main` e em pull requests. Só quando o CI de um commit em `main` termina com sucesso, `Publish container images` inicia três builds independentes em paralelo: API runtime (`runner`), API migrator (`migrator`) e web, todos para `linux/arm64` em runners ARM nativos, sem QEMU. Cada build envia uma tag candidata única por execução. Após os três builds, publica `mio-api:<SHA>`, `mio-api:<SHA>-migrator` e `mio-web:<SHA>`, e cria `mio-api:ready-<SHA>` como marcador do conjunto completo. Se qualquer build falhar, nenhuma tag final é promovida. A publicação é serializada por SHA e não altera tags depois de criado o marcador. Tags finais existentes sem marcador interrompem a promoção para evitar sobrescrita. Um SHA que já tenha um marcador antigo, mas não tenha a tag migrator, falha fechado; publique uma nova revisão para obter um novo SHA. Os Dockerfiles usam `turbo prune` e `turbo build --filter=...` para limitar o monorepo ao necessário.
+2. `Deploy to VM` é acionado manualmente em GitHub → Actions. Informe o SHA publicado e selecione o GitHub Environment. O workflow envia os manifests de `release/`, os Compose dos apps, o Compose raiz usado nos comandos operacionais e `scripts/ops/` para `/opt/mio`; a VM não recebe checkout Git nem constrói imagens. `release/scripts/release.sh production` valida os arquivos de ambiente, exige o marcador `ready`, baixa as imagens, inicia e aguarda os bancos, executa `docker compose run --rm` no Compose separado de migrations e só então atualiza os serviços da aplicação.
 
-Antes de usar o workflow, a VM deve ter Docker Engine/Compose, as pastas `/opt/mio/apps/api` e `/opt/mio/apps/web` graváveis pelo usuário SSH, os arquivos `apps/api/.env` e `apps/web/.env` criados em `/opt/mio` e a chave SSH pública do workflow autorizada. O usuário SSH precisa executar Docker sem prompt interativo. Crie esses `.env` a partir dos exemplos locais e transfira-os por um canal seguro; eles não são enviados pelo workflow nem devem ser commitados. Não é necessário clonar o código da aplicação na VM. Após um deploy bem-sucedido, `scripts/deploy-registry.sh` grava `TAG` e `GHCR_NAMESPACE` no `.env` da raiz para os comandos operacionais usarem a mesma versão e o mesmo namespace de imagens.
+Antes de usar o workflow, a VM deve ter Docker Engine/Compose 2.24+, `/opt/mio` gravável pelo usuário SSH e os arquivos `apps/api/.env` e `apps/web/.env` criados em `/opt/mio`. O usuário SSH precisa executar Docker sem prompt interativo e ter a chave pública do workflow autorizada. Se `/opt/mio` ainda pertence a `root`, ajuste a propriedade uma vez (preservando os arquivos): `sudo chown -R ubuntu:ubuntu /opt/mio`. Crie os `.env` a partir dos exemplos locais e transfira-os por um canal seguro; eles não são enviados pelo workflow nem devem ser commitados. Não é necessário clonar o código da aplicação. O SHA e o namespace GHCR ficam em `release/.state/production.state`, atualizado atomicamente ao final do deploy. O `release/.gitignore` mantém o estado fora do Git.
+
+Configure estas **Repository variables** em Settings → Secrets and variables → Actions → Variables. `GHCR_NAMESPACE` é a conta ou organização que contém as imagens no GHCR; não é inferido do owner do repositório. `GHCR_USERNAME` é o usuário GitHub que criou/detém o PAT usado como `GHCR_READ_TOKEN`; ele pode ser diferente do namespace quando as imagens pertencem a uma organização.
+
+| Variable | Conteúdo |
+| :--- | :--- |
+| `GHCR_NAMESPACE` | Namespace que aparece em `ghcr.io/<namespace>/mio-api` e `mio-web` (por exemplo, uma organização GitHub) |
+| `GHCR_USERNAME` | Conta do GitHub associada ao `GHCR_READ_TOKEN` usado pela VM |
+
+Para publicar em um namespace de organização diferente do owner do repositório, conceda ao repositório Actions acesso de escrita aos pacotes dessa organização. O workflow de publicação usa `GITHUB_TOKEN`; para a VM, o usuário de `GHCR_USERNAME` precisa ter leitura dos pacotes e o token deve ter `read:packages`.
 
 Crie um GitHub Environment chamado `PROD` em Settings → Environments e configure nele os **Environment secrets** abaixo. O job de deploy referencia o Environment selecionado no formulário de execução, por isso esses secrets só ficam disponíveis para o destino escolhido. Ao adicionar outro destino, crie outro Environment (por exemplo, `STAGING`) e cadastre nele os mesmos nomes de secrets com os valores daquele servidor. Assim, uma mesma tag de imagem pode ser promovida entre ambientes; selecione o ambiente desejado em GitHub → Actions → `Deploy to VM`:
 
@@ -257,15 +266,15 @@ Crie um GitHub Environment chamado `PROD` em Settings → Environments e configu
 | `DEPLOY_USER` | Usuário Linux usado para SSH (na VM Oracle atual, `ubuntu`) |
 | `DEPLOY_SSH_PRIVATE_KEY` | Chave privada dedicada ao workflow; a chave pública correspondente deve estar autorizada no servidor |
 | `DEPLOY_KNOWN_HOSTS` | Linha `known_hosts` do servidor, obtida e verificada por um canal confiável |
-| `GHCR_READ_TOKEN` | Personal access token clássico com `read:packages` para baixar imagens privadas; deve ter acesso aos pacotes do owner do repositório |
+| `GHCR_READ_TOKEN` | Personal access token clássico com `read:packages` para baixar imagens privadas; a conta associada deve ter acesso aos pacotes em `GHCR_NAMESPACE` |
 
-Os nomes são independentes do provedor. O namespace e o usuário de login do GHCR são derivados automaticamente do owner do repositório, sem username fixo no workflow; o namespace é salvo no `.env` operacional da VM durante o deploy. Para migrar da Oracle para outro host, atualize os valores no Environment correspondente; para manter Oracle e outro host ao mesmo tempo, crie um segundo Environment com as próprias credenciais. Se configurar aprovação ou outras regras de proteção no Environment do GitHub, elas serão aplicadas antes que o job receba seus secrets.
+Os nomes dos secrets são independentes do provedor. O workflow passa `GHCR_NAMESPACE` ao deploy, que o registra em `release/.state/production.state` junto com o SHA das imagens. Para migrar da Oracle para outro host, atualize os secrets no Environment correspondente; para manter Oracle e outro host ao mesmo tempo, crie um segundo Environment com as próprias credenciais. Se configurar aprovação ou outras regras de proteção no Environment do GitHub, elas serão aplicadas antes que o job receba seus secrets.
 
 O login GHCR no workflow é feito apenas durante o deploy; o token não deve ser colocado nos arquivos `.env`. A publicação usa o `GITHUB_TOKEN` da própria Actions com permissão `packages: write`. A tag do commit deve ter 40 caracteres hexadecimais e corresponder a uma execução bem-sucedida de `Publish container images`.
 
-O runner do GitHub seleciona os manifests do mesmo commit das imagens e os envia à VM; **o código da aplicação não é clonado nem construído na VM**. Antes de puxar as imagens e iniciar os serviços, `scripts/deploy-registry.sh` exige o marcador `mio-api:ready-<SHA>`. Isso impede que uma tag de commit parcial, publicada por uma tentativa incompleta, seja implantada. Os containers vêm das imagens do GHCR. Os arquivos `.env` e volumes Docker permanecem no servidor durante os deploys e devem ser tratados como configuração e dados do ambiente.
+O runner do GitHub seleciona os manifests do mesmo commit das imagens e os envia à VM; **o código da aplicação não é clonado nem construído na VM**. Antes de iniciar os serviços, `release/scripts/release.sh` exige o marcador `mio-api:ready-<SHA>` e baixa também a tag `mio-api:<SHA>-migrator`. Os containers vêm do GHCR. Os arquivos `.env` e volumes Docker permanecem no servidor durante os deploys e devem ser tratados como configuração e dados do ambiente.
 
-O deploy requer um host com Docker Compose 2.24+, suporte à arquitetura da imagem e armazenamento persistente para os volumes. O build local gera a arquitetura do host; o pipeline GHCR publica manifests para AMD64 e ARM64.
+O deploy requer um host com Docker Compose 2.24+, suporte à arquitetura da imagem e armazenamento persistente para os volumes. O build local gera a arquitetura do host; o pipeline GHCR publica somente imagens ARM64 para a VM Oracle atual.
 
 ### 6.1 Preparar ambiente de teste
 
@@ -280,7 +289,7 @@ Substitua todos os valores `CHANGE_ME`. Gere segredos hexadecimais — seguros p
 
 O acesso público passa pelo Nginx em `https://<IP-PUBLICO>`; a porta 3000 fica somente no loopback. Login por Google/GitHub depende de URLs de callback públicas e cadastradas nos respectivos provedores; e-mail de recuperação depende de SMTP real. Sem essas configurações, mantenha esses fluxos fora do teste.
 
-O frontend é publicado pelo Compose somente em `127.0.0.1:3000`; não crie regra de entrada para a porta 3000 na OCI nem no firewall do host. O Nginx instalado no host é a única entrada web: permita TCP 80 e 443 na rede da OCI e no firewall do sistema. Primeiro instale [`infra/nginx/mio-http.conf`](../infra/nginx/mio-http.conf) para servir HTTP e permitir o desafio ACME. Depois que o certificado estiver emitido, instale a configuração final [`infra/nginx/mio.conf`](../infra/nginx/mio.conf), que encaminha HTTPS para `127.0.0.1:3000` e redireciona HTTP para HTTPS.
+O frontend é publicado pelo Compose somente em `127.0.0.1:3000`; não crie regra de entrada para a porta 3000 na OCI nem no firewall do host. O Nginx instalado no host é a única entrada web: permita TCP 80 e 443 na rede da OCI e no firewall do sistema. Primeiro instale [`release/environments/production/nginx/mio-http.conf`](../release/environments/production/nginx/mio-http.conf) para servir HTTP e permitir o desafio ACME. Depois que o certificado estiver emitido, instale a configuração final [`release/environments/production/nginx/mio.conf`](../release/environments/production/nginx/mio.conf), que encaminha HTTPS para `127.0.0.1:3000` e redireciona HTTP para HTTPS.
 
 Antes de habilitar o site Mio, desative o site padrão do pacote Nginx para que ele não capture requisições destinadas ao IP público. No Ubuntu, confira `/etc/nginx/sites-enabled/` e remova o link simbólico `default` (mantenha o arquivo de referência em `sites-available`):
 
@@ -290,9 +299,9 @@ sudo unlink /etc/nginx/sites-enabled/default
 
 Faça isso antes de habilitar o site HTTP temporário ou o final. A configuração temporária declara `default_server` na porta 80; a final declara `default_server` nas portas 80 e 443. Ao trocar a temporária pela final, desabilite também o link simbólico do site temporário (por exemplo, `sudo unlink /etc/nginx/sites-enabled/mio-http`) antes de habilitar `mio`, para não deixar dois servidores padrão na porta 80. Remova qualquer outra declaração `default_server` para esses endereços/portas. O `server_name _` sozinho não torna um bloco o servidor padrão. Depois, habilite o site desejado e valide com `sudo nginx -t` antes de recarregar o Nginx.
 
-Sem domínio, o certificado precisa ser emitido para um IP público estável; certificados IP do Let's Encrypt têm validade de 160 horas e exigem renovação automática. O Certbot 5.4+ suporta solicitação por webroot usando o perfil `shortlived`; a instalação no Nginx é manual. A configuração versionada `infra/nginx/mio.conf` usa caminhos estáveis (`/etc/nginx/tls/mio/fullchain.pem` e `privkey.pem`) sem fixar o IP nem o caminho específico do Certbot. No host, crie esses caminhos como links simbólicos para os arquivos `fullchain.pem` e `privkey.pem` da linhagem Certbot emitida para aquele IP. Assim, o caminho específico do certificado fica apenas na VM. Preserve o bloco `/.well-known/acme-challenge/` na porta 80 para permitir as renovações. Valide com `sudo nginx -t` e recarregue com `sudo systemctl reload nginx`. Configure um deploy hook do Certbot para recarregar o Nginx após uma renovação bem-sucedida e teste com `sudo certbot renew --dry-run --run-deploy-hooks`.
+Sem domínio, o certificado precisa ser emitido para um IP público estável; certificados IP do Let's Encrypt têm validade de 160 horas e exigem renovação automática. O Certbot 5.4+ suporta solicitação por webroot usando o perfil `shortlived`; a instalação no Nginx é manual. A configuração versionada `release/environments/production/nginx/mio.conf` usa caminhos estáveis (`/etc/nginx/tls/mio/fullchain.pem` e `privkey.pem`) sem fixar o IP nem o caminho específico do Certbot. No host, crie esses caminhos como links simbólicos para os arquivos `fullchain.pem` e `privkey.pem` da linhagem Certbot emitida para aquele IP. Assim, o caminho específico do certificado fica apenas na VM. Preserve o bloco `/.well-known/acme-challenge/` na porta 80 para permitir as renovações. Valide com `sudo nginx -t` e recarregue com `sudo systemctl reload nginx`. Configure um deploy hook do Certbot para recarregar o Nginx após uma renovação bem-sucedida e teste com `sudo certbot renew --dry-run --run-deploy-hooks`.
 
-`docker compose --parallel 1 up --build -d` executa `api-migrate` depois que os três Postgres passam no healthcheck e só inicia o gateway após as migrations concluírem. O serviço executa o script `prisma:migrate:deploy` do `apps/api/package.json` usando a imagem da API. Para aplicar migrations manualmente na VM com a versão implantada, use `./scripts/ops/migrate.sh`.
+Em produção, use o fluxo `release/scripts/release.sh production`, chamado pelo workflow. Ele aguarda os três Postgres, executa o Compose isolado de migrations e interrompe o release se o job falhar. Para reaplicar migrations manualmente com a versão registrada em `release/.state/production.state`, use `./scripts/ops/migrate.sh`. O Compose local da raiz não aplica migrations automaticamente; no ambiente de desenvolvimento, use a stack de `docker-compose.dev.yml` e o comando `yarn docker:prisma:migrate:deploy` da API.
 
 Os scripts de dados iniciais ficam na própria API (`apps/api/apps/*/scripts`) e são compilados para `dist` durante o build da imagem. Os comandos `seed:all` e `seed:*` do `apps/api/package.json` executam essa versão compilada. Eles não rodam automaticamente durante o deploy. Na VM, execute `./scripts/ops/seed.sh seed:all`; o wrapper pede confirmação e inicia um container temporário `api-ops` usando a imagem implantada e a rede privada do Compose. Para uma operação não destrutiva, o runner genérico é `./scripts/ops/run.sh <script-do-package.json> [argumentos...]`. O seed inclui usuários de demonstração e atualiza o administrador; use somente em banco de teste.
 
@@ -306,21 +315,26 @@ Alterar `*_POSTGRES_PASSWORD` no `.env` não troca a senha que já está gravada
 
 ### 6.2 Migrations
 
-Cada serviço com banco possui seu schema Prisma em `apps/api/apps/<servico>/prisma/`. A imagem `mio-api` inclui schemas e migrations; o serviço one-shot `api-migrate` aplica os três schemas antes do gateway. Para executar manualmente a versão atualmente implantada:
+Cada serviço com banco possui seu schema Prisma em `apps/api/apps/<servico>/prisma/`. O workflow publica duas imagens da API: `mio-api:<SHA>` para serviços contínuos e `mio-api:<SHA>-migrator` para o job one-shot. O segundo target inclui o Prisma CLI e os schemas/migrations, e chama o script `prisma:migrate:deploy` definido uma única vez no `apps/api/package.json`. O arquivo `release/environments/production/docker-compose.migrate.yml` descreve esse job e o conecta à rede da stack.
+
+O deploy inicia primeiro os Postgres e espera seus healthchecks. Depois roda `docker compose run --pull always --rm api-migrate`; sucesso permite atualizar os serviços, falha interrompe o deploy antes da recriação. Para executar manualmente a versão atualmente implantada:
 
 ```bash
 ./scripts/ops/migrate.sh
 ```
 
-As migrations são executadas antes de iniciar as APIs em cada deploy que recria o job.
+O comando manual lê a tag em `release/.state/production.state` e sempre busca a imagem migrator no GHCR. O estado é gravado somente depois que migrations e atualização dos serviços terminam com sucesso.
 
 ### 6.3 Ordem de inicialização
 
 ```
-postgres-* (healthy) · redis (healthy) · rabbitmq (healthy)
+postgres-* (healthy)
         │
         ▼
-    api-migrate
+release Compose: api-migrate (mio-api:<SHA>-migrator)
+        │
+        ▼
+Compose principal: redis/rabbitmq (healthy)
         │
         ▼
 api-core · api-gamification · api-achievements · api-messenger · api-notifications · api-gateway
@@ -329,7 +343,9 @@ api-core · api-gamification · api-achievements · api-messenger · api-notific
 api-gateway ready → web
 ```
 
-Compose aguarda healthchecks de Postgres, Redis e RabbitMQ. O gateway é considerado saudável quando o endpoint `/health/ready` confirma os serviços gRPC. Os processos de longa duração usam `restart: unless-stopped`; migrations são um job sem política de reinício e precisam terminar com sucesso.
+O release espera healthchecks dos Postgres antes da migration. O Compose principal aguarda Redis, RabbitMQ e os Postgres usados diretamente por cada serviço. `api-core`, `api-gamification`, `api-achievements`, `api-messenger` e `api-notifications` verificam o RPC gRPC `Health.Check`; o gateway usa `/health/ready` para testar os serviços core, gamification e achievements, e o web verifica uma resposta HTTP local. `docker compose up --wait` aguarda esses healthchecks no deploy. Um container marcado como `unhealthy` não é reiniciado automaticamente apenas por isso; investigue o health status e os logs.
+
+Os serviços definem rotação de logs pelo driver `local`, com arquivos de até 10 MB e no máximo três arquivos por container. Isso limita o espaço usado pelos logs sem remover o acesso via `docker logs`. Os processos da API e o web têm `stop_grace_period: 20s`. A API inicia o Node com `exec` para que ele receba o `SIGTERM`, e seus processos NestJS habilitam os shutdown hooks para encerrar recursos como Prisma e conexões de mensageria antes do prazo. Se não encerrarem a tempo, o Docker termina o processo à força.
 
 ### 6.4 Persistência e Backup
 
@@ -382,7 +398,7 @@ Estimativa de consumo em repouso/carga baixa:
 | Redis | 1 | ~20–50 MB |
 | **Total** | **12** | **~2,5–4 GB** |
 
-Uma VM com **2+ vCPUs e 4+ GB de RAM** comporta a stack em carga baixa. A cota Always Free atual de A1 (2 OCPUs/12 GB) tem memória suficiente para a estimativa de runtime, mas o build simultâneo com a stack pode aumentar o pico de memória. Em hosts menores, construa as imagens antes de iniciar os containers ou use um runner/CI compatível. Imagens base, Prisma e `@node-rs/argon2` têm suporte a `amd64` e `arm64`; o build local usa a arquitetura do host.
+Uma VM com **2+ vCPUs e 4+ GB de RAM** comporta a stack em carga baixa. A cota Always Free atual de A1 (2 OCPUs/12 GB) tem memória suficiente para a estimativa de runtime, mas o build simultâneo com a stack pode aumentar o pico de memória. Em hosts menores, construa as imagens antes de iniciar os containers ou use um runner/CI compatível. As dependências de runtime usadas suportam `arm64`; a pipeline GHCR publica essa arquitetura para a VM Oracle atual. O build local gera a arquitetura do host.
 
 ---
 
@@ -393,10 +409,10 @@ O perfil padrão usa boas configurações para teste remoto. Ainda faltam itens 
 | Item | Situação atual | Necessário |
 | :--- | :--- | :--- |
 | Portas publicadas | O perfil padrão publica `web` somente em `127.0.0.1:3000`; gateway e dados ficam na rede interna | Abrir somente 80/443 para web e restringir SSH |
-| Migrations | Job `api-migrate` executa migrations antes do gateway e da web API | Operador deve revisar a migration antes de atualizar um banco com dados importantes |
+| Migrations | Imagem `mio-api:<SHA>-migrator` roda no Compose de release antes da atualização da aplicação | Operador deve revisar a migration antes de atualizar um banco com dados importantes |
 | Dados iniciais | Scripts compilados da API em `api-ops`; não fazem parte do deploy automático | Executar manualmente por `scripts/ops/seed.sh`, somente em banco de teste |
-| Healthchecks | Adicionados a Postgres, Redis, RabbitMQ e gateway | Observar estado `healthy` e logs após cada deploy |
+| Healthchecks | Postgres, Redis, RabbitMQ, cinco serviços gRPC, gateway e web | Observar estado `healthy` e logs após cada deploy; `unhealthy` sozinho não reinicia o container |
 | Limites de recursos | Sem limites rígidos por container | Dimensionar a VM para a stack e monitorar memória; build local consome memória adicional |
-| TLS | Nginx termina TLS em 443 e encaminha para `127.0.0.1:3000`; config em `infra/nginx/mio.conf` | Instalar certificado válido e automatizar renovação; certificado Let's Encrypt para IP é curto |
+| TLS | Nginx termina TLS em 443 e encaminha para `127.0.0.1:3000`; config em `release/environments/production/nginx/mio.conf` | Instalar certificado válido e automatizar renovação; certificado Let's Encrypt para IP é curto |
 | SMTP | O exemplo de produção não inclui servidor de e-mail | `SMTP_*` apontando para um servidor real antes de habilitar e-mail |
 | Messenger (SSE) | Container sobe apenas com health gRPC; streaming ainda não implementado | — |

@@ -1,0 +1,3 @@
+include:
+  - ../../../apps/api/docker-compose.yml
+  - ../../../apps/web/docker-compose.yml

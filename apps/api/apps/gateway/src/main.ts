@@ -10,6 +10,7 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create(GatewayModule)
+  app.enableShutdownHooks()
   await app.listen(process.env.GATEWAY_PORT ?? 3333)
 }
 bootstrap()
