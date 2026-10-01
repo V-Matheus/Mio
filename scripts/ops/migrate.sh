@@ -5,5 +5,5 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
 
 load_env
 log "Aplicando migrations com $MIO_API_MIGRATOR_IMAGE"
-migrate_compose run --pull always --rm api-migrate
+migrate_compose run --pull missing --rm api-migrate
 log "Migrations concluídas."

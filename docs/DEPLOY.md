@@ -226,19 +226,17 @@ yarn docker:up:build     # build + up (foreground)
 yarn docker:down         # derruba os containers (volumes são preservados)
 ```
 
-Para deixar a stack rodando em background no servidor:
+Para deixar a stack rodando em background no servidor, use o script recomendado. Ele constrói as imagens, inicia e aguarda os bancos, aplica as migrations com um container descartável na mesma rede Compose e só então inicia os serviços da aplicação:
 
 ```bash
-docker compose --parallel 1 up --build -d
+bash scripts/deploy.sh
 docker compose ps
 docker compose logs -f web api-gateway
 ```
 
-O caminho recomendado valida os dois arquivos `.env`, rejeita valores `CHANGE_ME` e verifica que o segredo interno coincide antes de subir a stack:
+O script valida os dois arquivos `.env`, rejeita valores `CHANGE_ME` e verifica que o segredo interno coincide antes de iniciar qualquer serviço. Os comandos `docker compose up` e `yarn docker:up:build` são operações de baixo nível e **não aplicam migrations**; o comando `yarn docker:prisma:migrate:deploy` continua apontando para o projeto isolado `mio-dev`, não para esta stack local.
 
-```bash
-bash scripts/deploy.sh
-```
+Se executar o Compose manualmente, aplique primeiro a migration usando o serviço `api-migrate` do mesmo projeto `mio` ou use `bash scripts/deploy.sh` para executar o fluxo completo com validação.
 
 ### Pipeline com GHCR e VM Oracle
 
@@ -317,13 +315,21 @@ Alterar `*_POSTGRES_PASSWORD` no `.env` não troca a senha que já está gravada
 
 Cada serviço com banco possui seu schema Prisma em `apps/api/apps/<servico>/prisma/`. O workflow publica duas imagens da API: `mio-api:<SHA>` para serviços contínuos e `mio-api:<SHA>-migrator` para o job one-shot. O segundo target inclui o Prisma CLI e os schemas/migrations, e chama o script `prisma:migrate:deploy` definido uma única vez no `apps/api/package.json`. O arquivo `release/environments/production/docker-compose.migrate.yml` descreve esse job e o conecta à rede da stack.
 
-O deploy inicia primeiro os Postgres e espera seus healthchecks. Depois roda `docker compose run --pull always --rm api-migrate`; sucesso permite atualizar os serviços, falha interrompe o deploy antes da recriação. Para executar manualmente a versão atualmente implantada:
+O deploy inicia primeiro os Postgres e espera seus healthchecks. Depois roda `docker compose run --pull always --rm api-migrate`; sucesso permite atualizar os serviços, falha interrompe o deploy antes da recriação. O workflow autentica no GHCR antes desse passo e força o pull para garantir que usa a imagem da tag publicada. Esse comportamento permanece no release automático.
+
+Para executar manualmente a versão atualmente implantada:
 
 ```bash
 ./scripts/ops/migrate.sh
 ```
 
-O comando manual lê a tag em `release/.state/production.state` e sempre busca a imagem migrator no GHCR. O estado é gravado somente depois que migrations e atualização dos serviços terminam com sucesso.
+O comando manual lê a tag em `release/.state/production.state` e reutiliza a imagem migrator local quando ela já está em cache. Se a imagem estiver ausente, o Compose tentará baixá-la do GHCR. Para imagens privadas, autentique a VM antes da primeira execução (ou quando o token expirar):
+
+```bash
+docker login ghcr.io --username SEU_USUARIO_GITHUB
+```
+
+Informe a senha/token quando solicitado. Use um Personal Access Token (classic) com `read:packages` e acesso ao pacote da namespace registrada em `release/.state/production.state`. Não coloque o token no comando nem no histórico do shell. O estado é gravado somente depois que migrations e atualização dos serviços terminam com sucesso.
 
 ### 6.3 Ordem de inicialização
 
