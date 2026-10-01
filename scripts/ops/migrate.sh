@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Applies pending Prisma migrations using the API image currently deployed.
+# Applies pending Prisma migrations using the dedicated migrator image.
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
 
 load_env
-log "Aplicando migrations com $MIO_API_IMAGE"
-compose run --rm api-migrate
+log "Aplicando migrations com $MIO_API_MIGRATOR_IMAGE"
+migrate_compose run --pull missing --rm api-migrate
 log "Migrations concluídas."

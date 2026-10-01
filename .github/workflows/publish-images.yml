@@ -36,8 +36,15 @@ jobs:
       - name: Resolve GHCR namespace
         id: namespace
         env:
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-        run: echo "value=$(printf '%s' "$REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+          GHCR_NAMESPACE: ${{ vars.GHCR_NAMESPACE }}
+        run: |
+          set -euo pipefail
+          GHCR_NAMESPACE="$(printf '%s' "$GHCR_NAMESPACE" | tr '[:upper:]' '[:lower:]')"
+          if ! printf '%s' "$GHCR_NAMESPACE" | grep -Eq '^[a-z0-9][a-z0-9-]*$'; then
+            echo "Configure the repository Actions variable GHCR_NAMESPACE with the GHCR account or organization namespace." >&2
+            exit 1
+          fi
+          echo "value=$GHCR_NAMESPACE" >> "$GITHUB_OUTPUT"
 
       - name: Check whether this SHA is already published
         id: release_check
@@ -65,6 +72,19 @@ jobs:
 
           ready_ref="ghcr.io/$GHCR_NAMESPACE/mio-api:ready-$IMAGE_TAG"
           if tag_state "$ready_ref"; then
+            for image_ref in \
+              "ghcr.io/$GHCR_NAMESPACE/mio-api:$IMAGE_TAG" \
+              "ghcr.io/$GHCR_NAMESPACE/mio-api:$IMAGE_TAG-migrator" \
+              "ghcr.io/$GHCR_NAMESPACE/mio-web:$IMAGE_TAG"; do
+              if tag_state "$image_ref"; then
+                continue
+              else
+                result=$?
+                echo "O marcador ready existe, mas o conjunto está incompleto ou não pôde ser verificado: $image_ref (status $result)" >&2
+                echo "A publicação foi interrompida; não altere tags de uma release marcada como pronta." >&2
+                exit 1
+              fi
+            done
             echo "Release $IMAGE_TAG já está completo; as tags imutáveis serão preservadas."
             echo "already_ready=true" >> "$GITHUB_OUTPUT"
             exit 0
@@ -78,6 +98,7 @@ jobs:
 
           for image_ref in \
             "ghcr.io/$GHCR_NAMESPACE/mio-api:$IMAGE_TAG" \
+            "ghcr.io/$GHCR_NAMESPACE/mio-api:$IMAGE_TAG-migrator" \
             "ghcr.io/$GHCR_NAMESPACE/mio-web:$IMAGE_TAG"; do
             if tag_state "$image_ref"; then
               echo "Tag final existente sem marcador ready: $image_ref" >&2
@@ -95,7 +116,7 @@ jobs:
           echo "already_ready=false" >> "$GITHUB_OUTPUT"
 
   build:
-    name: Build ${{ matrix.image }} (${{ matrix.arch }})
+    name: Build ${{ matrix.target_name }} (${{ matrix.arch }})
     needs: check
     if: ${{ needs.check.outputs.already_ready != 'true' }}
     strategy:
@@ -103,22 +124,29 @@ jobs:
       matrix:
         include:
           - image: api
+            target_name: API runtime
             dockerfile: apps/api/Dockerfile
-            platform: linux/amd64
-            arch: amd64
-            runner: ubuntu-24.04
+            target: runner
+            candidate: api
+            cache: mio-api-runner-arm64
+            platform: linux/arm64
+            arch: arm64
+            runner: ubuntu-24.04-arm
           - image: api
+            target_name: API migrator
             dockerfile: apps/api/Dockerfile
+            target: migrator
+            candidate: migrator
+            cache: mio-api-migrator-arm64
             platform: linux/arm64
             arch: arm64
             runner: ubuntu-24.04-arm
           - image: web
+            target_name: web
             dockerfile: apps/web/Dockerfile
-            platform: linux/amd64
-            arch: amd64
-            runner: ubuntu-24.04
-          - image: web
-            dockerfile: apps/web/Dockerfile
+            target: runner
+            candidate: web
+            cache: mio-web-arm64
             platform: linux/arm64
             arch: arm64
             runner: ubuntu-24.04-arm
@@ -144,13 +172,13 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
-          target: runner
+          target: ${{ matrix.target }}
           platforms: ${{ matrix.platform }}
           push: true
-          tags: ghcr.io/${{ needs.check.outputs.namespace }}/mio-${{ matrix.image }}:candidate-${{ github.event.workflow_run.head_sha }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.arch }}
+          tags: ghcr.io/${{ needs.check.outputs.namespace }}/mio-${{ matrix.image }}:candidate-${{ matrix.candidate }}-${{ github.event.workflow_run.head_sha }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.arch }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
-          cache-from: type=gha,scope=mio-${{ matrix.image }}-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=mio-${{ matrix.image }}-${{ matrix.arch }}
+          cache-from: type=gha,scope=${{ matrix.cache }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.cache }}
 
   publish:
     name: Assemble and publish immutable image set
@@ -168,7 +196,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Promote both multi-platform images to the commit tag
+      - name: Promote runtime, migrator, and web images to commit tags
         env:
           IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
           GHCR_NAMESPACE: ${{ needs.check.outputs.namespace }}
@@ -176,13 +204,15 @@ jobs:
         run: |
           docker buildx imagetools create \
             --tag "ghcr.io/$GHCR_NAMESPACE/mio-api:$IMAGE_TAG" \
-            "ghcr.io/$GHCR_NAMESPACE/mio-api:candidate-$CANDIDATE_SUFFIX-amd64" \
-            "ghcr.io/$GHCR_NAMESPACE/mio-api:candidate-$CANDIDATE_SUFFIX-arm64"
+            "ghcr.io/$GHCR_NAMESPACE/mio-api:candidate-api-$CANDIDATE_SUFFIX-arm64"
+
+          docker buildx imagetools create \
+            --tag "ghcr.io/$GHCR_NAMESPACE/mio-api:$IMAGE_TAG-migrator" \
+            "ghcr.io/$GHCR_NAMESPACE/mio-api:candidate-migrator-$CANDIDATE_SUFFIX-arm64"
 
           docker buildx imagetools create \
             --tag "ghcr.io/$GHCR_NAMESPACE/mio-web:$IMAGE_TAG" \
-            "ghcr.io/$GHCR_NAMESPACE/mio-web:candidate-$CANDIDATE_SUFFIX-amd64" \
-            "ghcr.io/$GHCR_NAMESPACE/mio-web:candidate-$CANDIDATE_SUFFIX-arm64"
+            "ghcr.io/$GHCR_NAMESPACE/mio-web:candidate-web-$CANDIDATE_SUFFIX-arm64"
 
       - name: Mark the complete image set as deployable
         env:

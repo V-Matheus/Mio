@@ -1,5 +1,12 @@
+x-log-rotation: &log-rotation
+  driver: local
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres-core:
+    logging: *log-rotation
     image: postgres:18-alpine
     env_file:
       - .env
@@ -18,6 +25,7 @@ services:
     restart: unless-stopped
 
   postgres-gamification:
+    logging: *log-rotation
     image: postgres:18-alpine
     env_file:
       - .env
@@ -36,6 +44,7 @@ services:
     restart: unless-stopped
 
   postgres-achievements:
+    logging: *log-rotation
     image: postgres:18-alpine
     env_file:
       - .env
@@ -54,6 +63,7 @@ services:
     restart: unless-stopped
 
   redis:
+    logging: *log-rotation
     image: redis:8-alpine
     volumes:
       - redis-data:/data
@@ -65,6 +75,7 @@ services:
     restart: unless-stopped
 
   rabbitmq:
+    logging: *log-rotation
     image: rabbitmq:4-management-alpine
     env_file:
       - .env
@@ -85,6 +96,7 @@ services:
   # by the other API services via `MIO_API_IMAGE` below — each picks its
   # process via the `SERVICE` env var consumed by the Dockerfile CMD.
   api-gateway:
+    logging: *log-rotation
     image: ${MIO_API_IMAGE:-mio-api}
     build:
       context: ../../
@@ -103,8 +115,6 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-      api-migrate:
-        condition: service_completed_successfully
     healthcheck:
       test:
         - CMD
@@ -116,15 +126,15 @@ services:
       retries: 10
       start_period: 60s
     restart: unless-stopped
+    stop_grace_period: 20s
 
-  api-migrate:
+  api-ops:
+    logging: *log-rotation
     image: ${MIO_API_IMAGE:-mio-api}
+    profiles: ["ops"]
     env_file:
       - .env
     working_dir: /app/apps/api
-    command:
-      - yarn
-      - prisma:migrate:deploy
     depends_on:
       postgres-core:
         condition: service_healthy
@@ -132,93 +142,127 @@ services:
         condition: service_healthy
       postgres-achievements:
         condition: service_healthy
-    restart: "no"
-
-  api-ops:
-    image: ${MIO_API_IMAGE:-mio-api}
-    profiles: ["ops"]
-    env_file:
-      - .env
-    working_dir: /app/apps/api
-    depends_on:
-      api-migrate:
-        condition: service_completed_successfully
       redis:
         condition: service_healthy
     command: ["yarn", "--help"]
     restart: "no"
 
   api-core:
+    logging: *log-rotation
     image: ${MIO_API_IMAGE:-mio-api}
     env_file:
       - .env
     environment:
       SERVICE: core
+      HEALTHCHECK_GRPC_PORT: ${CORE_GRPC_PORT:?CORE_GRPC_PORT is required}
     expose:
       - "${CORE_GRPC_PORT}"
+    healthcheck:
+      test: ["CMD", "node", "apps/api/healthcheck-grpc.cjs"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
-      api-migrate:
-        condition: service_completed_successfully
+      postgres-core:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
+    stop_grace_period: 20s
 
   api-gamification:
+    logging: *log-rotation
     image: ${MIO_API_IMAGE:-mio-api}
     env_file:
       - .env
     environment:
       SERVICE: gamification
+      HEALTHCHECK_GRPC_PORT: ${GAMIFICATION_GRPC_PORT:?GAMIFICATION_GRPC_PORT is required}
     expose:
       - "${GAMIFICATION_GRPC_PORT}"
+    healthcheck:
+      test: ["CMD", "node", "apps/api/healthcheck-grpc.cjs"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
-      api-migrate:
-        condition: service_completed_successfully
+      postgres-gamification:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
       redis:
         condition: service_healthy
     restart: unless-stopped
+    stop_grace_period: 20s
 
   api-achievements:
+    logging: *log-rotation
     image: ${MIO_API_IMAGE:-mio-api}
     env_file:
       - .env
     environment:
       SERVICE: achievements
+      HEALTHCHECK_GRPC_PORT: ${ACHIEVEMENTS_GRPC_PORT:?ACHIEVEMENTS_GRPC_PORT is required}
     expose:
       - "${ACHIEVEMENTS_GRPC_PORT}"
+    healthcheck:
+      test: ["CMD", "node", "apps/api/healthcheck-grpc.cjs"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
-      api-migrate:
-        condition: service_completed_successfully
+      postgres-achievements:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
+    stop_grace_period: 20s
 
   api-messenger:
+    logging: *log-rotation
     image: ${MIO_API_IMAGE:-mio-api}
     env_file:
       - .env
     environment:
       SERVICE: messenger
+      HEALTHCHECK_GRPC_PORT: ${MESSENGER_GRPC_PORT:?MESSENGER_GRPC_PORT is required}
     expose:
       - "${MESSENGER_GRPC_PORT}"
+    healthcheck:
+      test: ["CMD", "node", "apps/api/healthcheck-grpc.cjs"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
+    stop_grace_period: 20s
 
   api-notifications:
+    logging: *log-rotation
     image: ${MIO_API_IMAGE:-mio-api}
     env_file:
       - .env
     environment:
       SERVICE: notifications
+      HEALTHCHECK_GRPC_PORT: ${NOTIFICATIONS_GRPC_PORT:?NOTIFICATIONS_GRPC_PORT is required}
     expose:
       - "${NOTIFICATIONS_GRPC_PORT}"
+    healthcheck:
+      test: ["CMD", "node", "apps/api/healthcheck-grpc.cjs"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
       rabbitmq:
         condition: service_healthy
       redis:
         condition: service_healthy
     restart: unless-stopped
+    stop_grace_period: 20s
 
 volumes:
   postgres-core-data:
