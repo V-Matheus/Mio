@@ -23,4 +23,18 @@ if [[ -z "$api_secret" || "$api_secret" != "$web_secret" ]]; then
 fi
 
 docker compose version >/dev/null
-compose --parallel 1 up --build -d
+
+log "Construindo as imagens da aplicação e do migrator."
+compose --parallel 1 build
+compose --profile migrate --parallel 1 build api-migrate
+
+log "Iniciando os bancos da stack local e aguardando os healthchecks."
+compose up -d --wait --wait-timeout 180 \
+  postgres-core postgres-gamification postgres-achievements
+
+log "Aplicando migrations nos bancos da mesma stack local."
+compose --profile migrate run --no-deps --rm api-migrate
+
+log "Iniciando a aplicação com as imagens já construídas."
+compose --parallel 1 up --no-build -d
+compose ps
