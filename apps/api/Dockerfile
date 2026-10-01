@@ -36,6 +36,9 @@ COPY --from=installer /app/apps/api/node_modules/.prisma ./node_modules/.prisma
 COPY --from=pruner /app/out/json/yarn.lock ./yarn.lock
 COPY --from=pruner /app/out/full/ .
 RUN yarn turbo build --filter=@mio/api
+RUN for service in gateway core gamification achievements messenger notifications; do \
+      test -f "apps/api/dist/apps/${service}/apps/${service}/src/main.js" || exit 1; \
+    done
 
 # ================================
 # Production image
@@ -66,7 +69,7 @@ EXPOSE 3333
 
 COPY --chown=nestjs:nodejs apps/api/healthcheck-grpc.cjs ./apps/api/healthcheck-grpc.cjs
 
-CMD ["sh", "-c", "exec node apps/api/dist/apps/${SERVICE}/main.js"]
+CMD ["sh", "-c", "exec node apps/api/dist/apps/${SERVICE}/apps/${SERVICE}/src/main.js"]
 
 # ================================
 # One-shot Prisma migration image
