@@ -115,6 +115,12 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      api-core:
+        condition: service_healthy
+      api-gamification:
+        condition: service_healthy
+      api-achievements:
+        condition: service_healthy
     healthcheck:
       test:
         - CMD
@@ -145,6 +151,29 @@ services:
       redis:
         condition: service_healthy
     command: ["yarn", "--help"]
+    restart: "no"
+
+  # Local production-like deploy job. Uses this Compose project's default
+  # network and the same API env/database services as the runtime stack.
+  api-migrate:
+    logging: *log-rotation
+    image: mio-api-migrator
+    build:
+      context: ../../
+      dockerfile: apps/api/Dockerfile
+      target: migrator
+    profiles: ["migrate"]
+    env_file:
+      - .env
+    working_dir: /app/apps/api
+    command: ["yarn", "prisma:migrate:deploy"]
+    depends_on:
+      postgres-core:
+        condition: service_healthy
+      postgres-gamification:
+        condition: service_healthy
+      postgres-achievements:
+        condition: service_healthy
     restart: "no"
 
   api-core:
