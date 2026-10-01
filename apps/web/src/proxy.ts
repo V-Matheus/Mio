@@ -37,6 +37,8 @@ export async function proxy(req: NextRequest) {
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET,
+    // Match Auth.js's __Secure- session cookie in the production HTTPS deployment.
+    secureCookie: process.env.NODE_ENV === "production",
   })
 
   const validToken = isTokenValid(token)
