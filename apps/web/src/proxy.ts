@@ -33,12 +33,26 @@ function isTokenValid(token: unknown): boolean {
   return typeof t.accessToken === "string" && t.accessToken.length > 0
 }
 
+function usesSecureAuthCookie(req: NextRequest): boolean {
+  const authUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL
+  if (authUrl) {
+    return new URL(authUrl).protocol === "https:"
+  }
+
+  const forwardedProtocol = req.headers
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim()
+  const protocol = forwardedProtocol ?? req.nextUrl.protocol
+  return `${protocol.replace(/:$/, "")}:` === "https:"
+}
+
 export async function proxy(req: NextRequest) {
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET,
-    // Match Auth.js's __Secure- session cookie in the production HTTPS deployment.
-    secureCookie: process.env.NODE_ENV === "production",
+    // Match the URL/protocol precedence Auth.js uses when naming its cookie.
+    secureCookie: usesSecureAuthCookie(req),
   })
 
   const validToken = isTokenValid(token)
