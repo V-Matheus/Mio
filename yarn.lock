@@ -2983,9 +2983,9 @@
     prettier "^3.5.3"
 
 "@react-email/render@^2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@react-email/render/-/render-2.1.0.tgz#de0030083dbfc7b73adc34d7e1b539f10d79400c"
-  integrity sha512-F+zE3O6d6sW6Aj2UjvZAA17R7tJKM7kcq2mgV6k4HCT8jeLLFaVP2txMtH1lgqYFRMZ0Gxsd37q2PRyiXLXXxA==
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@react-email/render/-/render-2.1.1.tgz#2ffd07e9336195f9680e095229845d43e48691f6"
+  integrity sha512-DvVx4k6XjJ9cYBigd37+7SK2E89emUH32Lcn6COsMickQchXdvXa+ZA04BF7475Kg+8ikaIpus+zQYUwVVyjBg==
   dependencies:
     entities "^4.5.0"
     html-to-text "^9.0.5"
