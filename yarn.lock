@@ -1616,9 +1616,9 @@
     "@iconify/types" "*"
 
 "@iconify/react@^6.0.2":
-  version "6.0.2"
-  resolved "https://registry.yarnpkg.com/@iconify/react/-/react-6.0.2.tgz#b6d9bd0e13f9cb85b3a7fddbc70bbf71f5da1d33"
-  integrity sha512-SMmC2sactfpJD427WJEDN6PMyznTFMhByK9yLW0gOTtnjzzbsi/Ke/XqsumsavFPwNiXs8jSiYeZTmLCLwO+Fg==
+  version "6.0.3"
+  resolved "https://registry.yarnpkg.com/@iconify/react/-/react-6.0.3.tgz#528014e407a4e4b3f62d7fa741cf3415db2ec43d"
+  integrity sha512-2x7gVs+tpUG75aXYo/0c5wPOqrFy75YSGKmuJZyuHyrHMydzXpI/+i9/USIzWXJL9WWc2BCgPVnGY2FhbeiiDQ==
   dependencies:
     "@iconify/types" "^2.0.0"
 
