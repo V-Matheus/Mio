@@ -96,7 +96,7 @@
     "@types/amqplib": "^0.10.8",
     "@types/express": "^5.0.0",
     "@types/ioredis": "^5.0.0",
-    "@types/node": "^24.0.0",
+    "@types/node": "^26.0.0",
     "@types/nodemailer": "^8.0.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
